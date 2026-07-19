@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>طلبات النقل</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/pages.css"/>
+</head>
+<body>
+<div class="d-flex" id="app-wrapper">
+<div id="main-content" class="d-flex flex-column">
+<main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+  <div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <h1 class="page-title"><i class="fa-solid fa-right-left me-2 text-primary"></i>طلبات النقل</h1>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newTransferModal">
+      <i class="fa-solid fa-plus me-1"></i>طلب نقل جديد
+    </button>
+  </div>
+
+  <!-- إحصاءات سريعة -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="stat-card stat-card--amber">
+        <div class="stat-card__icon"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="stat-card__body">
+          <div class="stat-card__label">معلقة</div>
+          <div class="stat-card__value">47</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card stat-card--green">
+        <div class="stat-card__icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-card__body">
+          <div class="stat-card__label">موافق عليها</div>
+          <div class="stat-card__value">128</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card stat-card--red">
+        <div class="stat-card__icon"><i class="fa-solid fa-circle-xmark"></i></div>
+        <div class="stat-card__body">
+          <div class="stat-card__label">مرفوضة</div>
+          <div class="stat-card__value">23</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card stat-card--blue">
+        <div class="stat-card__icon"><i class="fa-solid fa-list"></i></div>
+        <div class="stat-card__body">
+          <div class="stat-card__label">الإجمالي</div>
+          <div class="stat-card__value">198</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- قائمة الطلبات -->
+    <div class="col-12 col-lg-5">
+      <div class="content-card">
+        <div class="content-card__header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+          <div style="font-size:14px;font-weight:600;">قائمة الطلبات</div>
+          <input type="text" id="transferSearch" class="form-control form-control-sm" placeholder="بحث..." style="width:150px;"/>
+        </div>
+        <div class="content-card__body p-2">
+          <!-- تبويبات الفلتر -->
+          <div class="d-flex gap-1 mb-3 flex-wrap">
+            <button class="filter-chip active" data-status="all">الكل</button>
+            <button class="filter-chip" data-status="pending">معلق</button>
+            <button class="filter-chip" data-status="approved">موافق</button>
+            <button class="filter-chip" data-status="rejected">مرفوض</button>
+          </div>
+          <div id="transferList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- لوحة المراجعة -->
+    <div class="col-12 col-lg-7">
+      <div class="review-panel" id="reviewPanel">
+        <div class="review-panel-header d-flex justify-content-between align-items-center">
+          <div style="font-size:15px;font-weight:600;color:#1a2332;" id="rpTitle">اختر طلباً للمراجعة</div>
+          <span id="rpStatus"></span>
+        </div>
+
+        <!-- المحتوى الافتراضي -->
+        <div id="rpEmpty" class="text-center py-5">
+          <div style="font-size:40px;color:#dde4ee;"><i class="fa-solid fa-right-left"></i></div>
+          <div style="font-size:14px;color:#9aaabb;margin-top:10px;">اختر طلباً من القائمة لمراجعته</div>
+        </div>
+
+        <!-- تفاصيل الطلب -->
+        <div id="rpDetails" class="d-none p-3 p-md-4">
+
+          <!-- بيانات الأسرة -->
+          <div style="font-size:11px;color:#9aaabb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">بيانات الأسرة</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f8fafc;border-radius:10px;margin-bottom:14px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:#e8f1fb;color:#1a6bb5;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;" id="rpAvatar">—</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#1a2332;" id="rpFamilyName">—</div>
+              <div style="font-size:12px;color:#7a8a9a;" id="rpFamilyNid">—</div>
+            </div>
+            <div class="ms-auto" id="rpFamilyBadge"></div>
+          </div>
+
+          <!-- حركة النقل -->
+          <div style="font-size:11px;color:#9aaabb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">حركة النقل</div>
+          <div class="camp-arrow-display mb-3">
+            <div class="camp-box from-box" style="flex:1;">
+              <div class="cb-name" id="rpFrom">—</div>
+              <div class="cb-sub">مخيم المصدر</div>
+            </div>
+            <i class="fa-solid fa-arrow-left fa-lg" style="color:#9aaabb;"></i>
+            <div class="camp-box to-box" style="flex:1;">
+              <div class="cb-name" id="rpTo">—</div>
+              <div class="cb-sub">مخيم الوجهة</div>
+            </div>
+          </div>
+
+          <!-- السبب -->
+          <div style="font-size:11px;color:#9aaabb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">سبب الطلب</div>
+          <div class="reason-box mb-3" id="rpReason">—</div>
+
+          <!-- مقدم الطلب + التاريخ -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <div style="font-size:11px;color:#9aaabb;">مقدم الطلب</div>
+              <div style="font-size:13px;font-weight:500;color:#1a2332;" id="rpSubmitter">—</div>
+            </div>
+            <div class="col-6">
+              <div style="font-size:11px;color:#9aaabb;">تاريخ الطلب</div>
+              <div style="font-size:13px;font-weight:500;color:#1a2332;" id="rpDate">—</div>
+            </div>
+          </div>
+
+          <!-- أزرار القرار (للطلبات المعلقة فقط) -->
+          <div id="rpActionArea">
+            <div style="font-size:11px;color:#9aaabb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">ملاحظات القرار (اختياري)</div>
+            <textarea class="form-control mb-2" id="rpRemarks" rows="2" placeholder="أدخل ملاحظات القرار..."></textarea>
+            <div class="review-action-btns">
+              <button class="btn-reject-action" id="btnRejectTransfer">
+                <i class="fa-solid fa-xmark me-1"></i>رفض الطلب
+              </button>
+              <button class="btn-approve-action" id="btnApproveTransfer">
+                <i class="fa-solid fa-check me-1"></i>الموافقة على النقل
+              </button>
+            </div>
+          </div>
+
+          <!-- نتيجة القرار -->
+          <div id="rpDecisionResult" class="d-none text-center py-3">
+            <div style="font-size:28px;" id="rpDecisionIcon"></div>
+            <div style="font-size:15px;font-weight:600;margin-top:8px;" id="rpDecisionText"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+</div>
+
+<!-- مودال طلب نقل جديد -->
+<div class="modal fade" id="newTransferModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-right-left me-2 text-primary"></i>تقديم طلب نقل جديد</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="field-label">رقم هوية رب الأسرة <span class="field-required">*</span></label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="ntNid" class="form-control" placeholder="276-1985-XXXX"/>
+            <button class="btn btn-outline-primary" id="btnNtCheck"><i class="fa-solid fa-search"></i></button>
+          </div>
+          <div id="ntFamilyFound" class="d-none mt-2" style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;">
+            <i class="fa-solid fa-circle-check me-1"></i><span id="ntFamilyName"></span>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="field-label">من مخيم <span class="field-required">*</span></label>
+          <select class="form-select" id="ntFrom">
+            <option>اختر المخيم...</option>
+            <option>مخيم جباليا</option><option>مخيم خان يونس</option>
+            <option>مواصي رفح</option><option>مخيم النصيرات</option><option>مخيم البريج</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="field-label">إلى مخيم <span class="field-required">*</span></label>
+          <select class="form-select" id="ntTo">
+            <option>اختر المخيم...</option>
+            <option>مخيم جباليا</option><option>مخيم خان يونس</option>
+            <option>مواصي رفح</option><option>مخيم النصيرات</option><option>مخيم البريج</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="field-label">سبب الطلب <span class="field-required">*</span></label>
+          <textarea class="form-control" id="ntReason" rows="3" placeholder="اشرح سبب طلب النقل..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button class="btn btn-primary" id="btnSubmitNewTransfer">
+          <i class="fa-solid fa-paper-plane me-1"></i>إرسال الطلب
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/layout.js"></script>
+<script>
+$(document).ready(function(){
+
+  var transfers = [
+    { id:'T-047', nid:'276-1985-0034', name:'أحمد محمد سليم',    from:'النصيرات',   to:'جباليا',    status:'pending',  date:'6 أبريل 2026',   submitter:'علاء أبو يوسف', reason:'وجود أقارب في مخيم جباليا يمكنهم تقديم الدعم للأسرة، كما يستدعي الوضع الصحي القرب من مركز الرعاية.', level:'high' },
+    { id:'T-046', nid:'291-1979-0112', name:'منى يوسف حسن',      from:'رفح',         to:'خان يونس', status:'pending',  date:'5 أبريل 2026',   submitter:'محمد الحنجوري', reason:'انتهاء صلاحية المأوى في رفح وتوفر مأوى جديد في خان يونس قريب من مستشفى.', level:'medium' },
+    { id:'T-045', nid:'283-1975-0145', name:'خالد إبراهيم ناصر', from:'جباليا',      to:'البريج',   status:'approved', date:'4 أبريل 2026',   submitter:'أحمد سليم',     reason:'طلب من المنظمة بسبب اكتظاظ مخيم جباليا.', level:'low' },
+    { id:'T-044', nid:'298-1991-0033', name:'سمير علي أبو ظاهر', from:'النصيرات',   to:'مواصي رفح',status:'rejected', date:'3 أبريل 2026',   submitter:'علاء أبو يوسف', reason:'طلب شخصي للانتقال لمنطقة أهدأ.', level:'medium' },
+    { id:'T-043', nid:'265-1995-0208', name:'هناء جمال الصوراني',from:'خان يونس',   to:'جباليا',    status:'pending',  date:'3 أبريل 2026',   submitter:'محمد الحنجوري', reason:'متابعة علاج الابن الأكبر في مستشفى جباليا.', level:'high' },
+    { id:'T-042', nid:'277-1988-0120', name:'إيمان راضي سعيد',   from:'البريج',      to:'النصيرات', status:'approved', date:'2 أبريل 2026',   submitter:'أحمد سليم',     reason:'توفر مأوى مناسب لذوي الإعاقة في النصيرات.', level:'high' },
+  ];
+
+  var selectedTransfer = null;
+  var activeStatusFilter = 'all';
+
+  function renderTransfers() {
+    var q = $('#transferSearch').val().toLowerCase();
+    var filtered = transfers.filter(function(t){
+      var matchQ = !q || t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q);
+      var matchS = activeStatusFilter==='all' || t.status===activeStatusFilter;
+      return matchQ && matchS;
+    });
+
+    var html = '';
+    if (!filtered.length) {
+      html = '<div style="text-align:center;padding:20px;color:#9aaabb;font-size:13px;">لا توجد نتائج</div>';
+    } else {
+      filtered.forEach(function(t){
+        var statusBadge = {
+          pending:  '<span class="badge bg-warning text-dark">معلق</span>',
+          approved: '<span class="badge bg-success">موافق</span>',
+          rejected: '<span class="badge bg-danger">مرفوض</span>'
+        }[t.status];
+        var selected = selectedTransfer && selectedTransfer.id===t.id ? 'selected' : '';
+        html += `
+          <div class="transfer-request-card ${selected}" data-id="${t.id}">
+            <div class="trc-head">
+              <div>
+                <div class="trc-id">${t.id}</div>
+                <div class="trc-name">${t.name}</div>
+                <div class="trc-route">
+                  <span class="trc-from">${t.from}</span>
+                  <span class="arrow"><i class="fa-solid fa-arrow-left"></i></span>
+                  <span class="trc-to">${t.to}</span>
+                </div>
+              </div>
+              <div>${statusBadge}</div>
+            </div>
+            <div class="trc-footer">
+              <span><i class="fa-regular fa-calendar me-1"></i>${t.date}</span>
+              <span><i class="fa-solid fa-user me-1"></i>${t.submitter}</span>
+            </div>
+          </div>`;
+      });
+    }
+    $('#transferList').html(html);
+  }
+
+  /* ── فلاتر الحالة ───────────────────────────────────── */
+  $(document).on('click','.filter-chip[data-status]',function(){
+    $('.filter-chip[data-status]').removeClass('active');
+    $(this).addClass('active');
+    activeStatusFilter = $(this).data('status');
+    renderTransfers();
+  });
+
+  $('#transferSearch').on('input', renderTransfers);
+
+  /* ── اختيار طلب ─────────────────────────────────────── */
+  $(document).on('click','.transfer-request-card',function(){
+    var id = $(this).data('id');
+    selectedTransfer = transfers.find(function(t){ return t.id===id; });
+    renderTransfers();
+    renderReview(selectedTransfer);
+  });
+
+  function renderReview(t) {
+    var initials = t.name.slice(0,1) + '.' + (t.name.split(' ')[1]||'')[0];
+    $('#rpTitle').text('طلب ' + t.id);
+    $('#rpEmpty').addClass('d-none');
+    $('#rpDetails').removeClass('d-none');
+    $('#rpDecisionResult').addClass('d-none');
+    $('#rpActionArea').removeClass('d-none');
+    $('#rpRemarks').val('');
+
+    var statusBadge = {
+      pending:  '<span class="badge bg-warning text-dark">معلق</span>',
+      approved: '<span class="badge bg-success">موافق عليه</span>',
+      rejected: '<span class="badge bg-danger">مرفوض</span>'
+    }[t.status];
+    $('#rpStatus').html(statusBadge);
+    $('#rpAvatar').text(initials);
+    $('#rpFamilyName').text(t.name);
+    $('#rpFamilyNid').text('رقم الهوية: ' + t.nid);
+    var lvlBadge = {high:'<span class="badge bg-danger">ضعف عالٍ</span>',medium:'<span class="badge bg-warning text-dark">متوسط</span>',low:'<span class="badge bg-success">منخفض</span>'}[t.level];
+    $('#rpFamilyBadge').html(lvlBadge);
+    $('#rpFrom').text(t.from);
+    $('#rpTo').text(t.to);
+    $('#rpReason').text(t.reason);
+    $('#rpSubmitter').text(t.submitter);
+    $('#rpDate').text(t.date);
+
+    if (t.status !== 'pending') {
+      $('#rpActionArea').addClass('d-none');
+      $('#rpDecisionResult').removeClass('d-none');
+      if (t.status === 'approved') {
+        $('#rpDecisionIcon').html('<i class="fa-solid fa-circle-check" style="color:#2d8a4e;"></i>');
+        $('#rpDecisionText').text('تمت الموافقة على هذا الطلب').css('color','#1a6a2a');
+      } else {
+        $('#rpDecisionIcon').html('<i class="fa-solid fa-circle-xmark" style="color:#b03030;"></i>');
+        $('#rpDecisionText').text('تم رفض هذا الطلب').css('color','#8a2020');
+      }
+    }
+  }
+
+  /* ── قرار الموافقة/الرفض ─────────────────────────────── */
+  function makeDecision(decision) {
+    if (!selectedTransfer || selectedTransfer.status !== 'pending') return;
+    selectedTransfer.status = decision;
+    var idx = transfers.findIndex(function(t){ return t.id===selectedTransfer.id; });
+    if (idx > -1) transfers[idx].status = decision;
+    renderTransfers();
+    renderReview(selectedTransfer);
+  }
+
+  $('#btnApproveTransfer').on('click', function(){ makeDecision('approved'); });
+  $('#btnRejectTransfer').on('click', function(){
+    if (!$('#rpRemarks').val().trim()) {
+      alert('يرجى إدخال سبب الرفض في ملاحظات القرار.'); return;
+    }
+    makeDecision('rejected');
+  });
+
+  /* ── طلب جديد ───────────────────────────────────────── */
+  var fakeNids = { '276-1985-0034':'أحمد محمد سليم','291-1979-0112':'فاطمة إبراهيم النجار' };
+  $('#btnNtCheck').on('click', function(){
+    var nid = $('#ntNid').val().trim();
+    if (fakeNids[nid]) {
+      $('#ntFamilyName').text(fakeNids[nid]);
+      $('#ntFamilyFound').removeClass('d-none');
+    } else {
+      $('#ntFamilyFound').addClass('d-none');
+      alert('لم يُعثر على أسرة بهذا الرقم.');
+    }
+  });
+
+  $('#btnSubmitNewTransfer').on('click', function(){
+    var nid    = $('#ntNid').val().trim();
+    var from   = $('#ntFrom').val();
+    var to     = $('#ntTo').val();
+    var reason = $('#ntReason').val().trim();
+    if (!nid || from==='اختر المخيم...' || to==='اختر المخيم...' || !reason) {
+      alert('يرجى ملء جميع الحقول.'); return;
+    }
+    var newId = 'T-' + (Math.floor(Math.random()*900)+100);
+    transfers.unshift({ id:newId, nid:nid, name:fakeNids[nid]||'أسرة جديدة', from:from.replace('مخيم ',''), to:to.replace('مخيم ',''), status:'pending', date:'اليوم', submitter:'المستخدم الحالي', reason:reason, level:'medium' });
+    renderTransfers();
+    bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
+    $('#ntNid,#ntReason').val('');
+    $('#ntFamilyFound').addClass('d-none');
+  });
+
+  /* ── تهيئة ───────────────────────────────────────────── */
+  renderTransfers();
+});
+</script>
+</body>
+</html>

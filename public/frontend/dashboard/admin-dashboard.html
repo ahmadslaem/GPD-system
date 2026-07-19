@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>لوحة تحكم المدير</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <style>
+    .role-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .role-banner.admin {
+      background: #e8f1fb;
+      color: #1a4a7a;
+      border: 1px solid #c5d9f0;
+    }
+
+    .role-banner.manager {
+      background: #eaf5ee;
+      color: #1a5a2a;
+      border: 1px solid #a0d8b0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <!-- بانر الدور -->
+        <div class="role-banner" id="roleBanner">
+          <i class="fa-solid fa-shield-check"></i>
+          <span id="roleBannerText">مرحباً —</span>
+          <span style="margin-right:auto;font-size:11px;opacity:0.7;" id="roleBannerDate"></span>
+        </div>
+
+        <div class="page-header d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 class="page-title">لوحة التحكم الرئيسية</h1>
+            <p class="page-sub mb-0"><i class="fa-regular fa-clock me-1"></i>آخر تحديث: <span id="lastUpdate"></span>
+            </p>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="btnRefresh">
+              <i class="fa-solid fa-rotate-right me-1"></i><span class="d-none d-sm-inline">تحديث</span>
+            </button>
+            <a href="reports.html" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-file-export me-1"></i><span class="d-none d-sm-inline">تصدير تقرير</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- بطاقات KPI -->
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card--blue">
+              <div class="stat-card__icon"><i class="fa-solid fa-house-chimney-user"></i></div>
+              <div class="stat-card__body">
+                <div class="stat-card__label">إجمالي الأسر المسجلة</div>
+                <div class="stat-card__value" data-target="12847">0</div>
+                <div class="stat-card__change"><i class="fa-solid fa-arrow-trend-up"></i> +234 هذا الأسبوع</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card--green">
+              <div class="stat-card__icon"><i class="fa-solid fa-people-group"></i></div>
+              <div class="stat-card__body">
+                <div class="stat-card__label">إجمالي الأفراد</div>
+                <div class="stat-card__value" data-target="71430">0</div>
+                <div class="stat-card__change"><i class="fa-solid fa-circle-check"></i> بيانات محدّثة</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card--red">
+              <div class="stat-card__icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="stat-card__body">
+                <div class="stat-card__label">حالات ضعف عالية</div>
+                <div class="stat-card__value" data-target="3218">0</div>
+                <div class="stat-card__change"><i class="fa-solid fa-circle-exclamation"></i> تحتاج متابعة فورية</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-card stat-card--amber">
+              <div class="stat-card__icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <div class="stat-card__body">
+                <div class="stat-card__label">طلبات نقل معلقة</div>
+                <div class="stat-card__value" data-target="47">0</div>
+                <div class="stat-card__change"><i class="fa-solid fa-hourglass-half"></i> بانتظار الموافقة</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- الصف الثاني: التوزيع + الضعف -->
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-lg-7">
+            <div class="content-card h-100">
+              <div class="content-card__header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="content-card__title"><i class="fa-solid fa-map-location-dot me-2 text-primary"></i>التوزيع
+                  الجغرافي حسب المخيم</h2>
+                <select class="form-select form-select-sm w-auto">
+                  <option>كل المحافظات</option>
+                  <option>شمال غزة</option>
+                  <option>غزة</option>
+                  <option>رفح</option>
+                </select>
+              </div>
+              <div class="content-card__body">
+                <div class="geo-bars">
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">مخيم جباليا</span><span
+                        class="geo-bar-val">3,412</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="82" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">خان يونس</span><span
+                        class="geo-bar-val">2,710</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="65" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">رفح</span><span
+                        class="geo-bar-val">2,420</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="58" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">النصيرات</span><span
+                        class="geo-bar-val">1,830</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="44" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">البريج</span><span
+                        class="geo-bar-val">1,495</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="36" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="geo-bar-item">
+                    <div class="geo-bar-label"><span class="geo-bar-name">مواصي رفح</span><span
+                        class="geo-bar-val">980</span></div>
+                    <div class="geo-bar-track">
+                      <div class="geo-bar-fill" data-width="24" style="width:0%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-5">
+            <div class="content-card h-100">
+              <div class="content-card__header">
+                <h2 class="content-card__title"><i class="fa-solid fa-chart-pie me-2 text-danger"></i>مستوى الضعف
+                  والتركيبة</h2>
+              </div>
+              <div class="content-card__body">
+                <div class="vuln-section mb-3">
+                  <div class="section-mini-title">تصنيف الضعف</div>
+                  <div class="vuln-item">
+                    <div class="vuln-row d-flex justify-content-between mb-1"><span
+                        class="vuln-label vuln-label--high"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
+                        عالٍ</span><span class="vuln-pct">25% — 3,218</span></div>
+                    <div class="progress" style="height:8px;">
+                      <div class="progress-bar bg-danger" data-width="25" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="vuln-item mt-2">
+                    <div class="vuln-row d-flex justify-content-between mb-1"><span
+                        class="vuln-label vuln-label--med"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
+                        متوسط</span><span class="vuln-pct">45% — 5,781</span></div>
+                    <div class="progress" style="height:8px;">
+                      <div class="progress-bar bg-warning" data-width="45" style="width:0%"></div>
+                    </div>
+                  </div>
+                  <div class="vuln-item mt-2">
+                    <div class="vuln-row d-flex justify-content-between mb-1"><span
+                        class="vuln-label vuln-label--low"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
+                        منخفض</span><span class="vuln-pct">30% — 3,848</span></div>
+                    <div class="progress" style="height:8px;">
+                      <div class="progress-bar bg-success" data-width="30" style="width:0%"></div>
+                    </div>
+                  </div>
+                </div>
+                <hr class="divider-light" />
+                <div class="section-mini-title mb-2">التركيبة الديموغرافية</div>
+                <div class="demo-grid">
+                  <div class="demo-item demo-item--blue"><i class="fa-solid fa-person"></i>
+                    <div class="demo-val">41,230</div>
+                    <div class="demo-lbl">بالغون (58%)</div>
+                  </div>
+                  <div class="demo-item demo-item--teal"><i class="fa-solid fa-child"></i>
+                    <div class="demo-val">23,470</div>
+                    <div class="demo-lbl">أطفال &lt;16 (33%)</div>
+                  </div>
+                  <div class="demo-item demo-item--amber"><i class="fa-solid fa-wheelchair"></i>
+                    <div class="demo-val">6,730</div>
+                    <div class="demo-lbl">ذوو إعاقة (9%)</div>
+                  </div>
+                  <div class="demo-item demo-item--pink"><i class="fa-solid fa-venus"></i>
+                    <div class="demo-val">2,140</div>
+                    <div class="demo-lbl">أسر FHH</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- الجدول + إجراءات المدير السريعة -->
+        <div class="row g-3">
+          <!-- جدول آخر الأسر -->
+          <div class="col-12 col-xl-8">
+            <div class="content-card">
+              <div class="content-card__header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h2 class="content-card__title"><i class="fa-solid fa-list-check me-2 text-secondary"></i>آخر الأسر
+                  المسجلة</h2>
+                <div class="d-flex gap-2 flex-wrap">
+                  <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="بحث..."
+                    style="width:160px;" />
+                  <a href="register.html" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus me-1"></i>تسجيل</a>
+                  <a href="search.html" class="btn btn-sm btn-outline-secondary">عرض الكل</a>
+                </div>
+              </div>
+              <div class="content-card__body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0" id="familiesTable">
+                    <thead>
+                      <tr>
+                        <th>رقم الأسرة</th>
+                        <th>رب الأسرة</th>
+                        <th class="d-none d-md-table-cell">المخيم</th>
+                        <th class="d-none d-sm-table-cell">الأفراد</th>
+                        <th>مستوى الضعف</th>
+                        <th class="d-none d-md-table-cell">تاريخ التسجيل</th>
+                        <th>الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="family-id">#F-00847</span></td>
+                        <td class="fw-medium">أحمد محمد سليم الأغا</td>
+                        <td class="d-none d-md-table-cell">جباليا</td>
+                        <td class="d-none d-sm-table-cell">7</td>
+                        <td><span class="badge bg-danger">عالٍ</span></td>
+                        <td class="d-none d-md-table-cell text-muted small">5 أبريل 2026</td>
+                        <td>
+                          <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
+                                class="fa-solid fa-eye"></i></button><button class="btn btn-xs btn-outline-secondary"><i
+                                class="fa-solid fa-pen"></i></button></div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><span class="family-id">#F-00846</span></td>
+                        <td class="fw-medium">فاطمة إبراهيم النجار</td>
+                        <td class="d-none d-md-table-cell">خان يونس</td>
+                        <td class="d-none d-sm-table-cell">4</td>
+                        <td><span class="badge bg-warning text-dark">متوسط</span></td>
+                        <td class="d-none d-md-table-cell text-muted small">4 أبريل 2026</td>
+                        <td>
+                          <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
+                                class="fa-solid fa-eye"></i></button><button class="btn btn-xs btn-outline-secondary"><i
+                                class="fa-solid fa-pen"></i></button></div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><span class="family-id">#F-00845</span></td>
+                        <td class="fw-medium">خالد يوسف الأغا</td>
+                        <td class="d-none d-md-table-cell">النصيرات</td>
+                        <td class="d-none d-sm-table-cell">9</td>
+                        <td><span class="badge bg-danger">عالٍ</span></td>
+                        <td class="d-none d-md-table-cell text-muted small">4 أبريل 2026</td>
+                        <td>
+                          <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
+                                class="fa-solid fa-eye"></i></button><button class="btn btn-xs btn-outline-secondary"><i
+                                class="fa-solid fa-pen"></i></button></div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><span class="family-id">#F-00844</span></td>
+                        <td class="fw-medium">منى صالح أبو غالي</td>
+                        <td class="d-none d-md-table-cell">رفح</td>
+                        <td class="d-none d-sm-table-cell">5</td>
+                        <td><span class="badge bg-success">منخفض</span></td>
+                        <td class="d-none d-md-table-cell text-muted small">3 أبريل 2026</td>
+                        <td>
+                          <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
+                                class="fa-solid fa-eye"></i></button><button class="btn btn-xs btn-outline-secondary"><i
+                                class="fa-solid fa-pen"></i></button></div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><span class="family-id">#F-00843</span></td>
+                        <td class="fw-medium">سمير علي أبو ظاهر</td>
+                        <td class="d-none d-md-table-cell">البريج</td>
+                        <td class="d-none d-sm-table-cell">6</td>
+                        <td><span class="badge bg-warning text-dark">متوسط</span></td>
+                        <td class="d-none d-md-table-cell text-muted small">3 أبريل 2026</td>
+                        <td>
+                          <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
+                                class="fa-solid fa-eye"></i></button><button class="btn btn-xs btn-outline-secondary"><i
+                                class="fa-solid fa-pen"></i></button></div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- إجراءات المدير السريعة -->
+          <div class="col-12 col-xl-4">
+            <div class="content-card mb-3">
+              <div class="content-card__header">
+                <h2 class="content-card__title"><i class="fa-solid fa-bolt me-2 text-warning"></i>إجراءات سريعة</h2>
+              </div>
+              <div class="content-card__body" style="display:flex;flex-direction:column;gap:8px;">
+                <a href="transfers.html"
+                  style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fdf3e0;border-radius:9px;text-decoration:none;transition:opacity 0.15s;"
+                  onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                  <div
+                    style="width:32px;height:32px;background:#f0cc80;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#7a5010;flex-shrink:0;">
+                    <i class="fa-solid fa-right-left" style="font-size:13px;"></i></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#7a5010;">مراجعة طلبات النقل</div>
+                    <div style="font-size:11px;color:#9a7a30;margin-top:1px;">47 طلب بانتظار القرار</div>
+                  </div>
+                  <span class="badge bg-warning text-dark ms-auto">47</span>
+                </a>
+                <a href="reports.html"
+                  style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#e8f1fb;border-radius:9px;text-decoration:none;transition:opacity 0.15s;"
+                  onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                  <div
+                    style="width:32px;height:32px;background:#b5d4f4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0c447c;flex-shrink:0;">
+                    <i class="fa-solid fa-chart-bar" style="font-size:13px;"></i></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#1a4a7a;">توليد تقرير</div>
+                    <div style="font-size:11px;color:#3a6a9a;margin-top:1px;">تقارير ديموغرافية وتحليلية</div>
+                  </div>
+                </a>
+                <a href="users.html" data-require="manage_users"
+                  style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#eaf5ee;border-radius:9px;text-decoration:none;transition:opacity 0.15s;"
+                  onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                  <div
+                    style="width:32px;height:32px;background:#b0ddc0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#1a5a2a;flex-shrink:0;">
+                    <i class="fa-solid fa-users-gear" style="font-size:13px;"></i></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#1a5a2a;">إدارة المستخدمين</div>
+                    <div style="font-size:11px;color:#2a7a3a;margin-top:1px;">24 مستخدم مسجل</div>
+                  </div>
+                </a>
+                <a href="search.html"
+                  style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border-radius:9px;text-decoration:none;border:1px solid #eef2f7;transition:opacity 0.15s;"
+                  onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                  <div
+                    style="width:32px;height:32px;background:#eef2f7;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#3a4a5a;flex-shrink:0;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size:13px;"></i></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:600;color:#1a2332;">البحث الشامل</div>
+                    <div style="font-size:11px;color:#5a6a7a;margin-top:1px;">عبر كل المخيمات</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <!-- آخر طلبات النقل للموافقة -->
+            <div class="content-card">
+              <div class="content-card__header d-flex justify-content-between align-items-center">
+                <h2 class="content-card__title" style="font-size:13px;"><i
+                    class="fa-solid fa-clock me-2 text-warning"></i>أحدث طلبات النقل المعلقة</h2>
+                <a href="transfers.html" style="font-size:12px;color:#1a6bb5;">عرض الكل</a>
+              </div>
+              <div class="content-card__body p-0">
+                <div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">أحمد محمد سليم</div>
+                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span
+                          style="color:#b03030;">النصيرات</span> <i class="fa-solid fa-arrow-left mx-1"
+                          style="font-size:9px;color:#9aaabb;"></i><span style="color:#1a6a2a;">جباليا</span></div>
+                    </div>
+                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
+                  </div>
+                </div>
+                <div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">منى يوسف حسن</div>
+                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span style="color:#b03030;">رفح</span>
+                        <i class="fa-solid fa-arrow-left mx-1" style="font-size:9px;color:#9aaabb;"></i><span
+                          style="color:#1a6a2a;">خان يونس</span></div>
+                    </div>
+                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
+                  </div>
+                </div>
+                <div style="padding:10px 16px;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">هناء جمال الصوراني</div>
+                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span style="color:#b03030;">خان
+                          يونس</span> <i class="fa-solid fa-arrow-left mx-1"
+                          style="font-size:9px;color:#9aaabb;"></i><span style="color:#1a6a2a;">جباليا</span></div>
+                    </div>
+                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+      if (!NDS.auth.guardPage('index')) return;
+
+      /* ── بانر الدور ─────────────────────────────────────── */
+      var s = NDS.auth.getSession();
+      var banner = $('#roleBanner');
+      banner.addClass(s.role);
+      var icons = { admin: 'fa-shield-check', manager: 'fa-user-tie' };
+      $('#roleBannerText').html('<i class="fa-solid ' + (icons[s.role] || 'fa-user') + ' me-1"></i>مرحباً، ' + s.name + ' — ' + s.roleLabel);
+      var now = new Date();
+      $('#roleBannerDate').text(now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      $('#lastUpdate').text(now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
+
+      /* ── تطبيق الصلاحيات ─────────────────────────────────── */
+      NDS.applyPermissions();
+
+      /* ── عداد تصاعدي ─────────────────────────────────────── */
+      $('.stat-card__value[data-target]').each(function () {
+        var $el = $(this), target = parseInt($el.data('target'));
+        $({ n: 0 }).animate({ n: target }, {
+          duration: 1400, easing: 'swing',
+          step: function () { $el.text(Math.floor(this.n).toLocaleString('ar-EG')); },
+          complete: function () { $el.text(target.toLocaleString('ar-EG')); }
+        });
+      });
+
+      /* ── أشرطة جغرافية ───────────────────────────────────── */
+      setTimeout(function () {
+        $('.geo-bar-fill').each(function (i) {
+          var $b = $(this), w = $b.data('width');
+          setTimeout(function () { $b.css('width', w + '%'); }, i * 100);
+        });
+        $('.progress-bar[data-width]').each(function (i) {
+          var $b = $(this), w = $b.data('width');
+          setTimeout(function () { $b.css('width', w + '%'); }, i * 150);
+        });
+      }, 350);
+
+      /* ── بحث في الجدول ───────────────────────────────────── */
+      $('#tableSearch').on('input', function () {
+        var q = $(this).val().toLowerCase();
+        $('#familiesTable tbody tr').each(function () {
+          $(this).toggle(!q || $(this).text().toLowerCase().includes(q));
+        });
+      });
+
+      /* ── زر التحديث ─────────────────────────────────────── */
+      $('#btnRefresh').on('click', function () {
+        $(this).find('i').addClass('fa-spin');
+        setTimeout(function () { $('#btnRefresh i').removeClass('fa-spin'); }, 1500);
+      });
+    });
+  </script>
+</body>
+
+</html>

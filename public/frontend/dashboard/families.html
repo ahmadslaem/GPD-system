@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>قاعدة بيانات الأسر</title>
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/> -->
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <style>
+    /* .fam-table thead th { font-size:12px;font-weight:600;color:#5a6a7a;white-space:nowrap;background:#f8fafc;border-bottom:2px solid #e2e8ef;padding:10px 14px;cursor:pointer;user-select:none; }
+    .fam-table thead th:hover { background:#eef2f7; }
+    .fam-table thead th .si { font-size:10px;color:#b0bbc8;margin-right:4px; }
+    .fam-table thead th.s-asc  .si { color:#1a6bb5; }
+    .fam-table thead th.s-desc .si { color:#1a6bb5; }
+    .fam-table tbody td { padding:10px 14px;font-size:13px;vertical-align:middle;border-bottom:1px solid #f0f4f8; }
+    .fam-table tbody tr:hover td { background:#f8fbff; }
+    .fam-table tbody tr.row-sel td { background:#eef6ff; }
+    .filter-panel { background:#f8fafc;border:1px solid #e2e8ef;border-radius:12px;padding:16px 18px;margin-bottom:16px; }
+    .filter-tag { display:inline-flex;align-items:center;gap:5px;background:#e8f1fb;color:#1a4a7a;border:1px solid #c5d9f0;border-radius:20px;font-size:12px;font-weight:500;padding:3px 10px;margin:2px; }
+    .filter-tag .rt { cursor:pointer;font-size:11px;color:#5a7a9a; }
+    .filter-tag .rt:hover { color:#b03030; }
+    .profile-drawer { position:fixed;top:0;left:0;width:460px;max-width:95vw;height:100vh;background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,0.12);z-index:1200;transform:translateX(-100%);transition:transform 0.3s ease;display:flex;flex-direction:column;overflow:hidden; }
+    .profile-drawer.open { transform:translateX(0); }
+    .drawer-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:1190;opacity:0;pointer-events:none;transition:opacity 0.3s; }
+    .drawer-overlay.active { opacity:1;pointer-events:all; }
+    .drawer-header { padding:16px 20px;border-bottom:1px solid #eef2f7;display:flex;align-items:center;gap:12px;flex-shrink:0; }
+    .drawer-body { flex:1;overflow-y:auto;padding:16px 20px; }
+    .drawer-footer { padding:12px 20px;border-top:1px solid #eef2f7;flex-shrink:0; }
+    .dfc { background:linear-gradient(135deg,#0f2744 0%,#1a4a7a 100%);border-radius:12px;padding:16px 18px;color:#fff;margin-bottom:16px; }
+    .dfc-name { font-size:16px;font-weight:700; }
+    .dfc-id   { font-size:12px;color:rgba(255,255,255,0.6);margin-top:3px; }
+    .dfc-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px; }
+    .dfc-st { text-align:center;background:rgba(255,255,255,0.1);border-radius:8px;padding:8px; }
+    .dfc-stv { font-size:18px;font-weight:700; }
+    .dfc-stl { font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px; }
+    .dtabs { display:flex;border-bottom:1px solid #eef2f7;margin-bottom:14px; }
+    .dtab { padding:8px 14px;font-size:12.5px;font-weight:500;color:#7a8a9a;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:'Tajawal',sans-serif;background:none;border-top:none;border-right:none;border-left:none; }
+    .dtab.active { color:#1a6bb5;border-bottom-color:#1a6bb5; }
+    .dtab:hover { color:#1a6bb5;background:#f0f6ff; }
+    .drow { display:flex;padding:8px 0;border-bottom:1px solid #f4f6f8; }
+    .drow:last-child { border-bottom:none; }
+    .dlbl { width:38%;font-size:12px;color:#7a8a9a;font-weight:500; }
+    .dval { width:62%;font-size:13px;color:#1a2332; }
+    .mi { display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-radius:9px;margin-bottom:6px; }
+    .mi-av { width:30px;height:30px;border-radius:50%;background:#1a6bb5;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+    .tl-i { display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f4f6f8; }
+    .tl-i:last-child { border-bottom:none; }
+    .tl-d { width:9px;height:9px;border-radius:50%;margin-top:4px;flex-shrink:0; }
+    .tl-t { font-size:12.5px;font-weight:500;color:#1a2332; }
+    .tl-s { font-size:11px;color:#9aaabb;margin-top:2px; }
+    .tab-bar { display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#f0f4f8;border-top:1px solid #e2e8ef;flex-wrap:wrap;gap:8px; }
+    .cpg { display:flex;align-items:center;gap:4px; }
+    .cpb { width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-family:'Tajawal',sans-serif;cursor:pointer;border:1px solid #e2e8ef;background:#fff;color:#5a6a7a;transition:all 0.15s; }
+    .cpb:hover { background:#e8f1fb;border-color:#c5d9f0;color:#1a6bb5; }
+    .cpb.on { background:#1a6bb5;border-color:#1a6bb5;color:#fff; }
+    .cpb.off { opacity:0.4;cursor:not-allowed; }
+    @media(max-width:767.98px){ .profile-drawer{width:100%;max-width:100%;left:0;} .drow{flex-direction:column;} .dlbl{width:100%;color:#9aaabb;font-size:11px;} .dval{width:100%;} } */
+  </style>
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+          <div>
+            <h1 class="page-title"><i class="fa-solid fa-database me-2 text-primary"></i>قاعدة بيانات الأسر</h1>
+            <p class="page-sub mb-0">إجمالي: <strong id="totalCount">0</strong> أسرة · يُعرض: <strong
+                id="shownCount">0</strong></p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-sm btn-outline-secondary" id="btnToggleFilters">
+              <i class="fa-solid fa-filter me-1"></i>الفلاتر
+              <span class="badge bg-primary ms-1" id="fcnt" style="display:none;">0</span>
+            </button>
+            <button class="btn btn-sm btn-outline-success" id="btnExportExcel"><i
+                class="fa-solid fa-file-excel me-1"></i><span class="d-none d-sm-inline">Excel</span></button>
+            <button class="btn btn-sm btn-outline-danger" id="btnExportPdf"><i
+                class="fa-solid fa-file-pdf me-1"></i><span class="d-none d-sm-inline">PDF</span></button>
+            <a href="register.html" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus me-1"></i><span
+                class="d-none d-sm-inline">تسجيل أسرة</span></a>
+          </div>
+        </div>
+
+        <!-- الفلاتر -->
+        <div class="filter-panel" id="filterPanel" style="display:none;">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div style="font-size:12px;font-weight:600;color:#5a6a7a;text-transform:uppercase;letter-spacing:0.5px;"><i
+                class="fa-solid fa-sliders text-primary me-1"></i>فلترة متقدمة</div>
+            <button class="btn btn-xs btn-outline-secondary" id="btnClearFilters"><i
+                class="fa-solid fa-xmark me-1"></i>مسح الكل</button>
+          </div>
+          <div class="row g-2">
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">المخيم</label><select
+                class="form-select form-select-sm" id="fCamp">
+                <option value="">كل المخيمات</option>
+                <option>مخيم جباليا</option>
+                <option>مخيم خان يونس</option>
+                <option>مواصي رفح</option>
+                <option>مخيم النصيرات</option>
+                <option>مخيم البريج</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">مستوى الضعف</label><select
+                class="form-select form-select-sm" id="fLevel">
+                <option value="">الكل</option>
+                <option value="high">عالٍ</option>
+                <option value="medium">متوسط</option>
+                <option value="low">منخفض</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">أسرة FHH</label><select
+                class="form-select form-select-sm" id="fFhh">
+                <option value="">الكل</option>
+                <option value="1">نعم</option>
+                <option value="0">لا</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">ذوو إعاقة</label><select
+                class="form-select form-select-sm" id="fPwd">
+                <option value="">الكل</option>
+                <option value="1">يوجد PWD</option>
+                <option value="0">لا يوجد</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">المحافظة الأصلية</label><select
+                class="form-select form-select-sm" id="fGov">
+                <option value="">كل المحافظات</option>
+                <option>شمال غزة</option>
+                <option>غزة</option>
+                <option>الوسطى</option>
+                <option>خان يونس</option>
+                <option>رفح</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">حجم الأسرة</label><select
+                class="form-select form-select-sm" id="fSize">
+                <option value="">أي حجم</option>
+                <option value="small">صغيرة (1-3)</option>
+                <option value="medium">متوسطة (4-6)</option>
+                <option value="large">كبيرة (7+)</option>
+              </select></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">من تاريخ</label><input type="date"
+                class="form-control form-control-sm" id="fDateFrom" /></div>
+            <div class="col-12 col-sm-6 col-md-3"><label class="field-label">إلى تاريخ</label><input type="date"
+                class="form-control form-control-sm" id="fDateTo" /></div>
+          </div>
+          <div id="activeTags" class="mt-2" style="display:none;">
+            <div style="font-size:11px;color:#9aaabb;margin-bottom:4px;">الفلاتر المطبقة:</div>
+            <div id="tagsContainer"></div>
+          </div>
+        </div>
+
+        <!-- الجدول -->
+        <div class="content-card">
+          <div class="content-card__header">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+              <div style="position:relative;flex:1;min-width:180px;max-width:300px;">
+                <i class="fa-solid fa-magnifying-glass"
+                  style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#9aaabb;font-size:13px;pointer-events:none;"></i>
+                <input type="text" id="tableSearch" class="form-control form-control-sm"
+                  placeholder="ابحث بالاسم أو الهوية أو رقم الأسرة..." style="padding-right:32px;" />
+              </div>
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select class="form-select form-select-sm" id="perPage" style="width:auto;">
+                  <option value="10">10 / صفحة</option>
+                  <option value="25" selected>25 / صفحة</option>
+                  <option value="50">50 / صفحة</option>
+                  <option value="100">100 / صفحة</option>
+                </select>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-xs btn-secondary" id="btnVT" title="جدول" style="padding:4px 9px;"><i
+                      class="fa-solid fa-table-list"></i></button>
+                  <button class="btn btn-xs btn-outline-secondary" id="btnVC" title="بطاقات" style="padding:4px 9px;"><i
+                      class="fa-solid fa-grip"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- عرض جدول -->
+          <div id="viewTable">
+            <div class="table-responsive">
+              <table class="table fam-table mb-0">
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" id="checkAll" class="form-check-input" /></th>
+                    <th class="sortable" data-col="id">رقم الأسرة <i class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable" data-col="name">رب الأسرة <i class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable d-none d-sm-table-cell" data-col="nid">رقم الهوية <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable d-none d-md-table-cell" data-col="camp">المخيم <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable d-none d-lg-table-cell" data-col="gov">المحافظة <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable d-none d-sm-table-cell" data-col="total">الأفراد <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable" data-col="level">الضعف <i class="fa-solid fa-sort si"></i></th>
+                    <th class="d-none d-md-table-cell">خصائص</th>
+                    <th class="sortable d-none d-xl-table-cell" data-col="score">الدرجة <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th class="sortable d-none d-xl-table-cell" data-col="date">التسجيل <i
+                        class="fa-solid fa-sort si"></i></th>
+                    <th>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+            <!-- شريط التحديد -->
+            <div class="tab-bar" id="selBar" style="display:none!important;">
+              <div style="font-size:13px;color:#5a6a7a;"><i class="fa-solid fa-check-square me-1 text-primary"></i>تم
+                تحديد <strong id="selCount">0</strong> أسرة</div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-danger" id="btnBulkDel"><i
+                    class="fa-solid fa-trash me-1"></i>حذف</button>
+                <button class="btn btn-sm btn-outline-secondary" id="btnBulkExp"><i
+                    class="fa-solid fa-download me-1"></i>تصدير</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- عرض بطاقات -->
+          <div id="viewCards" style="display:none;">
+            <div class="p-3">
+              <div class="row g-3" id="cardsGrid"></div>
+            </div>
+          </div>
+
+          <!-- فراغ -->
+          <div id="emptyState" style="display:none;text-align:center;padding:60px 20px;">
+            <i class="fa-solid fa-database" style="font-size:48px;color:#d0d8e8;display:block;margin-bottom:14px;"></i>
+            <div style="font-size:15px;font-weight:500;color:#7a8a9a;">لا توجد نتائج مطابقة</div>
+            <div style="font-size:13px;color:#b0bbc8;margin-top:5px;">جرّب تغيير معايير البحث أو الفلاتر</div>
+            <button class="btn btn-outline-secondary btn-sm mt-3" id="btnClearAll"><i
+                class="fa-solid fa-xmark me-1"></i>مسح كل الفلاتر</button>
+          </div>
+
+          <!-- pagination -->
+          <div class="d-flex align-items-center justify-content-between p-3 border-top flex-wrap gap-2">
+            <div style="font-size:13px;color:#7a8a9a;" id="pgInfo"></div>
+            <div class="cpg" id="pgBtns"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <div class="profile-drawer" id="profileDrawer">
+    <div class="drawer-header">
+      <button class="btn btn-xs btn-outline-secondary" id="btnCloseDrawer" style="padding:5px 10px;"><i
+          class="fa-solid fa-xmark"></i></button>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:600;color:#1a2332;" id="drawerTitle">ملف الأسرة</div>
+        <div style="font-size:11.5px;color:#7a8a9a;" id="drawerSub"></div>
+      </div>
+      <div class="d-flex gap-1">
+        <a href="edit-family.html" id="drawerEditLink" class="btn btn-xs btn-outline-primary" style="padding:5px 10px;" title="تعديل"><i
+            class="fa-solid fa-pen"></i></a>
+        <button class="btn btn-xs btn-outline-warning" id="drawerTransfer" style="padding:5px 10px;" title="طلب نقل"><i
+            class="fa-solid fa-right-left"></i></button>
+        <button class="btn btn-xs btn-outline-danger" id="drawerDelete" style="padding:5px 10px;" title="حذف"><i
+            class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+      <div style="text-align:center;padding:40px;color:#b0bbc8;"><i class="fa-solid fa-folder-open"
+          style="font-size:36px;display:block;margin-bottom:10px;"></i>اختر أسرة لعرض ملفها</div>
+    </div>
+    <div class="drawer-footer d-flex gap-2 justify-content-end">
+      <button class="btn btn-outline-secondary btn-sm" id="btnPrev"><i
+          class="fa-solid fa-arrow-right me-1"></i>السابق</button>
+      <button class="btn btn-outline-secondary btn-sm" id="btnNext">التالي<i
+          class="fa-solid fa-arrow-left ms-1"></i></button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()"><i
+          class="fa-solid fa-print me-1"></i>طباعة</button>
+    </div>
+  </div>
+
+  <!-- مودال الحذف -->
+  <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-body text-center py-4">
+          <div style="font-size:40px;color:#b03030;margin-bottom:10px;"><i class="fa-solid fa-circle-exclamation"></i>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#1a2332;">تأكيد الحذف</div>
+          <div style="font-size:13px;color:#7a8a9a;margin-top:6px;" id="delText">سيتم حذف هذه الأسرة.</div>
+          <div class="d-flex gap-2 justify-content-center mt-4">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+            <button class="btn btn-danger" id="btnConfirmDel"><i class="fa-solid fa-trash me-1"></i>حذف</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+      if (!NDS.auth.guardPage('families')) return;
+      NDS.applyPermissions();
+
+      /* ══ البيانات ══════════════════════════════════════════ */
+      var DB = [
+        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: 'مخيم جباليا', gov: 'رفح', shelter: 'B-14', phone: '059-456-7890', total: 7, adults: 3, children: 4, pwd: 2, fhh: true, fhhR: 'وفاة رب الأسرة', score: 85, level: 'high', date: '2026-04-05' },
+        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'مخيم خان يونس', gov: 'غزة', shelter: 'A-22', phone: '059-222-3344', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhR: '', score: 30, level: 'medium', date: '2026-04-04' },
+        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: 'مخيم النصيرات', gov: 'شمال غزة', shelter: 'C-07', phone: '059-887-6655', total: 9, adults: 3, children: 6, pwd: 1, fhh: false, fhhR: '', score: 72, level: 'high', date: '2026-04-04' },
+        { id: 'F-00844', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-01', phone: '059-111-2222', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'طلاق', score: 22, level: 'low', date: '2026-04-03' },
+        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-18', phone: '059-333-4455', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhR: '', score: 40, level: 'medium', date: '2026-04-03' },
+        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: 'مخيم جباليا', gov: 'غزة', shelter: 'B-32', phone: '059-778-9900', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhR: 'فقدان رب الأسرة', score: 25, level: 'medium', date: '2026-04-02' },
+        { id: 'F-00841', nid: '302-1987-0055', name: 'ماجد رامز الشوبكي', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-08', phone: '059-444-5566', total: 8, adults: 4, children: 4, pwd: 2, fhh: false, fhhR: '', score: 68, level: 'high', date: '2026-04-02' },
+        { id: 'F-00840', nid: '288-1975-0201', name: 'رانيا فارس العمر', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-44', phone: '059-999-0011', total: 2, adults: 2, children: 0, pwd: 1, fhh: true, fhhR: 'وفاة رب الأسرة', score: 35, level: 'medium', date: '2026-04-01' },
+        { id: 'F-00839', nid: '310-1990-0088', name: 'إبراهيم نظمي الكرد', camp: 'مخيم جباليا', gov: 'شمال غزة', shelter: 'B-05', phone: '059-122-3344', total: 11, adults: 5, children: 6, pwd: 3, fhh: false, fhhR: '', score: 90, level: 'high', date: '2026-03-31' },
+        { id: 'F-00838', nid: '274-1983-0144', name: 'سوسن حمدي القاسم', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-03', phone: '059-566-7788', total: 4, adults: 2, children: 2, pwd: 0, fhh: true, fhhR: 'إعاقة رب الأسرة', score: 28, level: 'medium', date: '2026-03-30' },
+        { id: 'F-00837', nid: '295-1978-0177', name: 'طارق عصام الجمل', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-19', phone: '059-677-8899', total: 7, adults: 3, children: 4, pwd: 0, fhh: false, fhhR: '', score: 35, level: 'medium', date: '2026-03-29' },
+        { id: 'F-00836', nid: '261-1993-0022', name: 'أميرة ناصر الهباش', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-61', phone: '059-800-9011', total: 1, adults: 1, children: 0, pwd: 0, fhh: true, fhhR: 'طلاق', score: 15, level: 'low', date: '2026-03-28' },
+        { id: 'F-00835', nid: '307-1986-0033', name: 'علي محمود الأسطل', camp: 'مخيم جباليا', gov: 'غزة', shelter: 'B-21', phone: '059-233-4456', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhR: '', score: 45, level: 'medium', date: '2026-03-27' },
+        { id: 'F-00834', nid: '279-1981-0066', name: 'نور سالم الشيخ', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-15', phone: '059-344-5567', total: 3, adults: 2, children: 1, pwd: 0, fhh: false, fhhR: '', score: 10, level: 'low', date: '2026-03-26' },
+        { id: 'F-00833', nid: '318-1994-0099', name: 'جمال عادل أبو صالح', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-33', phone: '059-455-6678', total: 8, adults: 3, children: 5, pwd: 2, fhh: false, fhhR: '', score: 78, level: 'high', date: '2026-03-25' },
+        { id: 'F-00832', nid: '268-1977-0111', name: 'وفاء عمر البلبيسي', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-27', phone: '059-566-7780', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'فقدان رب الأسرة', score: 32, level: 'medium', date: '2026-03-24' },
+        { id: 'F-00831', nid: '285-1989-0155', name: 'هشام كمال الزعنون', camp: 'مخيم جباليا', gov: 'شمال غزة', shelter: 'B-40', phone: '059-677-8892', total: 10, adults: 4, children: 6, pwd: 1, fhh: false, fhhR: '', score: 82, level: 'high', date: '2026-03-23' },
+        { id: 'F-00830', nid: '299-1982-0188', name: 'دلال سامي عوض', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-78', phone: '059-788-9903', total: 4, adults: 2, children: 2, pwd: 1, fhh: true, fhhR: 'وفاة رب الأسرة', score: 55, level: 'high', date: '2026-03-22' },
+        { id: 'F-00829', nid: '272-1984-0222', name: 'يوسف خليل البنا', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-22', phone: '059-899-0014', total: 6, adults: 4, children: 2, pwd: 0, fhh: false, fhhR: '', score: 20, level: 'low', date: '2026-03-21' },
+        { id: 'F-00828', nid: '314-1991-0044', name: 'أسماء حاتم النحال', camp: 'مخيم النصيرات', gov: 'غزة', shelter: 'C-41', phone: '059-900-1125', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhR: 'طلاق', score: 18, level: 'low', date: '2026-03-20' },
+        { id: 'F-00827', nid: '282-1976-0133', name: 'ربيع صلاح الرنتيسي', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-12', phone: '059-011-2236', total: 9, adults: 4, children: 5, pwd: 2, fhh: false, fhhR: '', score: 75, level: 'high', date: '2026-03-19' },
+        { id: 'F-00826', nid: '293-1985-0166', name: 'نسرين فايز الحساسنة', camp: 'مخيم جباليا', gov: 'رفح', shelter: 'B-55', phone: '059-122-3347', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'إعاقة رب الأسرة', score: 30, level: 'medium', date: '2026-03-18' },
+        { id: 'F-00825', nid: '306-1988-0077', name: 'زياد عبد الله الغول', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-92', phone: '059-233-4458', total: 7, adults: 3, children: 4, pwd: 1, fhh: false, fhhR: '', score: 52, level: 'high', date: '2026-03-17' },
+        { id: 'F-00824', nid: '271-1980-0199', name: 'صفاء محمود الحايك', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-29', phone: '059-344-5569', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhR: '', score: 15, level: 'low', date: '2026-03-16' },
+        { id: 'F-00823', nid: '315-1993-0055', name: 'مروان فتحي العجرمي', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-50', phone: '059-455-6670', total: 8, adults: 3, children: 5, pwd: 3, fhh: false, fhhR: '', score: 88, level: 'high', date: '2026-03-15' },
+      ];
+
+      /* ══ الحالة ════════════════════════════════════════════ */
+      var S = { data: DB, filtered: DB, page: 1, perPage: 25, sortCol: 'id', sortDir: 'asc', search: '', view: 'table', sel: [], openIdx: -1, filters: {} };
+      var LB = { high: '<span class="badge bg-danger">عالٍ</span>', medium: '<span class="badge bg-warning text-dark">متوسط</span>', low: '<span class="badge bg-success">منخفض</span>' };
+
+      $('#totalCount').text(DB.length.toLocaleString('ar-EG'));
+
+      /* ══ فلترة وترتيب ═══════════════════════════════════════ */
+      function applyFilters() {
+        var q = S.search.toLowerCase(), fl = S.filters;
+        S.filtered = S.data.filter(function (f) {
+          if (q && !(f.name.toLowerCase().includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q) || f.camp.includes(q))) return false;
+          if (fl.camp && f.camp !== fl.camp) return false;
+          if (fl.level && f.level !== fl.level) return false;
+          if (fl.fhh === '1' && !f.fhh) return false;
+          if (fl.fhh === '0' && f.fhh) return false;
+          if (fl.pwd === '1' && f.pwd < 1) return false;
+          if (fl.pwd === '0' && f.pwd > 0) return false;
+          if (fl.gov && f.gov !== fl.gov) return false;
+          if (fl.size === 'small' && f.total > 3) return false;
+          if (fl.size === 'medium' && (f.total < 4 || f.total > 6)) return false;
+          if (fl.size === 'large' && f.total < 7) return false;
+          return true;
+        });
+        S.filtered.sort(function (a, b) {
+          var va = a[S.sortCol], vb = b[S.sortCol];
+          if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+          var r = va < vb ? -1 : va > vb ? 1 : 0;
+          return S.sortDir === 'asc' ? r : -r;
+        });
+        S.page = 1; S.sel = []; render();
+      }
+
+      /* ══ رندر ══════════════════════════════════════════════ */
+      function render() {
+        var start = (S.page - 1) * S.perPage, end = start + S.perPage;
+        var paged = S.filtered.slice(start, end);
+        $('#shownCount').text(S.filtered.length.toLocaleString('ar-EG'));
+        updateFcnt(); updateTags();
+        if (!S.filtered.length) { $('#emptyState').show(); $('#viewTable,#viewCards').hide(); return; }
+        $('#emptyState').hide();
+        if (S.view === 'table') { $('#viewTable').show(); $('#viewCards').hide(); renderTable(paged); }
+        else { $('#viewCards').show(); $('#viewTable').hide(); renderCards(paged); }
+        renderPg(); updatePgInfo(start, end);
+      }
+
+      function renderTable(rows) {
+        if (!rows.length) { $('#tableBody').html('<tr><td colspan="12" style="text-align:center;padding:40px;color:#9aaabb;">لا توجد بيانات</td></tr>'); return; }
+        var html = rows.map(function (f) {
+          var isSel = S.sel.indexOf(f.id) !== -1;
+          var tags = '';
+          if (f.fhh) tags += '<span class="badge" style="background:#fbeaf0;color:#8a2050;font-size:10px;">FHH</span> ';
+          if (f.pwd > 0) tags += '<span class="badge bg-warning text-dark" style="font-size:10px;">PWD×' + f.pwd + '</span>';
+          return '<tr class="' + (isSel ? 'row-sel' : '') + '" data-id="' + f.id + '"><td><input type="checkbox" class="form-check-input rck" data-id="' + f.id + '" ' + (isSel ? 'checked' : '') + '/></td>'
+            + '<td><span class="family-id">' + f.id + '</span></td>'
+            + '<td class="fw-medium">' + f.name + '</td>'
+            + '<td class="d-none d-sm-table-cell text-muted" style="font-size:12px;font-family:monospace;">' + f.nid + '</td>'
+            + '<td class="d-none d-md-table-cell"><span class="badge bg-primary" style="font-size:11px;">' + f.camp.replace('مخيم ', '') + '</span></td>'
+            + '<td class="d-none d-lg-table-cell text-muted" style="font-size:12px;">' + f.gov + '</td>'
+            + '<td class="d-none d-sm-table-cell text-center"><b>' + f.total + '</b></td>'
+            + '<td>' + LB[f.level] + '</td>'
+            + '<td class="d-none d-md-table-cell">' + (tags || '<span style="color:#c0c8d4;font-size:11px;">—</span>') + '</td>'
+            + '<td class="d-none d-xl-table-cell text-center"><b>' + f.score + '</b></td>'
+            + '<td class="d-none d-xl-table-cell text-muted" style="font-size:12px;">' + f.date + '</td>'
+            + '<td><div class="d-flex gap-1">'
+            + '<a href="edit-family.html?familyId=' + f.id + '" class="btn btn-xs btn-outline-secondary" title="تعديل"><i class="fa-solid fa-pen"></i></a>'
+            + '<a href="add-members.html?familyId=' + f.id + '&familyName=' + encodeURIComponent(f.name) + '" class="btn btn-xs btn-outline-success" title="إضافة أفراد"><i class="fa-solid fa-users"></i></a>'
+            + '<a href="family-view.html?familyId=' + f.id + '&familyName=' + encodeURIComponent(f.name) + '&familyCamp=' + encodeURIComponent(f.camp) + '&familyGov=' + encodeURIComponent(f.gov) + '" class="btn btn-xs btn-outline-info" title="عرض العائلة"><i class="fa-solid fa-house-user"></i></a>'
+            + '<button class="btn btn-xs btn-outline-danger bdel" data-id="' + f.id + '" title="حذف"><i class="fa-solid fa-trash"></i></button></div></td></tr>';
+        }).join('');
+        $('#tableBody').html(html);
+        updateSelBar();
+      }
+
+      function renderCards(rows) {
+        var html = rows.map(function (f) {
+          return '<div class="col-12 col-sm-6 col-lg-4"><div class="content-card bopd" data-id="' + f.id + '" style="cursor:pointer;transition:box-shadow 0.15s;" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(26,107,181,0.1)\'" onmouseout="this.style.boxShadow=\'\'">'
+            + '<div class="content-card__body">'
+            + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+            + '<div style="width:38px;height:38px;border-radius:50%;background:#e8f1fb;color:#1a6bb5;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+            + f.name.charAt(0) + '.' + (f.name.split(' ')[1] || '')[0] + '</div>'
+            + '<div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:600;color:#1a2332;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + f.name + '</div>'
+            + '<div style="font-size:11px;color:#7a8a9a;font-family:monospace;">' + f.id + ' · ' + f.nid + '</div></div>'
+            + LB[f.level] + '</div>'
+            + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#5a6a7a;">'
+            + '<div><i class="fa-solid fa-tent me-1" style="font-size:10px;color:#9aaabb;"></i>' + f.camp.replace('مخيم ', '') + '</div>'
+            + '<div><i class="fa-solid fa-people-group me-1" style="font-size:10px;color:#9aaabb;"></i>' + f.total + ' أفراد</div>'
+            + '<div><i class="fa-solid fa-location-dot me-1" style="font-size:10px;color:#9aaabb;"></i>' + f.gov + '</div>'
+            + '<div><i class="fa-solid fa-gauge-high me-1" style="font-size:10px;color:#9aaabb;"></i>' + f.score + '/100</div></div>'
+            + (f.fhh || f.pwd > 0 ? '<div style="margin-top:8px;display:flex;gap:4px;">' + (f.fhh ? '<span class="badge" style="background:#fbeaf0;color:#8a2050;font-size:10px;">FHH</span>' : '') + (f.pwd > 0 ? '<span class="badge bg-warning text-dark" style="font-size:10px;">PWD×' + f.pwd + '</span>' : '') + '</div>' : '')
+            + '</div></div></div>';
+        }).join('');
+        $('#cardsGrid').html(html);
+      }
+
+      function renderPg() {
+        var total = S.filtered.length, pages = Math.ceil(total / S.perPage);
+        if (pages <= 1) { $('#pgBtns').html(''); return; }
+        var html = '<button class="cpb' + (S.page === 1 ? ' off' : '') + '" data-p="prev"><i class="fa-solid fa-chevron-right"></i></button>';
+        var range = [];
+        for (var i = 1; i <= pages; i++) { if (i === 1 || i === pages || (i >= S.page - 1 && i <= S.page + 1)) range.push(i); else if (range[range.length - 1] !== '...') range.push('...'); }
+        range.forEach(function (p) {
+          if (p === '...') html += '<span style="padding:0 4px;color:#9aaabb;font-size:13px;">···</span>';
+          else html += '<button class="cpb' + (p === S.page ? ' on' : '') + '" data-p="' + p + '">' + p + '</button>';
+        });
+        html += '<button class="cpb' + (S.page === pages ? ' off' : '') + '" data-p="next"><i class="fa-solid fa-chevron-left"></i></button>';
+        $('#pgBtns').html(html);
+      }
+
+      function updatePgInfo(s, e) {
+        var t = S.filtered.length;
+        $('#pgInfo').text('يُعرض ' + (s + 1) + ' - ' + Math.min(e, t) + ' من ' + t.toLocaleString('ar-EG') + ' أسرة');
+      }
+
+      function updateSelBar() {
+        $('#selBar').css('display', S.sel.length > 0 ? 'flex' : 'none');
+        $('#selCount').text(S.sel.length);
+      }
+
+      function updateFcnt() {
+        var c = Object.keys(S.filters).filter(function (k) { return S.filters[k]; }).length;
+        c > 0 ? $('#fcnt').text(c).show() : $('#fcnt').hide();
+      }
+
+      function updateTags() {
+        var lblK = { camp: 'المخيم', level: 'الضعف', fhh: 'FHH', pwd: 'PWD', gov: 'المحافظة', size: 'الحجم' };
+        var lblV = { high: 'عالٍ', medium: 'متوسط', low: 'منخفض', '1': 'نعم', '0': 'لا', small: 'صغيرة', large: 'كبيرة' };
+        var tags = '';
+        $.each(S.filters, function (k, v) { if (!v) return; tags += '<span class="filter-tag">' + lblK[k] + ': ' + (lblV[v] || v) + ' <span class="rt" data-key="' + k + '">&times;</span></span>'; });
+        if (tags) { $('#tagsContainer').html(tags); $('#activeTags').show(); } else { $('#activeTags').hide(); }
+      }
+
+      /* ══ درج الملف ═════════════════════════════════════════ */
+      function openDrawer(id) {
+        var f = S.filtered.find(function (x) { return x.id === id; }) || DB.find(function (x) { return x.id === id; });
+        if (!f) return;
+        S.openIdx = S.filtered.findIndex(function (x) { return x.id === id; });
+        localStorage.setItem('nds_edit_family', JSON.stringify(f));
+        var sc = { high: '#b03030', medium: '#9a6010', low: '#1a6a2a' }[f.level];
+        var sb = { high: '#fdf0f0', medium: '#fdf3e0', low: '#eaf5ee' }[f.level];
+        var ln = { high: 'عالٍ', medium: 'متوسط', low: 'منخفض' }[f.level];
+        $('#drawerTitle').text(f.name);
+        $('#drawerSub').text(f.id + ' · ' + f.nid);
+        $('#drawerEditLink').attr('href', 'edit-family.html?familyId=' + encodeURIComponent(f.id));
+        $('#drawerBody').html(
+          '<div class="dfc"><div class="dfc-name">' + f.name + '</div>'
+          + '<div class="dfc-id"><i class="fa-solid fa-hashtag me-1" style="opacity:0.5;"></i>' + f.id + ' · <i class="fa-solid fa-id-card me-1" style="opacity:0.5;"></i>' + f.nid + '</div>'
+          + '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+          + '<span style="background:rgba(255,255,255,0.15);border-radius:20px;padding:2px 10px;font-size:11px;">' + f.camp + '</span>'
+          + (f.fhh ? '<span style="background:rgba(255,120,180,0.2);border-radius:20px;padding:2px 10px;font-size:11px;">FHH</span>' : '')
+          + (f.pwd > 0 ? '<span style="background:rgba(255,200,80,0.2);border-radius:20px;padding:2px 10px;font-size:11px;">PWD×' + f.pwd + '</span>' : '')
+          + '</div><div class="dfc-stats">'
+          + '<div class="dfc-st"><div class="dfc-stv">' + f.total + '</div><div class="dfc-stl">الأفراد</div></div>'
+          + '<div class="dfc-st"><div class="dfc-stv">' + f.score + '</div><div class="dfc-stl">درجة الضعف</div></div>'
+          + '<div class="dfc-st"><div class="dfc-stv">' + f.pwd + '</div><div class="dfc-stl">ذوو إعاقة</div></div>'
+          + '</div></div>'
+          + '<div class="dtabs">'
+          + '<button class="dtab active" data-dt="basic">البيانات</button>'
+          + '<button class="dtab" data-dt="members">الأفراد</button>'
+          + '<button class="dtab" data-dt="vuln">الضعف</button>'
+          + '<button class="dtab" data-dt="history">السجل</button>'
+          + '</div>'
+          /* تبويب البيانات */
+          + '<div id="dt-basic">'
+          + '<div class="drow"><div class="dlbl">رب الأسرة</div><div class="dval fw-medium">' + f.name + '</div></div>'
+          + '<div class="drow"><div class="dlbl">رقم الهوية</div><div class="dval" style="font-family:monospace;">' + f.nid + '</div></div>'
+          + '<div class="drow"><div class="dlbl">رقم الهاتف</div><div class="dval">' + f.phone + '</div></div>'
+          + '<div class="drow"><div class="dlbl">المخيم</div><div class="dval">' + f.camp + ' · مأوى ' + f.shelter + '</div></div>'
+          + '<div class="drow"><div class="dlbl">المحافظة الأصلية</div><div class="dval">' + f.gov + '</div></div>'
+          + '<div class="drow"><div class="dlbl">الأفراد</div><div class="dval">' + f.total + ' (' + f.adults + ' بالغ · ' + f.children + ' طفل)</div></div>'
+          + '<div class="drow"><div class="dlbl">FHH</div><div class="dval">' + (f.fhh ? 'نعم — ' + f.fhhR : 'لا') + '</div></div>'
+          + '<div class="drow"><div class="dlbl">PWD</div><div class="dval">' + (f.pwd > 0 ? f.pwd + ' أشخاص' : 'لا يوجد') + '</div></div>'
+          + '<div class="drow"><div class="dlbl">تاريخ التسجيل</div><div class="dval">' + f.date + '</div></div>'
+          + '</div>'
+          /* تبويب الأفراد */
+          + '<div id="dt-members" style="display:none;">'
+          + '<div class="mi"><div class="mi-av">' + f.name.charAt(0) + '</div><div><div style="font-size:12.5px;font-weight:500;">' + f.name + ' <span class="badge bg-primary" style="font-size:10px;">رب أسرة</span></div><div style="font-size:11px;color:#7a8a9a;">' + f.nid + '</div></div></div>'
+          + (f.fhh ? '<div class="mi"><div class="mi-av" style="background:#9a2050;">ز</div><div><div style="font-size:12.5px;font-weight:500;">زوجة رب الأسرة</div><div style="font-size:11px;color:#7a8a9a;">زوجة · FHH</div></div></div>' : '')
+          + (f.children > 0 ? '<div class="mi"><div class="mi-av" style="background:#2d8a4e;">ط</div><div><div style="font-size:12.5px;font-weight:500;">الأطفال (' + f.children + ')</div><div style="font-size:11px;color:#7a8a9a;">أقل من 16 سنة</div></div></div>' : '')
+          + (f.pwd > 0 ? '<div class="mi"><div class="mi-av" style="background:#9a6010;">إ</div><div><div style="font-size:12.5px;font-weight:500;">ذوو إعاقة (' + f.pwd + ') <span class="badge bg-warning text-dark" style="font-size:10px;">PWD</span></div><div style="font-size:11px;color:#7a8a9a;">يحتاجون رعاية خاصة</div></div></div>' : '')
+          + '<div style="text-align:center;padding-top:10px;"><a href="edit-family.html?familyId=' + f.id + '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen me-1"></i>تعديل الأفراد</a></div>'
+          + '</div>'
+          /* تبويب الضعف */
+          + '<div id="dt-vuln" style="display:none;">'
+          + '<div style="background:' + sb + ';border-radius:10px;padding:14px;display:flex;align-items:center;gap:14px;margin-bottom:12px;">'
+          + '<div style="font-size:38px;font-weight:800;color:' + sc + ';">' + f.score + '</div>'
+          + '<div><div style="font-size:14px;font-weight:700;color:' + sc + ';">مستوى الضعف: ' + ln + '</div>'
+          + '<div style="font-size:12px;color:#5a6a7a;">من أصل 100 نقطة</div></div>'
+          + '<div class="ms-auto">' + LB[f.level] + '</div></div>'
+          + '<div class="row g-2 text-center">'
+          + '<div class="col-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:10px;color:#7a8a9a;">رئاسة أنثى</div><div style="font-size:17px;font-weight:700;color:#1a6bb5;">' + (f.fhh ? '+20' : '+0') + '</div></div></div>'
+          + '<div class="col-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:10px;color:#7a8a9a;">PWD×' + f.pwd + '</div><div style="font-size:17px;font-weight:700;color:#1a6bb5;">+' + (f.pwd * 15) + '</div></div></div>'
+          + '<div class="col-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:10px;color:#7a8a9a;">حجم الأسرة</div><div style="font-size:17px;font-weight:700;color:#1a6bb5;">' + (f.total > 8 ? '+15' : f.total > 5 ? '+8' : '+3') + '</div></div></div>'
+          + '</div></div>'
+          /* تبويب السجل */
+          + '<div id="dt-history" style="display:none;">'
+          + '<div class="tl-i"><div class="tl-d" style="background:#2d8a4e;"></div><div><div class="tl-t">تسجيل أولي في النظام</div><div class="tl-s">' + f.date + ' — موظف الإدخال</div></div></div>'
+          + '<div class="tl-i"><div class="tl-d" style="background:#1a6bb5;"></div><div><div class="tl-t">تحديث رقم الهاتف</div><div class="tl-s">بعد يوم من التسجيل</div></div></div>'
+          + '<div class="tl-i"><div class="tl-d" style="background:#b07a18;"></div><div><div class="tl-t">مراجعة تقييم الضعف</div><div class="tl-s">7 أبريل 2026 — مدير المنظمة</div></div></div>'
+          + '</div>'
+        );
+        $('#profileDrawer').addClass('open');
+        $('#drawerOverlay').addClass('active');
+        $('body').css('overflow', 'hidden');
+      }
+
+      function closeDrawer() {
+        $('#profileDrawer').removeClass('open');
+        $('#drawerOverlay').removeClass('active');
+        $('body').css('overflow', '');
+      }
+
+      /* ══ أحداث الدرج ════════════════════════════════════════ */
+      $('#btnCloseDrawer,#drawerOverlay').on('click', closeDrawer);
+      $('#btnPrev').on('click', function () { if (S.openIdx > 0) openDrawer(S.filtered[S.openIdx - 1].id); });
+      $('#btnNext').on('click', function () { if (S.openIdx < S.filtered.length - 1) openDrawer(S.filtered[S.openIdx + 1].id); });
+
+      /* تبويبات الدرج */
+      $(document).on('click', '.dtab', function () {
+        $('.dtab').removeClass('active'); $(this).addClass('active');
+        var t = $(this).data('dt');
+        $('[id^="dt-"]').hide(); $('#dt-' + t).show();
+      });
+
+      /* ══ أحداث الجدول ══════════════════════════════════════ */
+      $(document).on('click', '.bopd', function (e) { e.stopPropagation(); openDrawer($(this).data('id')); });
+
+      $(document).on('click', '.btn-outline-secondary[title="تعديل"]', function (e) {
+        e.stopPropagation();
+        var id = $(this).closest('tr').data('id');
+        var f = DB.find(function (x) { return x.id === id; });
+        if (f) {
+          localStorage.setItem('nds_edit_family', JSON.stringify(f));
+        }
+      });
+
+      /* ترتيب */
+      $(document).on('click', '.sortable', function () {
+        var col = $(this).data('col');
+        if (S.sortCol === col) { S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc'; } else { S.sortCol = col; S.sortDir = 'asc'; }
+        $('.sortable').removeClass('s-asc s-desc').find('.si').html('<i class="fa-solid fa-sort"></i>');
+        $(this).addClass('s-' + S.sortDir).find('.si').html('<i class="fa-solid fa-sort-' + S.sortDir + '"></i>');
+        applyFilters();
+      });
+
+      /* بحث */
+      $('#tableSearch').on('input', function () { S.search = $(this).val(); applyFilters(); });
+
+      /* عدد الصفوف */
+      $('#perPage').on('change', function () { S.perPage = parseInt($(this).val()); S.page = 1; render(); });
+
+      /* Pagination */
+      $(document).on('click', '.cpb:not(.off)', function () {
+        var p = $(this).data('p'), pages = Math.ceil(S.filtered.length / S.perPage);
+        if (p === 'prev') S.page = Math.max(1, S.page - 1);
+        else if (p === 'next') S.page = Math.min(pages, S.page + 1);
+        else S.page = parseInt(p);
+        render(); $('html,body').animate({ scrollTop: 0 }, 200);
+      });
+
+      /* عرض جدول/بطاقات */
+      $('#btnVT').on('click', function () { S.view = 'table'; $(this).removeClass('btn-outline-secondary').addClass('btn-secondary'); $('#btnVC').removeClass('btn-secondary').addClass('btn-outline-secondary'); render(); });
+      $('#btnVC').on('click', function () { S.view = 'cards'; $(this).removeClass('btn-outline-secondary').addClass('btn-secondary'); $('#btnVT').removeClass('btn-secondary').addClass('btn-outline-secondary'); render(); });
+
+      /* تحديد الصفوف */
+      $('#checkAll').on('change', function () {
+        var paged = S.filtered.slice((S.page - 1) * S.perPage, S.page * S.perPage);
+        if ($(this).is(':checked')) paged.forEach(function (f) { if (S.sel.indexOf(f.id) === -1) S.sel.push(f.id); });
+        else paged.forEach(function (f) { S.sel = S.sel.filter(function (id) { return id !== f.id; }); });
+        renderTable(paged);
+      });
+
+      $(document).on('change', '.rck', function () {
+        var id = $(this).data('id');
+        if ($(this).is(':checked')) { if (S.sel.indexOf(id) === -1) S.sel.push(id); }
+        else S.sel = S.sel.filter(function (x) { return x !== id; });
+        $(this).closest('tr').toggleClass('row-sel', $(this).is(':checked'));
+        updateSelBar();
+      });
+
+      /* الفلاتر */
+      $('#btnToggleFilters').on('click', function () { $('#filterPanel').slideToggle(200); });
+
+      function readFilters() {
+        S.filters = { camp: $('#fCamp').val(), level: $('#fLevel').val(), fhh: $('#fFhh').val(), pwd: $('#fPwd').val(), gov: $('#fGov').val(), size: $('#fSize').val() };
+        applyFilters();
+      }
+
+      $('#fCamp,#fLevel,#fFhh,#fPwd,#fGov,#fSize,#fDateFrom,#fDateTo').on('change input', readFilters);
+
+      $(document).on('click', '.rt', function () {
+        var k = $(this).data('key');
+        S.filters[k] = ''; $('#f' + k.charAt(0).toUpperCase() + k.slice(1)).val('');
+        applyFilters();
+      });
+
+      function clearAll() { S.filters = {}; S.search = ''; $('#tableSearch').val(''); $('#fCamp,#fLevel,#fFhh,#fPwd,#fGov,#fSize').val(''); applyFilters(); }
+      $('#btnClearFilters,#btnClearAll').on('click', clearAll);
+
+      /* حذف */
+      var delId = null;
+      $(document).on('click', '.bdel', function (e) {
+        e.stopPropagation();
+        delId = $(this).data('id');
+        var f = DB.find(function (x) { return x.id === delId; });
+        $('#delText').text('سيتم حذف بيانات الأسرة: ' + (f ? f.name : delId));
+        new bootstrap.Modal($('#deleteModal')[0]).show();
+      });
+      $('#drawerDelete').on('click', function () {
+        delId = (S.filtered[S.openIdx] || {}).id;
+        if (!delId) return;
+        var f = DB.find(function (x) { return x.id === delId; });
+        $('#delText').text('سيتم حذف بيانات الأسرة: ' + (f ? f.name : delId));
+        new bootstrap.Modal($('#deleteModal')[0]).show();
+      });
+      $('#btnConfirmDel').on('click', function () {
+        DB = DB.filter(function (f) { return f.id !== delId; });
+        S.data = DB;
+        bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
+        closeDrawer(); applyFilters();
+      });
+
+      $('#btnExportExcel').on('click', function () { alert('تصدير Excel — يُنفَّذ في Backend بـ Laravel Excel'); });
+      $('#btnExportPdf').on('click', function () { alert('تصدير PDF — يُنفَّذ في Backend بـ Laravel DomPDF'); });
+
+      applyFilters();
+    });
+  </script>
+</body>
+
+</html>

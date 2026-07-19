@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>تسجيل أسرة جديدة</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <!-- عنوان + مسار الخطوات -->
+        <div class="page-header mb-3">
+          <h1 class="page-title"><i class="fa-solid fa-user-plus me-2 text-primary"></i>تسجيل أسرة نازحة جديدة</h1>
+        </div>
+
+        <!-- شريط الخطوات -->
+        <div class="steps-bar mb-4" id="stepBar">
+          <div class="step-item">
+            <div class="step-circle active" id="sc1">1</div>
+            <span class="step-label active" id="sl1">التحقق من الهوية</span>
+          </div>
+          <div class="step-line" id="line1"></div>
+          <div class="step-item">
+            <div class="step-circle pending" id="sc2">2</div>
+            <span class="step-label pending" id="sl2">بيانات الأسرة</span>
+          </div>
+          <div class="step-line" id="line2"></div>
+          <div class="step-item">
+            <div class="step-circle pending" id="sc3">3</div>
+            <span class="step-label pending" id="sl3">أفراد الأسرة</span>
+          </div>
+          <div class="step-line" id="line3"></div>
+          <div class="step-item">
+            <div class="step-circle pending" id="sc4">4</div>
+            <span class="step-label pending" id="sl4">تقييم الضعف</span>
+          </div>
+        </div>
+
+        <!-- ════ الخطوة 1: التحقق من الهوية ════ -->
+        <div id="step1">
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="fa-solid fa-id-card text-primary"></i>
+              التحقق من رقم الهوية الوطنية
+            </div>
+            <p style="font-size:13px;color:#5a6a7a;margin-bottom:16px;">
+              يجب التحقق من رقم الهوية أولاً لمنع التسجيل المكرر عبر جميع المخيمات.
+            </p>
+            <div class="mb-3">
+              <label class="field-label">رقم الهوية الوطنية <span class="field-required">*</span></label>
+              <div class="nid-check-wrap">
+                <input type="text" id="nidInput" class="form-control" placeholder="مثال: 276-1985-0034" maxlength="14"
+                  style="font-size:16px;letter-spacing:1px;" />
+                <button class="btn btn-primary px-4" id="btnCheckNid">
+                  <i class="fa-solid fa-search me-1"></i>تحقق
+                </button>
+              </div>
+              <div class="form-text mt-1">أدخل رقم هوية رب الأسرة (14 رقم)</div>
+            </div>
+            <!-- نتيجة الفحص -->
+            <div class="nid-status-box new" id="nidStatusNew">
+              <i class="fa-solid fa-circle-check me-2"></i>
+              <strong>غير مسجل.</strong> يمكنك المتابعة لتسجيل الأسرة.
+            </div>
+            <div class="nid-status-box exists" id="nidStatusExists">
+              <i class="fa-solid fa-triangle-exclamation me-2"></i>
+              <strong>مسجل في مخيم آخر.</strong>
+              <span id="existsCampName"></span>
+              — يمكنك <a href="#" id="linkTransferRequest" style="color:#9a6010;font-weight:600;">تقديم طلب نقل</a>
+              بدلاً من التسجيل.
+            </div>
+            <div class="nid-status-box blocked" id="nidStatusBlocked">
+              <i class="fa-solid fa-ban me-2"></i>
+              <strong>مسجل في نفس المخيم.</strong> لا يمكن تسجيل نفس الهوية مرتين.
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary px-5" id="btnStep1Next" disabled>
+              التالي <i class="fa-solid fa-arrow-left me-1"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- ════ الخطوة 2: بيانات الأسرة ════ -->
+        <div id="step2" class="d-none">
+          <div class="row g-3">
+            <div class="col-12 col-lg-8">
+
+              <div class="form-card">
+                <div class="form-card-title"><i class="fa-solid fa-user text-primary"></i>بيانات رب الأسرة</div>
+                <div class="row g-3">
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">رقم الهوية <span class="field-required">*</span></label>
+                    <input type="text" id="s2Nid" class="form-control" readonly style="background:#f8fafc;" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">الاسم الكامل <span class="field-required">*</span></label>
+                    <input type="text" id="s2Name" class="form-control" placeholder="الاسم الرباعي" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">تاريخ الميلاد <span class="field-required">*</span></label>
+                    <input type="date" id="s2Dob" class="form-control" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">رقم الهاتف <span class="field-required">*</span></label>
+                    <input type="tel" id="s2Phone" class="form-control" placeholder="05X-XXX-XXXX" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">المحافظة الأصلية <span class="field-required">*</span></label>
+                    <select id="s2Gov" class="form-select">
+                      <option value="">اختر المحافظة...</option>
+                      <option>شمال غزة</option>
+                      <option>غزة</option>
+                      <option>الوسطى</option>
+                      <option>خان يونس</option>
+                      <option>رفح</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">المدينة / القرية الأصلية <span class="field-required">*</span></label>
+                    <input type="text" id="s2City" class="form-control" placeholder="مثال: رفح" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">المخيم الحالي</label>
+                    <input type="text" id="s2Camp" class="form-control" readonly style="background:#f8fafc;" />
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="field-label">رقم المأوى / الوحدة</label>
+                    <input type="text" id="s2Shelter" class="form-control" placeholder="مثال: B-14" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-card">
+                <div class="form-card-title"><i class="fa-solid fa-people-roof text-primary"></i>تركيبة الأسرة</div>
+                <div class="row g-3 mb-3">
+                  <div class="col-6 col-sm-3">
+                    <label class="field-label">إجمالي الأفراد <span class="field-required">*</span></label>
+                    <input type="number" id="s2Total" class="form-control" min="1" value="1" />
+                  </div>
+                  <div class="col-6 col-sm-3">
+                    <label class="field-label">عدد البالغين</label>
+                    <input type="number" id="s2Adults" class="form-control" min="0" value="1" />
+                  </div>
+                  <div class="col-6 col-sm-3">
+                    <label class="field-label">أطفال &lt;16</label>
+                    <input type="number" id="s2Children" class="form-control" min="0" value="0" />
+                  </div>
+                  <div class="col-6 col-sm-3">
+                    <label class="field-label">ذوو إعاقة</label>
+                    <input type="number" id="s2Pwd" class="form-control" min="0" value="0" />
+                  </div>
+                </div>
+
+                <!-- تبديل: أسرة برئاسة أنثى -->
+                <div class="toggle-wrap">
+                  <span class="toggle-text"><i class="fa-solid fa-venus me-2 text-danger"></i>أسرة برئاسة أنثى
+                    (FHH)</span>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="toggleFhh" />
+                  </div>
+                </div>
+                <div id="fhhReasonWrap" class="d-none mb-3">
+                  <label class="field-label">سبب ترؤس الأنثى <span class="field-required">*</span></label>
+                  <select id="s2FhhReason" class="form-select">
+                    <option value="">اختر السبب...</option>
+                    <option>وفاة رب الأسرة</option>
+                    <option>فقدان رب الأسرة</option>
+                    <option>إعاقة رب الأسرة</option>
+                    <option>طلاق</option>
+                    <option>أخرى</option>
+                  </select>
+                </div>
+
+                <!-- تبديل: ذوو إعاقة -->
+                <div class="toggle-wrap">
+                  <span class="toggle-text"><i class="fa-solid fa-wheelchair me-2 text-warning"></i>يوجد أفراد من ذوي
+                    الإعاقة (PWD)</span>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="togglePwd" />
+                  </div>
+                </div>
+                <div id="pwdDetailsWrap" class="d-none">
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="field-label">نوع الإعاقة السائدة</label>
+                      <select class="form-select">
+                        <option>إعاقة حركية</option>
+                        <option>إعاقة بصرية</option>
+                        <option>إعاقة سمعية</option>
+                        <option>إعاقة ذهنية</option>
+                        <option>متعددة</option>
+                      </select>
+                    </div>
+                    <div class="col-6">
+                      <label class="field-label">سبب الإعاقة</label>
+                      <select class="form-select">
+                        <option>منذ الولادة</option>
+                        <option>إصابة حرب</option>
+                        <option>مرض</option>
+                        <option>حادث</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ملخص جانبي -->
+            <div class="col-12 col-lg-4">
+              <div class="form-card" style="position:sticky;top:72px;">
+                <div class="form-card-title"><i class="fa-solid fa-circle-info text-primary"></i>ملخص التسجيل</div>
+                <div style="font-size:13px;color:#5a6a7a;line-height:1.9;">
+                  <div><i class="fa-solid fa-hashtag me-2 text-muted"></i>الهوية: <strong id="sumNid">—</strong></div>
+                  <div><i class="fa-solid fa-user me-2 text-muted"></i>الاسم: <strong id="sumName">—</strong></div>
+                  <div><i class="fa-solid fa-location-dot me-2 text-muted"></i>المخيم: <strong id="sumCamp">—</strong>
+                  </div>
+                  <div><i class="fa-solid fa-people-group me-2 text-muted"></i>الأفراد: <strong id="sumTotal">—</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" id="btnStep2Back"><i
+                class="fa-solid fa-arrow-right me-1"></i>السابق</button>
+            <button class="btn btn-primary px-4" id="btnStep2Next">التالي <i
+                class="fa-solid fa-arrow-left me-1"></i></button>
+          </div>
+        </div>
+
+        <!-- ════ الخطوة 3: أفراد الأسرة ════ -->
+        <div id="step3" class="d-none">
+          <div class="form-card">
+            <div class="form-card-title d-flex justify-content-between align-items-center">
+              <span><i class="fa-solid fa-users text-primary"></i> أفراد الأسرة</span>
+              <button class="btn btn-sm btn-outline-success" id="btnAddMember">
+                <i class="fa-solid fa-plus me-1"></i>إضافة فرد
+              </button>
+            </div>
+            <div id="membersList"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" id="btnStep3Back"><i
+                class="fa-solid fa-arrow-right me-1"></i>السابق</button>
+            <button class="btn btn-primary px-4" id="btnStep3Next">التالي <i
+                class="fa-solid fa-arrow-left me-1"></i></button>
+          </div>
+        </div>
+
+        <!-- ════ الخطوة 4: تقييم الضعف ════ -->
+        <div id="step4" class="d-none">
+          <div class="row g-3">
+            <div class="col-12 col-lg-7">
+              <div class="form-card">
+                <div class="form-card-title"><i class="fa-solid fa-shield-halved text-danger"></i>تقييم الضعف التلقائي
+                </div>
+                <p style="font-size:13px;color:#5a6a7a;margin-bottom:16px;">يحسب النظام درجة الضعف تلقائياً بناءً على
+                  المعلومات المدخلة.</p>
+
+                <div class="row g-2 mb-3" id="vulnFactors">
+                  <div class="col-6 col-sm-4">
+                    <div
+                      style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;text-align:center;">
+                      <div style="font-size:11px;color:#7a8a9a;">رئاسة أنثى</div>
+                      <div style="font-size:18px;font-weight:700;color:#1a6bb5;" id="vf1">+0</div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div
+                      style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;text-align:center;">
+                      <div style="font-size:11px;color:#7a8a9a;">ذوو إعاقة</div>
+                      <div style="font-size:18px;font-weight:700;color:#1a6bb5;" id="vf2">+0</div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div
+                      style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;text-align:center;">
+                      <div style="font-size:11px;color:#7a8a9a;">نسبة الاعتماد</div>
+                      <div style="font-size:18px;font-weight:700;color:#1a6bb5;" id="vf3">+0</div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div
+                      style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;text-align:center;">
+                      <div style="font-size:11px;color:#7a8a9a;">حجم الأسرة</div>
+                      <div style="font-size:18px;font-weight:700;color:#1a6bb5;" id="vf4">+0</div>
+                    </div>
+                  </div>
+                  <div class="col-6 col-sm-4">
+                    <div
+                      style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;text-align:center;">
+                      <div style="font-size:11px;color:#7a8a9a;">أطفال</div>
+                      <div style="font-size:18px;font-weight:700;color:#1a6bb5;" id="vf5">+0</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="vuln-score-display" id="vulnScoreDisplay">
+                  <div class="vuln-number" id="vulnScoreNum">0</div>
+                  <div>
+                    <div class="vuln-score-label" id="vulnScoreLabel">—</div>
+                    <div class="vuln-score-desc" id="vulnScoreDesc">سيتم الحساب التلقائي</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-card">
+                <div class="form-card-title"><i class="fa-solid fa-note-sticky text-warning"></i>ملاحظات إضافية</div>
+                <textarea class="form-control" rows="3" placeholder="أي ملاحظات خاصة بالأسرة..."></textarea>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-5">
+              <div class="form-card" style="position:sticky;top:72px;">
+                <div class="form-card-title"><i class="fa-solid fa-clipboard-check text-success"></i>ملخص التسجيل
+                  النهائي</div>
+                <div id="finalSummary" style="font-size:13px;line-height:2;color:#3a4a5a;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-3">
+            <button class="btn btn-outline-secondary" id="btnStep4Back"><i
+                class="fa-solid fa-arrow-right me-1"></i>السابق</button>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-secondary" id="btnSaveDraft"><i
+                  class="fa-regular fa-floppy-disk me-1"></i>حفظ مسودة</button>
+              <button class="btn btn-success px-4" id="btnSubmitRegistration">
+                <i class="fa-solid fa-check me-1"></i>تسجيل الأسرة
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- رسالة النجاح -->
+        <div id="successMsg" class="d-none text-center py-5">
+          <div
+            style="width:70px;height:70px;background:#eaf5ee;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:30px;color:#2d8a4e;">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <h2 style="font-size:20px;font-weight:700;color:#1a6a2a;">تم تسجيل الأسرة بنجاح!</h2>
+          <p style="color:#5a6a7a;margin-top:8px;" id="successFamilyId"></p>
+          <div class="d-flex gap-2 justify-content-center mt-3">
+            <a href="search.html" class="btn btn-primary">عرض الملف</a>
+            <button class="btn btn-outline-secondary" onclick="location.reload()">تسجيل أسرة أخرى</button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+      var currentStep = 1;
+      var nidVerified = false;
+      var memberCount = 0;
+
+      /* ── الخطوة 1: فحص الهوية ──────────────────────────── */
+      var fakeRegistered = { '276-1985-0034': 'جباليا', '291-1979-0112': 'خان يونس' };
+      var session = JSON.parse(sessionStorage.getItem('nds_user') || '{}');
+      var currentCamp = session.camp || 'مخيم جباليا';
+      $('#s2Camp, #sumCamp').val(currentCamp).text(currentCamp);
+
+      function checkNid() {
+        var nid = $('#nidInput').val().trim();
+        if (nid.length < 5) { alert('أدخل رقم هوية صحيح'); return; }
+        $('.nid-status-box').hide();
+        if (fakeRegistered[nid]) {
+          var regCamp = fakeRegistered[nid];
+          if (regCamp === currentCamp) {
+            $('#nidStatusBlocked').fadeIn();
+            $('#btnStep1Next').prop('disabled', true);
+            nidVerified = false;
+          } else {
+            $('#existsCampName').text(' الأسرة مسجلة في ' + regCamp);
+            $('#nidStatusExists').fadeIn();
+            $('#btnStep1Next').prop('disabled', true);
+            nidVerified = false;
+          }
+        } else {
+          $('#nidStatusNew').fadeIn();
+          $('#btnStep1Next').prop('disabled', false);
+          $('#s2Nid').val(nid);
+          $('#sumNid').text(nid);
+          nidVerified = true;
+        }
+      }
+
+      $('#btnCheckNid').on('click', checkNid);
+      $('#nidInput').on('keypress', function (e) { if (e.which === 13) checkNid(); });
+      $('#linkTransferRequest').on('click', function (e) { e.preventDefault(); window.location.href = 'transfers.html'; });
+
+      /* ── التنقل بين الخطوات ─────────────────────────────── */
+      function goStep(n) {
+        $('#step' + currentStep).addClass('d-none');
+        currentStep = n;
+        $('#step' + currentStep).removeClass('d-none');
+        updateStepBar();
+        $('html,body').animate({ scrollTop: 0 }, 300);
+      }
+
+      function updateStepBar() {
+        for (var i = 1; i <= 4; i++) {
+          var c = $('#sc' + i), l = $('#sl' + i), li = $('#line' + i);
+          c.removeClass('active done pending');
+          l.removeClass('active done pending');
+          if (i < currentStep) { c.addClass('done').html('<i class="fa-solid fa-check" style="font-size:11px;"></i>'); l.addClass('done'); li && li.addClass('done'); }
+          else if (i === currentStep) { c.addClass('active').text(i); l.addClass('active'); }
+          else { c.addClass('pending').text(i); l.addClass('pending'); }
+        }
+      }
+
+      $('#btnStep1Next').on('click', function () { if (nidVerified) goStep(2); });
+      $('#btnStep2Back').on('click', function () { goStep(1); });
+      $('#btnStep2Next').on('click', function () {
+        if (!$('#s2Name').val() || !$('#s2Phone').val() || !$('#s2Gov').val()) {
+          alert('يرجى ملء جميع الحقول الإلزامية'); return;
+        }
+        $('#sumName').text($('#s2Name').val());
+        $('#sumTotal').text($('#s2Total').val());
+        goStep(3);
+        renderMembers();
+      });
+      $('#btnStep3Back').on('click', function () { goStep(2); });
+      $('#btnStep3Next').on('click', function () { calcVuln(); buildFinalSummary(); goStep(4); });
+      $('#btnStep4Back').on('click', function () { goStep(3); });
+
+      /* ── Toggle FHH / PWD ───────────────────────────────── */
+      $('#toggleFhh').on('change', function () { $(this).is(':checked') ? $('#fhhReasonWrap').removeClass('d-none') : $('#fhhReasonWrap').addClass('d-none'); });
+      $('#togglePwd').on('change', function () { $(this).is(':checked') ? $('#pwdDetailsWrap').removeClass('d-none') : $('#pwdDetailsWrap').addClass('d-none'); });
+
+      /* ── ملخص جانبي live ───────────────────────────────── */
+      $('#s2Name').on('input', function () { $('#sumName').text($(this).val() || '—'); });
+      $('#s2Total').on('input', function () { $('#sumTotal').text($(this).val() || '—'); });
+
+      /* ── أفراد الأسرة ───────────────────────────────────── */
+      function renderMembers() {
+        if ($('#membersList').children().length === 0) addMember(true);
+      }
+
+      function addMember(isHead) {
+        memberCount++;
+        var idx = memberCount;
+        var headBadge = isHead ? '<span style="font-size:11px;background:#e8f1fb;color:#1a4a7a;padding:2px 8px;border-radius:20px;">رب أسرة</span>' : '';
+        var card = `
+      <div class="member-card" id="mc${idx}">
+        ${!isHead ? '<button class="btn-remove-member" onclick="$(\'#mc' + idx + '\').remove()"><i class="fa-solid fa-xmark"></i></button>' : ''}
+        <div class="member-card-head">
+          <div class="member-avatar-sm">${idx}</div>
+          <div style="font-weight:600;font-size:13px;">الفرد ${idx} ${headBadge}</div>
+        </div>
+        <div class="row g-2">
+          <div class="col-12 col-sm-6">
+            <label class="field-label">الاسم الكامل <span class="field-required">*</span></label>
+            <input type="text" class="form-control" placeholder="الاسم الكامل" ${isHead ? 'id="memberHeadName"' : ''}/>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="field-label">رقم الهوية</label>
+            <input type="text" class="form-control" placeholder="رقم الهوية الوطنية"/>
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="field-label">تاريخ الميلاد</label>
+            <input type="date" class="form-control"/>
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="field-label">صلة القرابة</label>
+            <select class="form-select">
+              ${isHead ? '<option selected>رب أسرة</option>' : '<option>اختر...</option>'}
+              <option>زوجة</option><option>ابن</option><option>ابنة</option>
+              <option>والد</option><option>والدة</option><option>أخ</option><option>أخت</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="field-label">إعاقة؟</label>
+            <select class="form-select"><option value="0">لا</option><option value="1">نعم</option></select>
+          </div>
+        </div>
+      </div>`;
+        $('#membersList').append(card);
+      }
+
+      $('#btnAddMember').on('click', function () { addMember(false); });
+
+      /* ── حساب الضعف ─────────────────────────────────────── */
+      function calcVuln() {
+        var fhh = $('#toggleFhh').is(':checked') ? 20 : 0;
+        var pwd = parseInt($('#s2Pwd').val() || 0) * 15;
+        var total = parseInt($('#s2Total').val() || 1);
+        var adults = parseInt($('#s2Adults').val() || 1);
+        var children = parseInt($('#s2Children').val() || 0);
+        var depRatio = adults > 0 ? (total - adults) / adults : 0;
+        var depScore = depRatio > 1 ? 15 : depRatio > 0.5 ? 8 : 0;
+        var sizeScore = total > 8 ? 15 : total > 5 ? 8 : 0;
+        var childScore = children > 3 ? 10 : children > 1 ? 5 : 0;
+        var total_score = fhh + pwd + depScore + sizeScore + childScore;
+
+        $('#vf1').text('+' + (fhh));
+        $('#vf2').text('+' + (pwd));
+        $('#vf3').text('+' + (depScore));
+        $('#vf4').text('+' + (sizeScore));
+        $('#vf5').text('+' + (childScore));
+        $('#vulnScoreNum').text(total_score);
+
+        var disp = $('#vulnScoreDisplay');
+        disp.removeClass('high medium low');
+        if (total_score >= 50) {
+          disp.addClass('high');
+          $('#vulnScoreLabel').text('مستوى الضعف: عالٍ');
+          $('#vulnScoreDesc').text('هذه الأسرة تحتاج أولوية متابعة فورية');
+        } else if (total_score >= 25) {
+          disp.addClass('medium');
+          $('#vulnScoreLabel').text('مستوى الضعف: متوسط');
+          $('#vulnScoreDesc').text('تحتاج متابعة دورية منتظمة');
+        } else {
+          disp.addClass('low');
+          $('#vulnScoreLabel').text('مستوى الضعف: منخفض');
+          $('#vulnScoreDesc').text('الوضع مستقر نسبياً');
+        }
+      }
+
+      function buildFinalSummary() {
+        $('#finalSummary').html(`
+      <div><i class="fa-solid fa-hashtag me-2 text-muted"></i>رقم الهوية: <b>${$('#s2Nid').val()}</b></div>
+      <div><i class="fa-solid fa-user me-2 text-muted"></i>رب الأسرة: <b>${$('#s2Name').val()}</b></div>
+      <div><i class="fa-solid fa-phone me-2 text-muted"></i>الهاتف: <b>${$('#s2Phone').val()}</b></div>
+      <div><i class="fa-solid fa-location-dot me-2 text-muted"></i>المخيم: <b>${currentCamp}</b></div>
+      <div><i class="fa-solid fa-people-group me-2 text-muted"></i>الأفراد: <b>${$('#s2Total').val()}</b></div>
+      <div><i class="fa-solid fa-venus me-2 text-muted"></i>أسرة FHH: <b>${$('#toggleFhh').is(':checked') ? 'نعم' : 'لا'}</b></div>
+      <div><i class="fa-solid fa-wheelchair me-2 text-muted"></i>ذوو إعاقة: <b>${$('#s2Pwd').val()}</b></div>
+    `);
+      }
+
+      /* ── تأكيد التسجيل ──────────────────────────────────── */
+      $('#btnSubmitRegistration').on('click', function () {
+        var fid = '#F-' + String(Math.floor(Math.random() * 9000) + 1000).padStart(5, '0');
+        $('#step4').addClass('d-none');
+        $('#successMsg').removeClass('d-none');
+        $('#successFamilyId').text('رقم الأسرة المُسند: ' + fid);
+      });
+
+    });
+  </script>
+</body>
+
+</html>

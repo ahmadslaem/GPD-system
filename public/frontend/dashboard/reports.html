@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>التقارير والإحصاءات</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <div class="page-header mb-3">
+          <h1 class="page-title"><i class="fa-solid fa-chart-bar me-2 text-primary"></i>التقارير والإحصاءات</h1>
+        </div>
+
+        <div class="row g-3">
+          <!-- عمود الجانب: اختيار التقرير + الفلاتر -->
+          <div class="col-12 col-lg-4 col-xl-3">
+
+            <!-- نوع التقرير -->
+            <div class="content-card mb-3">
+              <div class="content-card__header">
+                <div class="content-card__title">نوع التقرير</div>
+              </div>
+              <div class="content-card__body">
+                <button class="report-type-btn active" data-report="demographic">
+                  <div class="rt-icon" style="background:#e8f1fb;color:#1a6bb5;"><i
+                      class="fa-solid fa-people-group"></i></div>
+                  <div class="rt-name">تقرير ديموغرافي شامل</div>
+                  <div class="rt-desc">توزيع الأسر والأفراد حسب المخيم</div>
+                </button>
+                <button class="report-type-btn" data-report="vulnerability">
+                  <div class="rt-icon" style="background:#fdf0f0;color:#b03030;"><i
+                      class="fa-solid fa-triangle-exclamation"></i></div>
+                  <div class="rt-name">تقرير حالات الضعف</div>
+                  <div class="rt-desc">تصنيف الأسر بحسب مستوى الضعف</div>
+                </button>
+                <button class="report-type-btn" data-report="transfer">
+                  <div class="rt-icon" style="background:#eaf5ee;color:#1a6a2a;"><i class="fa-solid fa-right-left"></i>
+                  </div>
+                  <div class="rt-name">تقرير حركة النقل</div>
+                  <div class="rt-desc">إحصاءات طلبات النقل والقرارات</div>
+                </button>
+                <button class="report-type-btn" data-report="timeline">
+                  <div class="rt-icon" style="background:#fdf3e0;color:#9a6010;"><i
+                      class="fa-solid fa-clock-rotate-left"></i></div>
+                  <div class="rt-name">تقرير زمني دوري</div>
+                  <div class="rt-desc">مقارنة التسجيلات عبر الزمن</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- معاملات التقرير -->
+            <div class="content-card">
+              <div class="content-card__header">
+                <div class="content-card__title">معاملات التقرير</div>
+              </div>
+              <div class="content-card__body">
+                <div class="mb-3">
+                  <label class="field-label">المخيم / الموقع</label>
+                  <select class="form-select" id="repCamp">
+                    <option value="all">كل المخيمات</option>
+                    <option>مخيم جباليا</option>
+                    <option>مخيم خان يونس</option>
+                    <option>مواصي رفح</option>
+                    <option>مخيم النصيرات</option>
+                    <option>مخيم البريج</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="field-label">من تاريخ</label>
+                  <input type="date" class="form-control" id="repFrom" value="2026-01-01" />
+                </div>
+                <div class="mb-3">
+                  <label class="field-label">إلى تاريخ</label>
+                  <input type="date" class="form-control" id="repTo" value="2026-04-07" />
+                </div>
+                <div class="mb-3">
+                  <label class="field-label">مستوى الضعف</label>
+                  <select class="form-select" id="repLevel">
+                    <option value="all">الكل</option>
+                    <option value="high">عالٍ فقط</option>
+                    <option value="medium">متوسط فقط</option>
+                    <option value="low">منخفض فقط</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary w-100" id="btnGenerate">
+                  <i class="fa-solid fa-chart-line me-1"></i>توليد التقرير
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- عمود المعاينة -->
+          <div class="col-12 col-lg-8 col-xl-9">
+            <div class="content-card">
+              <div class="content-card__header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <div class="content-card__title" id="previewTitle">معاينة: تقرير ديموغرافي شامل</div>
+                  <div style="font-size:12px;color:#7a8a9a;margin-top:2px;" id="previewMeta">كل المخيمات — يناير 2026
+                    إلى أبريل 2026</div>
+                </div>
+                <div class="d-flex gap-2" id="exportBtns" style="display:none!important;">
+                  <button class="btn btn-sm btn-outline-success" id="btnExportExcel">
+                    <i class="fa-solid fa-file-excel me-1"></i>Excel
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" id="btnExportPdf">
+                    <i class="fa-solid fa-file-pdf me-1"></i>PDF
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" id="btnPrint">
+                    <i class="fa-solid fa-print me-1"></i>طباعة
+                  </button>
+                </div>
+              </div>
+
+              <!-- حالة التوليد -->
+              <div id="generateLoading" class="d-none text-center py-5">
+                <div class="spinner-border text-primary mb-3" style="width:40px;height:40px;"></div>
+                <div style="font-size:14px;color:#5a6a7a;">جارٍ توليد التقرير...</div>
+              </div>
+
+              <!-- حالة فارغة -->
+              <div id="previewEmpty" class="text-center py-5">
+                <div style="font-size:42px;color:#dde4ee;"><i class="fa-solid fa-chart-bar"></i></div>
+                <div style="font-size:14px;color:#9aaabb;margin-top:10px;">اضبط المعاملات ثم اضغط "توليد التقرير"</div>
+              </div>
+
+              <!-- محتوى التقرير -->
+              <div id="previewContent" class="content-card__body d-none">
+
+                <!-- بطاقات الملخص -->
+                <div class="row g-2 mb-4" id="summaryCards"></div>
+
+                <!-- الرسم البياني -->
+                <div class="mb-4" id="chartSection">
+                  <div style="font-size:13px;font-weight:600;color:#1a2332;margin-bottom:12px;" id="chartTitle">التوزيع
+                    الجغرافي</div>
+                  <div id="chartBars"></div>
+                </div>
+
+                <!-- الجدول التفصيلي -->
+                <div id="tableSection">
+                  <div style="font-size:13px;font-weight:600;color:#1a2332;margin-bottom:10px;">البيانات التفصيلية</div>
+                  <div class="table-responsive preview-table-wrap">
+                    <table class="table table-hover mb-0" id="reportTable">
+                      <thead id="reportTableHead"></thead>
+                      <tbody id="reportTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+
+      var currentReport = 'demographic';
+
+      var reportData = {
+        demographic: {
+          title: 'تقرير ديموغرافي شامل',
+          summary: [
+            { label: 'إجمالي الأسر', val: '12,847', icon: 'fa-house-chimney-user', color: 'blue' },
+            { label: 'إجمالي الأفراد', val: '71,430', icon: 'fa-people-group', color: 'green' },
+            { label: 'ذوو إعاقة', val: '6,730', icon: 'fa-wheelchair', color: 'amber' },
+            { label: 'أسر FHH', val: '2,140', icon: 'fa-venus', color: 'red' },
+          ],
+          chartTitle: 'توزيع الأسر حسب المخيم',
+          chartData: [
+            { name: 'جباليا', val: 3412, max: 4000 },
+            { name: 'خان يونس', val: 2710, max: 4000 },
+            { name: 'رفح', val: 2420, max: 4000 },
+            { name: 'النصيرات', val: 1830, max: 4000 },
+            { name: 'البريج', val: 1495, max: 4000 },
+            { name: 'مواصي رفح', val: 980, max: 4000 },
+          ],
+          tableHead: ['المخيم', 'الأسر', 'الأفراد', 'ضعف عالٍ', 'PWD', 'FHH'],
+          tableRows: [
+            ['جباليا', '3,412', '18,976', '812', '1,240', '534'],
+            ['خان يونس', '2,710', '15,090', '645', '980', '421'],
+            ['رفح', '2,420', '13,478', '576', '875', '378'],
+            ['النصيرات', '1,830', '10,186', '436', '662', '285'],
+            ['البريج', '1,495', '8,318', '356', '541', '233'],
+            ['<b>المجموع</b>', '<b>12,847</b>', '<b>71,430</b>', '<b>3,218</b>', '<b>6,730</b>', '<b>2,140</b>'],
+          ]
+        },
+        vulnerability: {
+          title: 'تقرير حالات الضعف',
+          summary: [
+            { label: 'ضعف عالٍ', val: '3,218 (25%)', icon: 'fa-triangle-exclamation', color: 'red' },
+            { label: 'ضعف متوسط', val: '5,781 (45%)', icon: 'fa-circle-half-stroke', color: 'amber' },
+            { label: 'ضعف منخفض', val: '3,848 (30%)', icon: 'fa-circle-check', color: 'green' },
+            { label: 'متوسط الدرجة', val: '42 / 100', icon: 'fa-gauge-high', color: 'blue' },
+          ],
+          chartTitle: 'توزيع حالات الضعف العالي حسب المخيم',
+          chartData: [
+            { name: 'جباليا', val: 812, max: 900 },
+            { name: 'خان يونس', val: 645, max: 900 },
+            { name: 'رفح', val: 576, max: 900 },
+            { name: 'النصيرات', val: 436, max: 900 },
+            { name: 'البريج', val: 356, max: 900 },
+          ],
+          tableHead: ['المخيم', 'عالٍ', 'متوسط', 'منخفض', 'إجمالي', 'نسبة العالي'],
+          tableRows: [
+            ['جباليا', '812', '1,536', '1,064', '3,412', '24%'],
+            ['خان يونس', '645', '1,219', '846', '2,710', '24%'],
+            ['رفح', '576', '1,089', '755', '2,420', '24%'],
+            ['النصيرات', '436', '824', '570', '1,830', '24%'],
+            ['البريج', '356', '672', '467', '1,495', '24%'],
+          ]
+        },
+        transfer: {
+          title: 'تقرير حركة النقل',
+          summary: [
+            { label: 'إجمالي الطلبات', val: '198', icon: 'fa-list', color: 'blue' },
+            { label: 'موافق عليها', val: '128 (65%)', icon: 'fa-circle-check', color: 'green' },
+            { label: 'مرفوضة', val: '23 (12%)', icon: 'fa-ban', color: 'red' },
+            { label: 'معلقة', val: '47 (24%)', icon: 'fa-hourglass', color: 'amber' },
+          ],
+          chartTitle: 'الطلبات حسب المخيم (المصدر)',
+          chartData: [
+            { name: 'جباليا', val: 62, max: 80 },
+            { name: 'النصيرات', val: 45, max: 80 },
+            { name: 'رفح', val: 38, max: 80 },
+            { name: 'خان يونس', val: 31, max: 80 },
+            { name: 'البريج', val: 22, max: 80 },
+          ],
+          tableHead: ['الشهر', 'الطلبات', 'موافق', 'مرفوض', 'معلق'],
+          tableRows: [
+            ['يناير 2026', '42', '28', '5', '9'],
+            ['فبراير 2026', '55', '36', '7', '12'],
+            ['مارس 2026', '61', '40', '8', '13'],
+            ['أبريل 2026', '40', '24', '3', '13'],
+          ]
+        },
+        timeline: {
+          title: 'تقرير زمني دوري',
+          summary: [
+            { label: 'تسجيلات يناير', val: '1,240', icon: 'fa-calendar', color: 'blue' },
+            { label: 'تسجيلات فبراير', val: '1,890', icon: 'fa-calendar', color: 'blue' },
+            { label: 'تسجيلات مارس', val: '3,120', icon: 'fa-calendar', color: 'green' },
+            { label: 'تسجيلات أبريل', val: '6,597', icon: 'fa-calendar', color: 'amber' },
+          ],
+          chartTitle: 'التسجيلات الشهرية',
+          chartData: [
+            { name: 'يناير', val: 1240, max: 7000 },
+            { name: 'فبراير', val: 1890, max: 7000 },
+            { name: 'مارس', val: 3120, max: 7000 },
+            { name: 'أبريل', val: 6597, max: 7000 },
+          ],
+          tableHead: ['الشهر', 'تسجيلات جديدة', 'إجمالي تراكمي', 'مخيم الأعلى'],
+          tableRows: [
+            ['يناير 2026', '1,240', '1,240', 'جباليا'],
+            ['فبراير 2026', '1,890', '3,130', 'جباليا'],
+            ['مارس 2026', '3,120', '6,250', 'رفح'],
+            ['أبريل 2026', '6,597', '12,847', 'جباليا'],
+          ]
+        }
+      };
+
+      /* ── اختيار نوع التقرير ─────────────────────────────── */
+      $(document).on('click', '.report-type-btn', function () {
+        $('.report-type-btn').removeClass('active');
+        $(this).addClass('active');
+        currentReport = $(this).data('report');
+      });
+
+      /* ── توليد التقرير ──────────────────────────────────── */
+      $('#btnGenerate').on('click', function () {
+        var camp = $('#repCamp').val() === 'all' ? 'كل المخيمات' : $('#repCamp').val();
+        var from = $('#repFrom').val() || 'يناير 2026';
+        var to = $('#repTo').val() || 'أبريل 2026';
+        var data = reportData[currentReport];
+
+        $('#previewEmpty').addClass('d-none');
+        $('#previewContent').addClass('d-none');
+        $('#generateLoading').removeClass('d-none');
+
+        setTimeout(function () {
+          $('#generateLoading').addClass('d-none');
+          $('#previewContent').removeClass('d-none');
+          $('#exportBtns').css('display', 'flex');
+          $('#previewTitle').text('معاينة: ' + data.title);
+          $('#previewMeta').text(camp + ' — ' + from + ' إلى ' + to);
+
+          /* بطاقات الملخص */
+          var colorMap = { blue: '#1a6bb5', green: '#2d8a4e', red: '#b03030', amber: '#9a6010' };
+          var bgMap = { blue: '#e8f1fb', green: '#eaf5ee', red: '#fdf0f0', amber: '#fdf3e0' };
+          var cardsHtml = data.summary.map(function (s) {
+            return `<div class="col-6 col-xl-3">
+          <div style="background:${bgMap[s.color]};border-radius:10px;padding:12px 14px;">
+            <div style="font-size:11px;color:${colorMap[s.color]};margin-bottom:3px;opacity:0.8;">${s.label}</div>
+            <div style="font-size:18px;font-weight:700;color:${colorMap[s.color]};">${s.val}</div>
+          </div>
+        </div>`;
+          }).join('');
+          $('#summaryCards').html(cardsHtml);
+
+          /* الرسم البياني */
+          $('#chartTitle').text(data.chartTitle);
+          var barsHtml = data.chartData.map(function (b) {
+            var pct = Math.round((b.val / b.max) * 100);
+            return `<div class="chart-bar-horiz">
+          <div class="bar-name">${b.name}</div>
+          <div class="bar-track">
+            <div class="bar-fill-rep" data-width="${pct}" style="width:0%;"></div>
+          </div>
+          <div class="bar-count">${b.val.toLocaleString()}</div>
+        </div>`;
+          }).join('');
+          $('#chartBars').html(barsHtml);
+
+          /* تحريك الأشرطة */
+          setTimeout(function () {
+            $('.bar-fill-rep').each(function () {
+              $(this).css('width', $(this).data('width') + '%');
+            });
+          }, 150);
+
+          /* الجدول */
+          var thHtml = data.tableHead.map(function (h) { return '<th>' + h + '</th>'; }).join('');
+          $('#reportTableHead').html('<tr>' + thHtml + '</tr>');
+          var tbHtml = data.tableRows.map(function (row) {
+            return '<tr>' + row.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
+          }).join('');
+          $('#reportTableBody').html(tbHtml);
+
+        }, 1200);
+      });
+
+      /* ── أزرار التصدير ──────────────────────────────────── */
+      $('#btnExportExcel').on('click', function () {
+        alert('جارٍ تصدير ملف Excel... (يُنفَّذ في مرحلة الـ Backend بـ Laravel Excel)');
+      });
+      $('#btnExportPdf').on('click', function () {
+        alert('جارٍ تصدير ملف PDF... (يُنفَّذ في مرحلة الـ Backend بـ Laravel DomPDF)');
+      });
+      $('#btnPrint').on('click', function () { window.print(); });
+    });
+  </script>
+</body>
+
+</html>

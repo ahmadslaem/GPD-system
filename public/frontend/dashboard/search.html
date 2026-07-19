@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>البحث عن أسرة</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <div class="page-header mb-3">
+          <h1 class="page-title"><i class="fa-solid fa-magnifying-glass me-2 text-primary"></i>البحث عن أسرة</h1>
+        </div>
+
+        <!-- بطاقة البحث -->
+        <div class="search-hero">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-auto">
+              <label style="font-size:12px;color:#5a6a7a;display:block;margin-bottom:5px;">نطاق البحث</label>
+              <div class="search-mode-tabs">
+                <button class="search-mode-tab active" id="tabLocal">
+                  <i class="fa-solid fa-tent me-1"></i>محلي
+                </button>
+                <button class="search-mode-tab" id="tabGlobal">
+                  <i class="fa-solid fa-globe me-1"></i>شامل
+                </button>
+              </div>
+            </div>
+            <div class="col-12 col-md">
+              <label style="font-size:12px;color:#5a6a7a;display:block;margin-bottom:5px;">كلمة البحث</label>
+              <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass search-icon-abs"></i>
+                <input type="text" id="mainSearchInput" class="form-control search-big-input w-100"
+                  placeholder="ابحث بالاسم أو رقم الهوية أو رقم الأسرة..." />
+              </div>
+            </div>
+            <div class="col-12 col-md-auto">
+              <label style="font-size:12px;color:transparent;display:block;margin-bottom:5px;">.</label>
+              <button class="btn btn-primary px-4" id="btnSearch" style="height:42px;">
+                <i class="fa-solid fa-search me-1"></i>بحث
+              </button>
+            </div>
+          </div>
+          <!-- فلاتر إضافية -->
+          <div class="mt-3 d-flex gap-2 flex-wrap align-items-center" id="filterRow">
+            <span style="font-size:12px;color:#7a8a9a;">تصفية:</span>
+            <button class="filter-chip active" data-filter="all">الكل</button>
+            <button class="filter-chip" data-filter="high">ضعف عالٍ</button>
+            <button class="filter-chip" data-filter="medium">ضعف متوسط</button>
+            <button class="filter-chip" data-filter="low">ضعف منخفض</button>
+            <button class="filter-chip" data-filter="fhh">أسر FHH</button>
+          </div>
+        </div>
+
+        <!-- منطقة النتائج + الملف -->
+        <div class="row g-3" id="resultsArea" style="display:none!important;">
+
+          <!-- قائمة النتائج -->
+          <div class="col-12 col-lg-5 col-xl-4" id="resultsList">
+            <div style="font-size:13px;color:#5a6a7a;margin-bottom:10px;" id="resultsCount"></div>
+            <div id="resultsContainer"></div>
+          </div>
+
+          <!-- ملف الأسرة التفصيلي -->
+          <div class="col-12 col-lg-7 col-xl-8" id="profilePanel">
+            <div class="content-card" id="profileCard">
+
+              <!-- رأس الملف -->
+              <div class="content-card__header">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                  <div
+                    style="width:50px;height:50px;border-radius:50%;background:#e8f1fb;color:#1a6bb5;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
+                    id="profileAvatar">—</div>
+                  <div style="flex:1;">
+                    <div style="font-size:16px;font-weight:700;color:#1a2332;" id="profileName">اختر أسرة من القائمة
+                    </div>
+                    <div style="font-size:12px;color:#7a8a9a;margin-top:2px;" id="profileMeta">—</div>
+                    <div class="d-flex gap-2 flex-wrap mt-2" id="profileBadges"></div>
+                  </div>
+                  <div class="d-flex gap-2" id="profileActions" style="display:none!important;">
+                    <button class="btn btn-sm btn-outline-primary" id="btnEditFamily"><i
+                        class="fa-solid fa-pen me-1"></i>تعديل</button>
+                    <button class="btn btn-sm btn-outline-warning" id="btnTransferFamily"><i
+                        class="fa-solid fa-right-left me-1"></i>طلب نقل</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- تبويبات الملف -->
+              <div class="p-0">
+                <ul class="nav profile-tabs px-3 border-bottom" id="profileTabsNav">
+                  <li class="nav-item"><button class="nav-link active" data-tab="basic">البيانات الأساسية</button></li>
+                  <li class="nav-item"><button class="nav-link" data-tab="members">الأفراد</button></li>
+                  <li class="nav-item"><button class="nav-link" data-tab="vuln">الضعف</button></li>
+                  <li class="nav-item"><button class="nav-link" data-tab="history">السجل</button></li>
+                </ul>
+
+                <div class="p-3 p-md-4">
+                  <!-- تبويب البيانات الأساسية -->
+                  <div id="tabBasic">
+                    <div id="basicInfoContent" style="color:#5a6a7a;font-size:13px;text-align:center;padding:30px;">اختر
+                      أسرة لعرض بياناتها</div>
+                  </div>
+                  <!-- تبويب الأفراد -->
+                  <div id="tabMembers" class="d-none">
+                    <div id="membersContent"></div>
+                  </div>
+                  <!-- تبويب الضعف -->
+                  <div id="tabVuln" class="d-none">
+                    <div id="vulnContent"></div>
+                  </div>
+                  <!-- تبويب السجل -->
+                  <div id="tabHistory" class="d-none">
+                    <ul class="history-timeline" id="historyContent"></ul>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- حالة لا يوجد بحث بعد -->
+        <div id="emptyState" class="text-center py-5">
+          <div style="font-size:50px;color:#dde4ee;margin-bottom:16px;"><i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <div style="font-size:15px;font-weight:500;color:#9aaabb;">ابدأ البحث للعثور على أسرة</div>
+          <div style="font-size:13px;color:#b0bbc8;margin-top:6px;">يمكنك البحث بالاسم أو رقم الهوية أو رقم الأسرة</div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+
+      /* ── بيانات تجريبية ────────────────────────────────── */
+      var families = [
+        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: 'جباليا', gov: 'رفح', phone: '059-456-7890', total: 7, adults: 3, children: 4, pwd: 2, fhh: true, fhhReason: 'وفاة رب الأسرة', shelter: 'B-14', score: 85, level: 'high', regDate: '5 أبريل 2026' },
+        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'خان يونس', gov: 'غزة', phone: '059-222-3344', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhReason: '', shelter: 'A-22', score: 30, level: 'medium', regDate: '4 أبريل 2026' },
+        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: 'النصيرات', gov: 'شمال غزة', phone: '059-887-6655', total: 9, adults: 3, children: 6, pwd: 1, fhh: false, fhhReason: '', shelter: 'C-07', score: 72, level: 'high', regDate: '4 أبريل 2026' },
+        { id: 'F-00844', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: 'رفح', gov: 'رفح', phone: '059-111-2222', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhReason: 'طلاق', shelter: 'D-01', score: 22, level: 'low', regDate: '3 أبريل 2026' },
+        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: 'البريج', gov: 'الوسطى', phone: '059-333-4455', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhReason: '', shelter: 'E-18', score: 40, level: 'medium', regDate: '3 أبريل 2026' },
+        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: 'جباليا', gov: 'غزة', phone: '059-778-9900', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhReason: 'فقدان رب الأسرة', shelter: 'B-32', score: 25, level: 'medium', regDate: '2 أبريل 2026' },
+      ];
+
+      var selectedFamily = null;
+      var activeFilter = 'all';
+      var isGlobal = false;
+
+      /* ── وضع البحث ──────────────────────────────────────── */
+      $('#tabLocal').on('click', function () { isGlobal = false; $(this).addClass('active'); $('#tabGlobal').removeClass('active'); });
+      $('#tabGlobal').on('click', function () { isGlobal = true; $(this).addClass('active'); $('#tabLocal').removeClass('active'); });
+
+      /* ── الفلاتر ─────────────────────────────────────────── */
+      $(document).on('click', '.filter-chip', function () {
+        $('.filter-chip').removeClass('active');
+        $(this).addClass('active');
+        activeFilter = $(this).data('filter');
+        if ($('#resultsArea').is(':visible')) doSearch();
+      });
+
+      /* ── تنفيذ البحث ─────────────────────────────────────── */
+      function doSearch() {
+        var q = $('#mainSearchInput').val().trim().toLowerCase();
+        var filtered = families.filter(function (f) {
+          var match = !q || f.name.includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q);
+          var filterMatch = activeFilter === 'all' || f.level === activeFilter || (activeFilter === 'fhh' && f.fhh);
+          return match && filterMatch;
+        });
+
+        $('#emptyState').hide();
+        $('#resultsArea').css('display', 'flex');
+        $('#resultsCount').text('وجدنا ' + filtered.length + ' نتيجة' + (isGlobal ? ' (بحث شامل)' : ' (بحث محلي)'));
+
+        var html = '';
+        if (filtered.length === 0) {
+          html = '<div style="text-align:center;padding:30px;color:#9aaabb;"><i class="fa-solid fa-face-frown" style="font-size:32px;display:block;margin-bottom:8px;"></i>لا توجد نتائج</div>';
+        } else {
+          filtered.forEach(function (f) {
+            var levelBadge = { high: '<span class="badge bg-danger">عالٍ</span>', medium: '<span class="badge bg-warning text-dark">متوسط</span>', low: '<span class="badge bg-success">منخفض</span>' }[f.level];
+            html += `
+          <div class="family-result-card" data-id="${f.id}">
+            <div class="frc-avatar">${f.name.slice(0, 1)}.${f.name.split(' ')[1] ? f.name.split(' ')[1][0] : ''}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="frc-name">${f.name}</div>
+              <div class="frc-meta"><i class="fa-solid fa-hashtag me-1"></i>${f.id} · ${f.camp}</div>
+            </div>
+            <div class="frc-badge">${levelBadge}</div>
+          </div>`;
+          });
+        }
+        $('#resultsContainer').html(html);
+      }
+
+      $('#btnSearch').on('click', doSearch);
+      $('#mainSearchInput').on('keypress', function (e) { if (e.which === 13) doSearch(); });
+
+      /* ── اختيار أسرة ─────────────────────────────────────── */
+      $(document).on('click', '.family-result-card', function () {
+        var id = $(this).data('id');
+        selectedFamily = families.find(function (f) { return f.id === id; });
+        if (!selectedFamily) return;
+
+        $('.family-result-card').removeClass('selected');
+        $(this).addClass('selected');
+        renderProfile(selectedFamily);
+      });
+
+      function renderProfile(f) {
+        var initials = f.name.slice(0, 1) + '.' + (f.name.split(' ')[1] ? f.name.split(' ')[1][0] : '');
+        $('#profileAvatar').text(initials);
+        $('#profileName').text(f.name);
+        $('#profileMeta').text('رقم الهوية: ' + f.nid + ' · رقم الأسرة: ' + f.id);
+        $('#profileActions').css('display', 'flex');
+
+        var badges = `<span class="badge bg-primary">${f.camp}</span>`;
+        if (f.level === 'high') badges += '<span class="badge bg-danger">ضعف عالٍ</span>';
+        else if (f.level === 'medium') badges += '<span class="badge bg-warning text-dark">ضعف متوسط</span>';
+        else badges += '<span class="badge bg-success">ضعف منخفض</span>';
+        if (f.fhh) badges += '<span class="badge" style="background:#fbeaf0;color:#8a2050;">أسرة FHH</span>';
+        $('#profileBadges').html(badges);
+
+        /* تبويب البيانات الأساسية */
+        $('#basicInfoContent').html(`
+      <div class="info-row-pair"><div class="info-pair-label">رقم الهوية</div><div class="info-pair-val">${f.nid}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">المخيم الحالي</div><div class="info-pair-val">${f.camp} · مأوى ${f.shelter}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">المحافظة الأصلية</div><div class="info-pair-val">${f.gov}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">رقم الهاتف</div><div class="info-pair-val">${f.phone}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">إجمالي الأفراد</div><div class="info-pair-val">${f.total} (${f.adults} بالغ · ${f.children} طفل)</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">ذوو إعاقة</div><div class="info-pair-val">${f.pwd > 0 ? f.pwd + ' أشخاص' : 'لا يوجد'}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">أسرة برئاسة أنثى</div><div class="info-pair-val">${f.fhh ? 'نعم — ' + f.fhhReason : 'لا'}</div></div>
+      <div class="info-row-pair"><div class="info-pair-label">تاريخ التسجيل</div><div class="info-pair-val">${f.regDate}</div></div>
+    `);
+
+        /* تبويب الأفراد (تجريبي) */
+        var mems = [
+          { n: f.name, rel: 'رب أسرة', y: '1985', pwd: false },
+          { n: 'زوجة رب الأسرة', rel: 'زوجة', y: '1990', pwd: f.pwd > 0 },
+          { n: 'الابن الأول', rel: 'ابن', y: '2010', pwd: false },
+        ];
+        var memsHtml = mems.map(function (m, i) {
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-radius:9px;margin-bottom:6px;">
+        <div class="member-avatar-sm">${i + 1}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#1a2332;">${m.n}</div><div style="font-size:11.5px;color:#7a8a9a;">${m.rel} · ${m.y}</div></div>
+        ${m.pwd ? '<span class="badge bg-warning text-dark">PWD</span>' : ''}
+      </div>`;
+        }).join('') + `<div style="font-size:12px;color:#9aaabb;text-align:center;margin-top:6px;">+ ${f.total - 3} أفراد آخرين</div>`;
+        $('#membersContent').html(memsHtml);
+
+        /* تبويب الضعف */
+        var levelClass = { high: 'danger', medium: 'warning', low: 'success' }[f.level];
+        var levelText = { high: 'عالٍ', medium: 'متوسط', low: 'منخفض' }[f.level];
+        $('#vulnContent').html(`
+      <div style="display:flex;align-items:center;gap:14px;background:var(--color-${f.level === 'high' ? 'danger' : 'success'}-light,#fdf0f0);border-radius:10px;padding:14px 18px;margin-bottom:14px;">
+        <div style="font-size:36px;font-weight:800;color:${f.level === 'high' ? '#b03030' : f.level === 'medium' ? '#9a6010' : '#1a6a2a'};">${f.score}</div>
+        <div><div style="font-size:14px;font-weight:600;">مستوى الضعف: ${levelText}</div><div style="font-size:12px;color:#5a6a7a;">من أصل 100 نقطة</div></div>
+      </div>
+      <div class="row g-2 text-center">
+        <div class="col-6 col-sm-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:11px;color:#7a8a9a;">رئاسة أنثى</div><div style="font-size:16px;font-weight:700;color:#1a6bb5;">${f.fhh ? '+20' : '+0'}</div></div></div>
+        <div class="col-6 col-sm-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:11px;color:#7a8a9a;">إعاقة ×${f.pwd}</div><div style="font-size:16px;font-weight:700;color:#1a6bb5;">+${f.pwd * 15}</div></div></div>
+        <div class="col-6 col-sm-4"><div style="background:#f8fafc;border:1px solid #eef2f7;border-radius:9px;padding:10px;"><div style="font-size:11px;color:#7a8a9a;">حجم الأسرة</div><div style="font-size:16px;font-weight:700;color:#1a6bb5;">${f.total > 8 ? '+15' : f.total > 5 ? '+8' : '+0'}</div></div></div>
+      </div>
+    `);
+
+        /* تبويب السجل */
+        $('#historyContent').html(`
+      <li><div class="ht-dot" style="background:#2d8a4e;"></div><div><div class="ht-title">تسجيل أولي في النظام</div><div class="ht-time">${f.regDate} — موظف الإدخال</div></div></li>
+      <li><div class="ht-dot" style="background:#1a6bb5;"></div><div><div class="ht-title">تحديث رقم الهاتف</div><div class="ht-time">بعد يوم من التسجيل — موظف الإدخال</div></div></li>
+      <li><div class="ht-dot" style="background:#b07a18;"></div><div><div class="ht-title">مراجعة تقييم الضعف</div><div class="ht-time">7 أبريل 2026 — مدير المنظمة</div></div></li>
+    `);
+
+        /* تفعيل التبويبات */
+        $('#profileTabsNav .nav-link').first().click();
+      }
+
+      /* ── التبويبات ───────────────────────────────────────── */
+      $(document).on('click', '#profileTabsNav .nav-link', function () {
+        $('#profileTabsNav .nav-link').removeClass('active');
+        $(this).addClass('active');
+        var tab = $(this).data('tab');
+        $('#tabBasic,#tabMembers,#tabVuln,#tabHistory').addClass('d-none');
+        $('#tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).removeClass('d-none');
+      });
+
+      $('#btnTransferFamily').on('click', function () { window.location.href = 'transfers.html'; });
+      $('#btnEditFamily').on('click', function () {
+        if (selectedFamily) {
+          window.location.href = 'edit-family.html?familyId=' + encodeURIComponent(selectedFamily.id);
+        } else {
+          window.location.href = 'families.html';
+        }
+      });
+
+      /* ── من URL query ────────────────────────────────────── */
+      var urlQ = new URLSearchParams(window.location.search).get('q');
+      if (urlQ) { $('#mainSearchInput').val(urlQ); doSearch(); }
+    });
+  </script>
+</body>
+
+</html>

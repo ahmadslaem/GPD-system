@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>لوحة موظف الإدخال</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+  <style>
+    /* ── تخصيص لوحة الموظف ─── */
+    .staff-hero {
+      background: linear-gradient(135deg, #0f2744 0%, #1a4a7a 100%);
+      border-radius: 14px;
+      padding: 20px 24px;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .staff-hero__title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .staff-hero__sub {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .staff-hero__camp {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+
+    .staff-hero__camp .label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .staff-hero__camp .value {
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* بطاقات الإجراءات السريعة */
+    .quick-action {
+      background: #fff;
+      border: 1.5px solid #e2e8ef;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: block;
+    }
+
+    .quick-action:hover {
+      border-color: #1a6bb5;
+      background: #f0f6ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(26, 107, 181, 0.12);
+    }
+
+    .quick-action__icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin: 0 auto 12px;
+    }
+
+    .quick-action__label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a2332;
+    }
+
+    .quick-action__sub {
+      font-size: 11.5px;
+      color: #7a8a9a;
+      margin-top: 4px;
+    }
+
+    /* بطاقة إحصاء المخيم */
+    .camp-stat {
+      background: #fff;
+      border: 1px solid #e2e8ef;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .camp-stat__icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .camp-stat__val {
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .camp-stat__label {
+      font-size: 11.5px;
+      color: #7a8a9a;
+      margin-top: 3px;
+    }
+
+    /* بطاقة طلب النقل في قائمة الموظف */
+    .my-transfer-card {
+      background: #fff;
+      border: 1px solid #e2e8ef;
+      border-radius: 11px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mtc-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mtc-status.pending {
+      background: #f0a800;
+    }
+
+    .mtc-status.approved {
+      background: #2d8a4e;
+    }
+
+    .mtc-status.rejected {
+      background: #b03030;
+    }
+
+    .mtc-id {
+      font-size: 11px;
+      color: #9aaabb;
+      font-family: monospace;
+    }
+
+    .mtc-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a2332;
+    }
+
+    .mtc-route {
+      font-size: 11.5px;
+      color: #5a6a7a;
+      margin-top: 2px;
+    }
+
+    /* بطاقة نتيجة البحث للموظف */
+    .staff-search-result {
+      background: #fff;
+      border: 1px solid #e2e8ef;
+      border-radius: 11px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .staff-search-result:hover {
+      border-color: #1a6bb5;
+    }
+
+    .ssr-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1a2332;
+    }
+
+    .ssr-meta {
+      font-size: 12px;
+      color: #7a8a9a;
+      margin-top: 2px;
+    }
+
+    /* حالة القيد (البحث محدود بالمخيم) */
+    .scope-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #fdf3e0;
+      color: #9a6010;
+      border: 1px solid #f0cc80;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 3px 10px;
+    }
+
+    .scope-badge.global {
+      background: #e8f1fb;
+      color: #1a4a7a;
+      border-color: #c5d9f0;
+    }
+
+    /* مودال إنشاء طلب نقل */
+    .nid-verify-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nid-verify-row input {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="d-flex" id="app-wrapper">
+    <div id="main-content" class="d-flex flex-column">
+      <main id="content-area" class="flex-grow-1 p-3 p-md-4">
+
+        <!-- ══════════════════════════════════════════════════════
+    بطاقة الترحيب + معلومات المخيم
+  ══════════════════════════════════════════════════════ -->
+        <div class="staff-hero" id="staffHero">
+          <div>
+            <div class="staff-hero__title" id="heroTitle">مرحباً، محمد</div>
+            <div class="staff-hero__sub">
+              <i class="fa-regular fa-clock me-1"></i>
+              <span id="heroDate"></span>
+            </div>
+            <div style="margin-top:10px;">
+              <span
+                style="background:rgba(255,255,255,0.15);border-radius:20px;padding:3px 10px;font-size:11.5px;color:rgba(255,255,255,0.85);">
+                <i class="fa-solid fa-user-pen me-1"></i>موظف إدخال بيانات
+              </span>
+            </div>
+          </div>
+          <div class="staff-hero__camp">
+            <div class="label"><i class="fa-solid fa-location-dot me-1"></i>مخيم عملك</div>
+            <div class="value" id="heroCamp">—</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;" id="heroCampCount">— أسرة مسجلة
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+    الإجراءات السريعة (4 بطاقات)
+  ══════════════════════════════════════════════════════ -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-lg-3">
+            <a href="register.html" class="quick-action">
+              <div class="quick-action__icon" style="background:#e8f1fb;color:#1a6bb5;">
+                <i class="fa-solid fa-user-plus"></i>
+              </div>
+              <div class="quick-action__label">تسجيل أسرة</div>
+              <div class="quick-action__sub">تسجيل أسرة نازحة جديدة</div>
+            </a>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="quick-action" id="qaSearch">
+              <div class="quick-action__icon" style="background:#eaf5ee;color:#1a6a2a;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <div class="quick-action__label">البحث والاستعلام</div>
+              <div class="quick-action__sub">ابحث عن أسرة أو فرد</div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="quick-action" id="qaTransfer">
+              <div class="quick-action__icon" style="background:#fdf3e0;color:#9a6010;">
+                <i class="fa-solid fa-right-left"></i>
+              </div>
+              <div class="quick-action__label">طلب نقل أسرة</div>
+              <div class="quick-action__sub">تقديم طلب نقل لمخيم آخر</div>
+            </div>
+          </div>
+          <div class="col-6 col-lg-3">
+            <div class="quick-action" id="qaMyTransfers">
+              <div class="quick-action__icon" style="background:#fdf0f0;color:#b03030;">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div class="quick-action__label">طلباتي</div>
+              <div class="quick-action__sub">متابعة حالة طلبات النقل</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+    إحصاءات المخيم (جلسة العمل الحالية)
+  ══════════════════════════════════════════════════════ -->
+        <div class="content-card mb-4">
+          <div class="content-card__header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="content-card__title">
+              <i class="fa-solid fa-chart-simple me-2 text-primary"></i>
+              إحصاءات مخيمك — <span id="campStatTitle">—</span>
+            </h2>
+            <span style="font-size:12px;color:#7a8a9a;">
+              <i class="fa-regular fa-clock me-1"></i>آخر تحديث: <span id="lastStatUpdate">—</span>
+            </span>
+          </div>
+          <div class="content-card__body">
+            <div class="row g-3" id="campStatsRow">
+              <div class="col-6 col-sm-3">
+                <div class="camp-stat">
+                  <div class="camp-stat__icon" style="background:#e8f1fb;color:#1a6bb5;">
+                    <i class="fa-solid fa-house-chimney-user"></i>
+                  </div>
+                  <div>
+                    <div class="camp-stat__val" id="cs1">—</div>
+                    <div class="camp-stat__label">إجمالي الأسر</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="camp-stat">
+                  <div class="camp-stat__icon" style="background:#eaf5ee;color:#1a6a2a;">
+                    <i class="fa-solid fa-people-group"></i>
+                  </div>
+                  <div>
+                    <div class="camp-stat__val" id="cs2">—</div>
+                    <div class="camp-stat__label">إجمالي الأفراد</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="camp-stat">
+                  <div class="camp-stat__icon" style="background:#fdf0f0;color:#b03030;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div>
+                    <div class="camp-stat__val" id="cs3">—</div>
+                    <div class="camp-stat__label">ضعف عالٍ</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-sm-3">
+                <div class="camp-stat">
+                  <div class="camp-stat__icon" style="background:#fdf3e0;color:#9a6010;">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                  </div>
+                  <div>
+                    <div class="camp-stat__val" id="cs4">—</div>
+                    <div class="camp-stat__label">طلبات نقل معلقة</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- أشرطة التوزيع الديموغرافي داخل المخيم -->
+            <div class="mt-4" id="campDemoSection">
+              <div
+                style="font-size:12.5px;font-weight:600;color:#3a4a5a;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;">
+                التوزيع الديموغرافي</div>
+              <div class="row g-2">
+                <div class="col-12 col-md-4">
+                  <div
+                    style="font-size:12px;color:#5a6a7a;display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span><i class="fa-solid fa-person me-1" style="color:#1a6bb5;"></i>بالغون</span>
+                    <span id="demoAdults">—</span>
+                  </div>
+                  <div class="progress" style="height:7px;">
+                    <div class="progress-bar" style="background:#1a6bb5;width:0%;" data-demo="adults"></div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div
+                    style="font-size:12px;color:#5a6a7a;display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span><i class="fa-solid fa-child me-1" style="color:#2d8a4e;"></i>أطفال &lt;16</span>
+                    <span id="demoChildren">—</span>
+                  </div>
+                  <div class="progress" style="height:7px;">
+                    <div class="progress-bar" style="background:#2d8a4e;width:0%;" data-demo="children"></div>
+                  </div>
+                </div>
+                <div class="col-12 col-md-4">
+                  <div
+                    style="font-size:12px;color:#5a6a7a;display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span><i class="fa-solid fa-wheelchair me-1" style="color:#9a6010;"></i>ذوو إعاقة</span>
+                    <span id="demoPwd">—</span>
+                  </div>
+                  <div class="progress" style="height:7px;">
+                    <div class="progress-bar" style="background:#f0a800;width:0%;" data-demo="pwd"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+    الصف السفلي: البحث السريع + طلبات النقل
+  ══════════════════════════════════════════════════════ -->
+        <div class="row g-3">
+
+          <!-- ── البحث والاستعلام ─── -->
+          <div class="col-12 col-lg-6">
+            <div class="content-card h-100">
+              <div class="content-card__header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="content-card__title">
+                  <i class="fa-solid fa-magnifying-glass me-2 text-success"></i>
+                  البحث والاستعلام
+                </h2>
+                <!-- مؤشر نطاق البحث -->
+                <div>
+                  <span class="scope-badge" id="searchScopeBadge">
+                    <i class="fa-solid fa-tent"></i>
+                    محلي — <span id="scopeCampName">مخيمك</span>
+                  </span>
+                </div>
+              </div>
+              <div class="content-card__body">
+                <!-- وضع البحث -->
+                <div class="d-flex gap-1 mb-3"
+                  style="background:#f0f4f8;border-radius:9px;padding:3px;width:fit-content;">
+                  <button class="search-mode-tab active" id="btnScopeLocal" style="font-size:12px;padding:6px 12px;">
+                    <i class="fa-solid fa-tent me-1"></i>محلي
+                  </button>
+                  <button class="search-mode-tab" id="btnScopeGlobal" style="font-size:12px;padding:6px 12px;">
+                    <i class="fa-solid fa-globe me-1"></i>شامل
+                  </button>
+                </div>
+                <div style="position:relative;margin-bottom:10px;">
+                  <i class="fa-solid fa-magnifying-glass"
+                    style="position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#9aaabb;font-size:13px;pointer-events:none;"></i>
+                  <input type="text" id="staffSearchInput" class="form-control"
+                    placeholder="ابحث بالاسم أو رقم الهوية..." style="padding-right:34px;" />
+                </div>
+                <div id="staffSearchResults">
+                  <!-- نتائج البحث تظهر هنا -->
+                  <div style="text-align:center;padding:24px;color:#b0bbc8;" id="searchPlaceholder">
+                    <i class="fa-solid fa-magnifying-glass"
+                      style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i>
+                    <div style="font-size:13px;">اكتب للبحث</div>
+                  </div>
+                </div>
+                <!-- رابط صفحة البحث الكاملة -->
+                <div style="text-align:center;padding-top:10px;border-top:1px solid #f0f4f8;margin-top:10px;">
+                  <a href="search.html" style="font-size:12.5px;color:#1a6bb5;text-decoration:none;font-weight:500;">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>فتح صفحة البحث الكاملة
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── طلبات النقل المُقدَّمة ─── -->
+          <div class="col-12 col-lg-6">
+            <div class="content-card h-100">
+              <div class="content-card__header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="content-card__title">
+                  <i class="fa-solid fa-right-left me-2 text-warning"></i>
+                  طلبات النقل المُقدَّمة
+                </h2>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTransferModal">
+                  <i class="fa-solid fa-plus me-1"></i>طلب جديد
+                </button>
+              </div>
+              <div class="content-card__body">
+                <!-- مرشحات الحالة -->
+                <div class="d-flex gap-1 mb-3 flex-wrap">
+                  <button class="filter-chip active" data-tfilter="all">الكل</button>
+                  <button class="filter-chip" data-tfilter="pending">
+                    <i class="fa-solid fa-circle" style="color:#f0a800;font-size:7px;margin-left:3px;"></i>معلق
+                  </button>
+                  <button class="filter-chip" data-tfilter="approved">
+                    <i class="fa-solid fa-circle" style="color:#2d8a4e;font-size:7px;margin-left:3px;"></i>موافق
+                  </button>
+                  <button class="filter-chip" data-tfilter="rejected">
+                    <i class="fa-solid fa-circle" style="color:#b03030;font-size:7px;margin-left:3px;"></i>مرفوض
+                  </button>
+                </div>
+                <div id="myTransfersList">
+                  <!-- الطلبات تظهر هنا -->
+                </div>
+                <!-- إحصاء مختصر -->
+                <div
+                  style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid #f0f4f8;">
+                  <div style="text-align:center;padding:8px;background:#fdf3e0;border-radius:8px;">
+                    <div style="font-size:18px;font-weight:700;color:#9a6010;" id="tcountPending">0</div>
+                    <div style="font-size:10.5px;color:#b07a18;">معلق</div>
+                  </div>
+                  <div style="text-align:center;padding:8px;background:#eaf5ee;border-radius:8px;">
+                    <div style="font-size:18px;font-weight:700;color:#1a6a2a;" id="tcountApproved">0</div>
+                    <div style="font-size:10.5px;color:#2d8a4e;">موافق</div>
+                  </div>
+                  <div style="text-align:center;padding:8px;background:#fdf0f0;border-radius:8px;">
+                    <div style="font-size:18px;font-weight:700;color:#b03030;" id="tcountRejected">0</div>
+                    <div style="font-size:10.5px;color:#cc4444;">مرفوض</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /row -->
+
+      </main>
+    </div>
+  </div><!-- /app-wrapper -->
+
+  <!-- ══════════════════════════════════════════════════════
+  مودال: طلب نقل جديد
+══════════════════════════════════════════════════════ -->
+  <div class="modal fade" id="newTransferModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa-solid fa-right-left me-2 text-warning"></i>
+            تقديم طلب نقل أسرة
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="field-label">رقم هوية رب الأسرة <span class="field-required">*</span></label>
+            <div class="nid-verify-row">
+              <input type="text" id="ntNid" class="form-control" placeholder="ادخل رقم الهوية للتحقق" />
+              <button class="btn btn-outline-primary" id="btnNtCheck">
+                <i class="fa-solid fa-search"></i>
+              </button>
+            </div>
+            <div id="ntResult" class="mt-2"></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="field-label">من مخيم <span class="field-required">*</span></label>
+            <input type="text" class="form-control" id="ntFromCamp" readonly style="background:#f8fafc;" />
+          </div>
+
+          <div class="mb-3">
+            <label class="field-label">إلى مخيم <span class="field-required">*</span></label>
+            <select class="form-select" id="ntToCamp">
+              <option value="">اختر المخيم المقصود...</option>
+              <option>مخيم جباليا</option>
+              <option>مخيم خان يونس</option>
+              <option>مواصي رفح</option>
+              <option>مخيم النصيرات</option>
+              <option>مخيم البريج</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="field-label">سبب طلب النقل <span class="field-required">*</span></label>
+            <textarea class="form-control" id="ntReason" rows="3"
+              placeholder="اشرح سبب طلب النقل بالتفصيل..."></textarea>
+          </div>
+
+          <!-- تنبيه: الطلب يذهب للمدير -->
+          <div
+            style="background:#e8f1fb;border:1px solid #c5d9f0;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#1a4a7a;">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            سيُرسَل الطلب إلى مدير المنظمة للمراجعة. ستتمكن من متابعة حالته في قائمة طلباتك.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+          <button class="btn btn-primary" id="btnSubmitTransfer">
+            <i class="fa-solid fa-paper-plane me-1"></i>إرسال الطلب
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+  مودال: تفاصيل نتيجة البحث (عرض ملف الأسرة مبسط)
+══════════════════════════════════════════════════════ -->
+  <div class="modal fade" id="familyQuickModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="fqmTitle">ملف الأسرة</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="fqmBody"></div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-secondary" data-bs-dismiss="modal">إغلاق</button>
+          <a href="register.html" class="btn btn-primary">
+            <i class="fa-solid fa-pen me-1"></i>تعديل البيانات
+          </a>
+          <button class="btn btn-warning" id="fqmTransferBtn" data-bs-toggle="modal" data-bs-target="#newTransferModal">
+            <i class="fa-solid fa-right-left me-1"></i>طلب نقل
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    $(document).ready(function () {
+
+      /* ── حراسة الصفحة ─────────────────────────────────────── */
+      if (!NDS.auth.guardPage('index')) return;
+
+      var session = NDS.auth.getSession();
+      var campName = session.camp || 'مخيم جباليا';
+
+      /* ── بيانات المخيمات (تجريبية — ستُجلب من API) ─────────── */
+      var campData = {
+        'مخيم جباليا': { families: 3412, persons: 18976, high: 812, pending: 12, adults: 11300, children: 5810, pwd: 1240 },
+        'مخيم خان يونس': { families: 2710, persons: 15090, high: 645, pending: 8, adults: 8900, children: 4610, pwd: 980 },
+        'مواصي رفح': { families: 980, persons: 5440, high: 234, pending: 5, adults: 3200, children: 1780, pwd: 360 },
+        'مخيم النصيرات': { families: 1830, persons: 10186, high: 436, pending: 9, adults: 6100, children: 3320, pwd: 662 },
+        'مخيم البريج': { families: 1495, persons: 8318, high: 356, pending: 6, adults: 4990, children: 2710, pwd: 541 },
+      };
+
+      var myTransfers = [
+        { id: 'T-047', nid: '276-1985-0034', name: 'أحمد محمد سليم', from: campName, to: 'جباليا', status: 'pending', date: '6 أبريل' },
+        { id: 'T-044', nid: '291-1979-0112', name: 'فاطمة إبراهيم', from: campName, to: 'رفح', status: 'approved', date: '3 أبريل' },
+        { id: 'T-038', nid: '283-1992-0088', name: 'خالد يوسف الأغا', from: campName, to: 'النصيرات', status: 'rejected', date: '1 أبريل' },
+      ];
+
+      var allFamilies = [
+        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: campName, total: 7, level: 'high', fhh: true },
+        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: campName, total: 9, level: 'high', fhh: false },
+        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: campName, total: 6, level: 'medium', fhh: false },
+        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: campName, total: 3, level: 'medium', fhh: true },
+        { id: 'F-00840', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: campName, total: 5, level: 'low', fhh: true },
+        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'مخيم خان يونس', total: 4, level: 'medium', fhh: false },
+        { id: 'F-00844', nid: '302-1987-0055', name: 'ماجد رامز الشوبكي', camp: 'مواصي رفح', total: 8, level: 'high', fhh: false },
+      ];
+
+      var searchScope = 'local'; /* local | global */
+      var activeFilter = 'all';
+
+      /* ── تهيئة واجهة الموظف ────────────────────────────────── */
+      function initStaffUI() {
+        /* اسم + تاريخ */
+        var firstName = session.name.split(' ')[0];
+        $('#heroTitle').text('مرحباً، ' + firstName);
+        var now = new Date();
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        $('#heroDate').text(now.toLocaleDateString('ar-EG', options));
+        $('#lastStatUpdate').text(now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
+
+        /* اسم المخيم */
+        $('#heroCamp').text(campName.replace('مخيم ', ''));
+        $('#campStatTitle').text(campName);
+        $('#scopeCampName').text(campName.replace('مخيم ', ''));
+
+        /* إحصاءات المخيم */
+        var data = campData[campName] || campData['مخيم جباليا'];
+        $('#heroCampCount').text(data.families.toLocaleString('ar-EG') + ' أسرة مسجلة');
+
+        /* عداد تصاعدي للبطاقات */
+        animateNum($('#cs1'), data.families);
+        animateNum($('#cs2'), data.persons);
+        animateNum($('#cs3'), data.high);
+        animateNum($('#cs4'), data.pending);
+
+        /* أشرطة الديموغرافيا */
+        var total = data.persons;
+        $('#demoAdults').text(data.adults.toLocaleString('ar-EG') + ' (' + Math.round(data.adults / total * 100) + '%)');
+        $('#demoChildren').text(data.children.toLocaleString('ar-EG') + ' (' + Math.round(data.children / total * 100) + '%)');
+        $('#demoPwd').text(data.pwd.toLocaleString('ar-EG') + ' (' + Math.round(data.pwd / total * 100) + '%)');
+
+        setTimeout(function () {
+          $('[data-demo="adults"]').css('width', Math.round(data.adults / total * 100) + '%');
+          $('[data-demo="children"]').css('width', Math.round(data.children / total * 100) + '%');
+          $('[data-demo="pwd"]').css('width', Math.round(data.pwd / total * 100) + '%');
+        }, 400);
+
+        /* حقل "من مخيم" في مودال النقل */
+        $('#ntFromCamp').val(campName);
+      }
+
+      /* عداد تصاعدي */
+      function animateNum($el, target) {
+        $({ n: 0 }).animate({ n: target }, {
+          duration: 1200, easing: 'swing',
+          step: function () { $el.text(Math.floor(this.n).toLocaleString('ar-EG')); },
+          complete: function () { $el.text(target.toLocaleString('ar-EG')); }
+        });
+      }
+
+      /* ── طلبات النقل ────────────────────────────────────────── */
+      function renderMyTransfers(filter) {
+        filter = filter || activeFilter;
+        var filtered = myTransfers.filter(function (t) {
+          return filter === 'all' || t.status === filter;
+        });
+
+        /* عداد الحالات */
+        $('#tcountPending').text(myTransfers.filter(function (t) { return t.status === 'pending'; }).length);
+        $('#tcountApproved').text(myTransfers.filter(function (t) { return t.status === 'approved'; }).length);
+        $('#tcountRejected').text(myTransfers.filter(function (t) { return t.status === 'rejected'; }).length);
+
+        if (!filtered.length) {
+          $('#myTransfersList').html('<div style="text-align:center;padding:20px;color:#b0bbc8;font-size:13px;"><i class="fa-solid fa-inbox" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.4;"></i>لا توجد طلبات</div>');
+          return;
+        }
+
+        var statusConfig = {
+          pending: { color: '#f0a800', label: 'معلق — بانتظار الموافقة', badge: '<span class="badge bg-warning text-dark">معلق</span>' },
+          approved: { color: '#2d8a4e', label: 'تمت الموافقة', badge: '<span class="badge bg-success">موافق</span>' },
+          rejected: { color: '#b03030', label: 'مرفوض', badge: '<span class="badge bg-danger">مرفوض</span>' }
+        };
+
+        var html = filtered.map(function (t) {
+          var sc = statusConfig[t.status];
+          return `
+        <div class="my-transfer-card">
+          <div class="mtc-status ${t.status}"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span class="mtc-id">${t.id}</span>
+              ${sc.badge}
+            </div>
+            <div class="mtc-name">${t.name}</div>
+            <div class="mtc-route">
+              <span style="color:#b03030;">${t.from.replace('مخيم ', '')}</span>
+              <i class="fa-solid fa-arrow-left mx-1" style="font-size:10px;color:#9aaabb;"></i>
+              <span style="color:#1a6a2a;">${t.to}</span>
+              <span style="color:#c0c8d4;margin: 0 5px;">·</span>
+              ${t.date}
+            </div>
+          </div>
+          ${t.status === 'rejected' ?
+              `<i class="fa-solid fa-circle-xmark" style="color:#b03030;font-size:16px;" title="مرفوض"></i>` :
+              t.status === 'approved' ?
+                `<i class="fa-solid fa-circle-check" style="color:#2d8a4e;font-size:16px;" title="موافق"></i>` :
+                `<i class="fa-regular fa-clock" style="color:#f0a800;font-size:16px;" title="معلق"></i>`
+            }
+        </div>`;
+        }).join('');
+        $('#myTransfersList').html(html);
+      }
+
+      $(document).on('click', '.filter-chip[data-tfilter]', function () {
+        $('.filter-chip[data-tfilter]').removeClass('active');
+        $(this).addClass('active');
+        activeFilter = $(this).data('tfilter');
+        renderMyTransfers(activeFilter);
+      });
+
+      /* ── البحث ─────────────────────────────────────────────── */
+      /* وضع البحث */
+      $('#btnScopeLocal').on('click', function () {
+        searchScope = 'local';
+        $(this).addClass('active'); $('#btnScopeGlobal').removeClass('active');
+        $('#searchScopeBadge').removeClass('global').html('<i class="fa-solid fa-tent me-1"></i>محلي — <span id="scopeCampName">' + campName.replace('مخيم ', '') + '</span>');
+        doStaffSearch($('#staffSearchInput').val());
+      });
+
+      $('#btnScopeGlobal').on('click', function () {
+        searchScope = 'global';
+        $(this).addClass('active'); $('#btnScopeLocal').removeClass('active');
+        $('#searchScopeBadge').addClass('global').html('<i class="fa-solid fa-globe me-1"></i>شامل — كل المخيمات');
+        doStaffSearch($('#staffSearchInput').val());
+      });
+
+      $('#staffSearchInput').on('input', function () {
+        doStaffSearch($(this).val());
+      });
+
+      function doStaffSearch(q) {
+        q = (q || '').trim().toLowerCase();
+        if (!q) {
+          $('#staffSearchResults').html('<div style="text-align:center;padding:24px;color:#b0bbc8;" id="searchPlaceholder"><i class="fa-solid fa-magnifying-glass" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i><div style="font-size:13px;">اكتب للبحث</div></div>');
+          return;
+        }
+
+        var results = allFamilies.filter(function (f) {
+          var matchQ = f.name.toLowerCase().includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q);
+          var matchScope = searchScope === 'global' || f.camp === campName;
+          return matchQ && matchScope;
+        });
+
+        if (!results.length) {
+          $('#staffSearchResults').html('<div style="text-align:center;padding:20px;color:#b0bbc8;font-size:13px;"><i class="fa-solid fa-face-frown" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.4;"></i>لا توجد نتائج مطابقة</div>');
+          return;
+        }
+
+        var lvlBadge = function (l) { return { high: '<span class="badge bg-danger">عالٍ</span>', medium: '<span class="badge bg-warning text-dark">متوسط</span>', low: '<span class="badge bg-success">منخفض</span>' }[l]; };
+
+        var html = results.map(function (f) {
+          var campTag = searchScope === 'global' && f.camp !== campName
+            ? '<span style="font-size:10px;background:#fff3cd;color:#7a5010;padding:2px 6px;border-radius:4px;margin-right:4px;"><i class="fa-solid fa-location-dot me-1"></i>' + f.camp + '</span>'
+            : '';
+          return `
+        <div class="staff-search-result" data-fid="${f.id}">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div class="ssr-name">${f.name}</div>
+            ${campTag}
+            ${lvlBadge(f.level)}
+          </div>
+          <div class="ssr-meta">
+            <span>${f.id}</span>
+            <span style="color:#d0d8e4;margin:0 5px;">·</span>
+            <span>${f.nid}</span>
+            <span style="color:#d0d8e4;margin:0 5px;">·</span>
+            <span>${f.total} أفراد</span>
+            ${f.fhh ? '<span style="margin-right:5px;font-size:10px;background:#fbeaf0;color:#8a2050;padding:1px 5px;border-radius:4px;">FHH</span>' : ''}
+          </div>
+        </div>`;
+        }).join('');
+        $('#staffSearchResults').html(html);
+      }
+
+      /* ── فتح ملف الأسرة (عرض مبسط) ─────────────────────────── */
+      $(document).on('click', '.staff-search-result', function () {
+        var fid = $(this).data('fid');
+        var f = allFamilies.find(function (x) { return x.id === fid; });
+        if (!f) return;
+
+        $('#fqmTitle').text('ملف الأسرة — ' + f.id);
+        var isOtherCamp = f.camp !== campName;
+        var lvlBadge = { high: '<span class="badge bg-danger">ضعف عالٍ</span>', medium: '<span class="badge bg-warning text-dark">ضعف متوسط</span>', low: '<span class="badge bg-success">ضعف منخفض</span>' }[f.level];
+
+        var editBtn = isOtherCamp ? 'style="display:none"' : '';
+        var transferNote = isOtherCamp
+          ? '<div style="background:#fff3cd;border:1px solid #f0cc80;border-radius:8px;padding:10px 13px;font-size:12.5px;color:#7a5010;margin-top:12px;"><i class="fa-solid fa-circle-info me-1"></i>هذه الأسرة مسجلة في مخيم آخر. يمكنك تقديم طلب نقل فقط.</div>'
+          : '';
+
+        $('#fqmBody').html(`
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="width:48px;height:48px;border-radius:50%;background:#e8f1fb;color:#1a6bb5;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          ${f.name.charAt(0)}.${(f.name.split(' ')[1] || '')[0] || ''}
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1a2332;">${f.name}</div>
+          <div style="font-size:12px;color:#7a8a9a;margin-top:2px;">${f.id} · ${f.nid}</div>
+          <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span class="badge bg-primary">${f.camp}</span>
+            ${lvlBadge}
+            ${f.fhh ? '<span class="badge" style="background:#fbeaf0;color:#8a2050;">FHH</span>' : ''}
+          </div>
+        </div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:14px;">
+        <div class="row g-2" style="font-size:13px;">
+          <div class="col-6"><span style="color:#7a8a9a;">إجمالي الأفراد:</span> <b>${f.total}</b></div>
+          <div class="col-6"><span style="color:#7a8a9a;">المخيم:</span> <b>${f.camp}</b></div>
+          <div class="col-6"><span style="color:#7a8a9a;">رقم الهوية:</span> <b>${f.nid}</b></div>
+          <div class="col-6"><span style="color:#7a8a9a;">أسرة FHH:</span> <b>${f.fhh ? 'نعم' : 'لا'}</b></div>
+        </div>
+      </div>
+      ${transferNote}
+    `);
+
+        /* إخفاء زر التعديل إذا أسرة من مخيم آخر */
+        if (isOtherCamp) {
+          $('#familyQuickModal .modal-footer .btn-primary').hide();
+        } else {
+          $('#familyQuickModal .modal-footer .btn-primary').show();
+        }
+
+        /* تعبئة حقل الهوية في مودال النقل */
+        $('#ntNid').val(f.nid);
+        $('#ntFromCamp').val(f.camp);
+
+        bootstrap.Modal.getInstance($('#newTransferModal')[0])?.hide();
+        new bootstrap.Modal($('#familyQuickModal')[0]).show();
+      });
+
+      /* ── مودال طلب النقل ────────────────────────────────────── */
+      var fakeNids = {
+        '276-1985-0034': 'أحمد محمد سليم الأغا',
+        '291-1979-0112': 'فاطمة إبراهيم النجار',
+        '283-1992-0088': 'خالد يوسف الأغا',
+      };
+
+      $('#btnNtCheck').on('click', function () {
+        var nid = $('#ntNid').val().trim();
+        var found = fakeNids[nid];
+        if (found) {
+          $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + found + '</b></div>');
+        } else if (nid) {
+          $('#ntResult').html('<div style="background:#fdf0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a2020;"><i class="fa-solid fa-ban me-1"></i>لم يُعثر على أسرة بهذا الرقم</div>');
+        }
+      });
+
+      $('#btnSubmitTransfer').on('click', function () {
+        var nid = $('#ntNid').val().trim();
+        var toCamp = $('#ntToCamp').val();
+        var reason = $('#ntReason').val().trim();
+        if (!nid || !toCamp || !reason) { alert('يرجى ملء جميع الحقول.'); return; }
+        if (toCamp === campName) { alert('المخيم المقصود يجب أن يختلف عن مخيمك الحالي.'); return; }
+
+        var newT = {
+          id: 'T-' + (Math.floor(Math.random() * 900) + 100),
+          nid: nid,
+          name: fakeNids[nid] || 'أسرة جديدة',
+          from: campName,
+          to: toCamp.replace('مخيم ', ''),
+          status: 'pending',
+          date: 'اليوم'
+        };
+        myTransfers.unshift(newT);
+        bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
+        $('#ntNid,#ntReason').val('');
+        $('#ntResult').html('');
+        $('#ntToCamp').val('');
+        renderMyTransfers('all');
+        $('.filter-chip[data-tfilter]').removeClass('active');
+        $('.filter-chip[data-tfilter="all"]').addClass('active');
+
+        /* رسالة نجاح */
+        $('body').append('<div id="toastMsg" style="position:fixed;bottom:24px;right:24px;background:#1a6a2a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);"><i class="fa-solid fa-check me-2"></i>تم إرسال طلب النقل بنجاح!</div>');
+        setTimeout(function () { $('#toastMsg').fadeOut(300, function () { $(this).remove(); }); }, 3000);
+      });
+
+      /* ── روابط الإجراءات السريعة ────────────────────────────── */
+      $('#qaSearch').on('click', function () { $('#staffSearchInput').focus(); });
+      $('#qaTransfer').on('click', function () {
+        new bootstrap.Modal($('#newTransferModal')[0]).show();
+      });
+      $('#qaMyTransfers').on('click', function () {
+        $('html,body').animate({ scrollTop: $('#myTransfersList').offset().top - 80 }, 400);
+      });
+
+      /* ── تهيئة ──────────────────────────────────────────────── */
+      initStaffUI();
+      renderMyTransfers('all');
+    });
+  </script>
+</body>
+
+</html>

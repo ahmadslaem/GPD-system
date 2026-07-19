@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>تسجيل الدخول — نظام إدارة الأسر النازحة</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="css/all.min.css">
+  <link rel="stylesheet" href="css/css2.css">
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/pages.css" />
+</head>
+
+<body>
+
+  <!-- صفحة تسجيل الدخول — لا تحتاج سايدبار -->
+  <div class="login-page">
+
+    <!-- ── مرحلة 1: نموذج تسجيل الدخول ─────────────────────── -->
+    <div class="login-box" id="loginStep">
+      <div class="login-logo">
+        <i class="fa-solid fa-house-circle-check"></i>
+      </div>
+      <h1 class="login-title">نظام إدارة الأسر النازحة</h1>
+      <p class="login-sub">قطاع غزة — Al-Azhar University</p>
+
+      <!-- رسالة الخطأ — تُظهر بـ jQuery -->
+      <div class="login-error" id="loginError">
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+        <span id="loginErrorText">بيانات الدخول غير صحيحة. حاول مرة أخرى.</span>
+      </div>
+
+      <div class="mb-3">
+        <label class="login-label" for="username">اسم المستخدم / البريد الإلكتروني</label>
+        <input type="text" id="username" class="login-input" placeholder="أدخل اسم المستخدم" autocomplete="username" />
+      </div>
+
+      <div class="mb-3">
+        <label class="login-label" for="password">كلمة المرور</label>
+        <div style="position:relative;">
+          <input type="password" id="password" class="login-input" placeholder="أدخل كلمة المرور"
+            autocomplete="current-password" />
+          <!-- زر إظهار/إخفاء كلمة المرور -->
+          <button type="button" id="togglePass"
+            style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9aaabb;cursor:pointer;font-size:14px;">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-login" id="btnLogin">
+        <span id="loginBtnText"><i class="fa-solid fa-right-to-bracket me-2"></i>دخول</span>
+        <span id="loginBtnLoading" class="d-none">
+          <span class="spinner-border spinner-border-sm me-2"></span>جارٍ التحقق...
+        </span>
+      </button>
+
+      <!-- بيانات تجريبية للمطورين -->
+      <div style="margin-top:24px;padding:12px;background:#f8fafc;border-radius:9px;border:1px dashed #dde4ee;">
+        <div style="font-size:11px;color:#9aaabb;margin-bottom:8px;text-align:center;">بيانات تجريبية للاختبار</div>
+        <div class="d-flex flex-column gap-2">
+          <button class="demo-btn" data-user="admin" data-pass="admin123"
+            style="background:#e8f1fb;border:1px solid #c5d9f0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a4a7a;display:flex;justify-content:space-between;align-items:center;">
+            <span><i class="fa-solid fa-user-shield me-1"></i>مدير النظام</span>
+            <span style="color:#7a8a9a;">admin / admin123</span>
+          </button>
+          <button class="demo-btn" data-user="manager" data-pass="manager123"
+            style="background:#eaf5ee;border:1px solid #a0d8b0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a5a2a;display:flex;justify-content:space-between;align-items:center;">
+            <span><i class="fa-solid fa-user-tie me-1"></i>مدير المنظمة</span>
+            <span style="color:#7a8a9a;">manager / manager123</span>
+          </button>
+          <button class="demo-btn" data-user="staff" data-pass="staff123"
+            style="background:#fdf3e0;border:1px solid #f0cc80;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#7a5010;display:flex;justify-content:space-between;align-items:center;">
+            <span><i class="fa-solid fa-user-pen me-1"></i>موظف إدخال بيانات</span>
+            <span style="color:#7a8a9a;">staff / staff123</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── مرحلة 2: اختيار المخيم (لموظف الإدخال فقط) ────────── -->
+    <div class="camp-selection-card d-none" id="campStep">
+      <div class="text-center mb-4">
+        <div class="login-logo mx-auto mb-3">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <span class="camp-step-badge">الخطوة 2 من 2</span>
+        <h2 class="login-title mt-2">اختر المخيم</h2>
+        <p class="login-sub">يجب تحديد مخيم العمل قبل بدء إدخال البيانات</p>
+      </div>
+
+      <!-- بادج بيانات المستخدم -->
+      <div
+        style="background:#f0f6ff;border:1px solid #c5d9f0;border-radius:9px;padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+        <div
+          style="width:34px;height:34px;border-radius:50%;background:#1a6bb5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;"
+          id="campStepAvatar">م</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1a2332;" id="campStepName">—</div>
+          <div style="font-size:11px;color:#7a8a9a;">موظف إدخال بيانات</div>
+        </div>
+      </div>
+
+      <!-- قائمة المخيمات -->
+      <ul class="camp-list" id="campList">
+        <li class="camp-list-item" data-camp="مخيم جباليا" data-count="3412">
+          <div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>
+          <div style="flex:1;">
+            <div class="camp-name-text">مخيم جباليا</div>
+            <div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>3,412 أسرة مسجلة</div>
+          </div>
+          <i class="fa-solid fa-circle-check camp-check"></i>
+        </li>
+        <li class="camp-list-item" data-camp="مخيم خان يونس" data-count="2710">
+          <div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>
+          <div style="flex:1;">
+            <div class="camp-name-text">مخيم خان يونس</div>
+            <div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>2,710 أسرة مسجلة</div>
+          </div>
+          <i class="fa-solid fa-circle-check camp-check"></i>
+        </li>
+        <li class="camp-list-item" data-camp="مواصي رفح" data-count="980">
+          <div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>
+          <div style="flex:1;">
+            <div class="camp-name-text">مواصي رفح</div>
+            <div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>980 أسرة مسجلة</div>
+          </div>
+          <i class="fa-solid fa-circle-check camp-check"></i>
+        </li>
+        <li class="camp-list-item" data-camp="مخيم النصيرات" data-count="1830">
+          <div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>
+          <div style="flex:1;">
+            <div class="camp-name-text">مخيم النصيرات</div>
+            <div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>1,830 أسرة مسجلة</div>
+          </div>
+          <i class="fa-solid fa-circle-check camp-check"></i>
+        </li>
+        <li class="camp-list-item" data-camp="مخيم البريج" data-count="1495">
+          <div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>
+          <div style="flex:1;">
+            <div class="camp-name-text">مخيم البريج</div>
+            <div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>1,495 أسرة مسجلة</div>
+          </div>
+          <i class="fa-solid fa-circle-check camp-check"></i>
+        </li>
+      </ul>
+
+      <div id="campRequired" class="d-none" style="font-size:12px;color:#dc3545;text-align:center;margin-bottom:8px;">
+        <i class="fa-solid fa-circle-exclamation me-1"></i>يجب اختيار مخيم للمتابعة
+      </div>
+
+      <button class="btn-login mt-2" id="btnEnterCamp">
+        <i class="fa-solid fa-door-open me-2"></i>دخول النظام
+      </button>
+
+      <button
+        style="width:100%;margin-top:8px;background:none;border:none;font-family:'Tajawal',sans-serif;font-size:13px;color:#7a8a9a;cursor:pointer;padding:8px;"
+        id="btnBackToLogin">
+        <i class="fa-solid fa-arrow-right me-1"></i>العودة
+      </button>
+    </div>
+
+  </div><!-- /login-page -->
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).ready(function () {
+
+      /* بيانات المستخدمين التجريبية */
+      var USERS = {
+        admin: { name: 'محمد أبو حماد', role: 'admin', roleLabel: 'مدير النظام', pass: 'admin123' },
+        manager: { name: 'أحمد سليم', role: 'manager', roleLabel: 'مدير المنظمة', pass: 'manager123' },
+        staff: { name: 'علاء أبو يوسف', role: 'staff', roleLabel: 'موظف إدخال بيانات', pass: 'staff123' }
+      };
+
+      var currentUser = null;
+
+      /* ── ملء البيانات التجريبية ──────────────────────────── */
+      $('.demo-btn').on('click', function () {
+        $('#username').val($(this).data('user'));
+        $('#password').val($(this).data('pass'));
+        $('#loginError').hide();
+      });
+
+      /* ── إظهار/إخفاء كلمة المرور ────────────────────────── */
+      $('#togglePass').on('click', function () {
+        var $input = $('#password');
+        var isPass = $input.attr('type') === 'password';
+        $input.attr('type', isPass ? 'text' : 'password');
+        $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+      });
+
+      /* ── تسجيل الدخول ────────────────────────────────────── */
+      function doLogin() {
+        var user = $('#username').val().trim();
+        var pass = $('#password').val().trim();
+
+        if (!user || !pass) {
+          showError('يرجى إدخال اسم المستخدم وكلمة المرور.');
+          return;
+        }
+
+        /* إظهار حالة التحميل */
+        $('#loginBtnText').addClass('d-none');
+        $('#loginBtnLoading').removeClass('d-none');
+        $('#loginError').hide();
+
+        /* محاكاة طلب الخادم (setTimeout بدلاً من AJAX حالياً) */
+        setTimeout(function () {
+          $('#loginBtnText').removeClass('d-none');
+          $('#loginBtnLoading').addClass('d-none');
+
+          var found = USERS[user];
+          if (!found || found.pass !== pass) {
+            showError('اسم المستخدم أو كلمة المرور غير صحيحة.');
+            $('#username, #password').addClass('is-invalid');
+            return;
+          }
+
+          $('#username, #password').removeClass('is-invalid');
+          currentUser = $.extend({}, found, { username: user });
+
+          /* إذا موظف إدخال → انتقل لاختيار المخيم */
+          if (found.role === 'staff') {
+            var initials = found.name.split(' ').slice(0, 2).map(function (w) { return w[0]; }).join('.');
+            $('#campStepAvatar').text(initials);
+            $('#campStepName').text(found.name);
+            $('#loginStep').addClass('d-none');
+            $('#campStep').removeClass('d-none');
+          } else {
+            /* مدير/أدمن → ادخل مباشرة */
+            saveSessionAndGo(found, null);
+          }
+        }, 900);
+      }
+
+      $('#btnLogin').on('click', doLogin);
+      $('#username, #password').on('keypress', function (e) {
+        if (e.which === 13) doLogin();
+      });
+      $('#username, #password').on('input', function () {
+        $(this).removeClass('is-invalid');
+        $('#loginError').hide();
+      });
+
+      function showError(msg) {
+        $('#loginErrorText').text(msg);
+        $('#loginError').fadeIn(200);
+      }
+
+      /* ── اختيار المخيم ───────────────────────────────────── */
+      $(document).on('click', '.camp-list-item', function () {
+        $('.camp-list-item').removeClass('selected');
+        $(this).addClass('selected');
+        $('#campRequired').addClass('d-none');
+      });
+
+      $('#btnEnterCamp').on('click', function () {
+        var $selected = $('.camp-list-item.selected');
+        if ($selected.length === 0) {
+          $('#campRequired').removeClass('d-none');
+          return;
+        }
+        var camp = $selected.data('camp');
+        saveSessionAndGo(currentUser, camp);
+      });
+
+      $('#btnBackToLogin').on('click', function () {
+        $('#campStep').addClass('d-none');
+        $('#loginStep').removeClass('d-none');
+        currentUser = null;
+        $('.camp-list-item').removeClass('selected');
+      });
+
+      /* ── حفظ الجلسة والانتقال ────────────────────────────── */
+      function saveSessionAndGo(user, camp) {
+        var session = {
+          name: user.name,
+          username: user.username,
+          role: user.role,
+          roleLabel: user.roleLabel,
+          camp: camp
+        };
+        sessionStorage.setItem('nds_user', JSON.stringify(session));
+        window.location.href = 'index.html';
+      }
+
+      /* ── إذا كان مسجلاً بالفعل، اذهب للداشبورد ──────────── */
+      if (sessionStorage.getItem('nds_user')) {
+        window.location.href = 'index.html';
+      }
+
+    });
+  </script>
+</body>
+
+</html>
