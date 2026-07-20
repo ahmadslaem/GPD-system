@@ -443,6 +443,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
@@ -461,8 +462,8 @@
       /* ── تطبيق الصلاحيات ─────────────────────────────────── */
       NDS.applyPermissions();
 
-      /* ── عداد تصاعدي ─────────────────────────────────────── */
-      $('.stat-card__value[data-target]').each(function () {
+      function animateCounters() {
+        $('.stat-card__value[data-target]').each(function () {
         var $el = $(this), target = parseInt($el.data('target'));
         $({ n: 0 }).animate({ n: target }, {
           duration: 1400, easing: 'swing',
@@ -470,9 +471,9 @@
           complete: function () { $el.text(target.toLocaleString('ar-EG')); }
         });
       });
+      }
 
-      /* ── أشرطة جغرافية ───────────────────────────────────── */
-      setTimeout(function () {
+      function animateBars() {
         $('.geo-bar-fill').each(function (i) {
           var $b = $(this), w = $b.data('width');
           setTimeout(function () { $b.css('width', w + '%'); }, i * 100);
@@ -481,7 +482,52 @@
           var $b = $(this), w = $b.data('width');
           setTimeout(function () { $b.css('width', w + '%'); }, i * 150);
         });
-      }, 350);
+      }
+
+      async function loadDashboard() {
+        try {
+          var response = await NDS.api.dashboard();
+          var data = response.data || {};
+          var cards = data.cards || {};
+          var values = [
+            cards.total_families ? cards.total_families.count : 0,
+            cards.total_individuals ? cards.total_individuals.count : 0,
+            cards.high_vulnerability_cases ? cards.high_vulnerability_cases.count : 0,
+            cards.pending_transfers ? cards.pending_transfers.count : 0
+          ];
+          $('.stat-card__value[data-target]').each(function (index) {
+            $(this).attr('data-target', values[index] || 0).data('target', values[index] || 0).text('0');
+          });
+
+          if (cards.total_families) {
+            $('.stat-card__change').eq(0).html('<i class="fa-solid fa-arrow-trend-up"></i> +' + (cards.total_families.new_this_week || 0) + ' هذا الأسبوع');
+          }
+
+          var geo = data.geographic_distribution || [];
+          var maxIndividuals = Math.max.apply(null, geo.map(function (g) { return g.individuals_count || 0; }).concat([1]));
+          $('.geo-bars').html(geo.map(function (g) {
+            var width = Math.round(((g.individuals_count || 0) / maxIndividuals) * 100);
+            return '<div class="geo-bar-item"><div class="geo-bar-label"><span class="geo-bar-name">' + g.camp_name + '</span><span class="geo-bar-val">' + (g.individuals_count || 0).toLocaleString('ar-EG') + '</span></div><div class="geo-bar-track"><div class="geo-bar-fill" data-width="' + width + '" style="width:0%"></div></div></div>';
+          }).join('') || '<div class="text-muted text-center py-3">لا توجد بيانات مخيمات</div>');
+
+          var vuln = data.vulnerability_levels || {};
+          $('.progress-bar.bg-danger').attr('data-width', vuln.high ? vuln.high.percentage : 0).data('width', vuln.high ? vuln.high.percentage : 0).css('width', '0%');
+          $('.progress-bar.bg-warning').attr('data-width', vuln.medium ? vuln.medium.percentage : 0).data('width', vuln.medium ? vuln.medium.percentage : 0).css('width', '0%');
+          $('.progress-bar.bg-success').attr('data-width', vuln.low ? vuln.low.percentage : 0).data('width', vuln.low ? vuln.low.percentage : 0).css('width', '0%');
+
+          var latest = data.latest_families || [];
+          $('#familiesTable tbody').html(latest.map(function (f) {
+            return '<tr><td><span class="family-id">' + f.family_number + '</span></td><td>' + f.head_name + '</td><td>' + (f.camp_name || '-') + '</td><td>' + (f.members_count || 0) + '</td><td>' + (f.vulnerability_label || f.vulnerability_level || '-') + '</td><td>' + (f.registered_at || '-') + '</td></tr>';
+          }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">لا توجد أسر مسجلة بعد</td></tr>');
+
+          $('#lastUpdate').text(data.last_updated || new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
+          animateCounters();
+          setTimeout(animateBars, 350);
+        } catch (error) {
+          $('.stat-card__value').text('!');
+          $('#familiesTable tbody').html('<tr><td colspan="6" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل لوحة التحكم') + '</td></tr>');
+        }
+      }
 
       /* ── بحث في الجدول ───────────────────────────────────── */
       $('#tableSearch').on('input', function () {
@@ -494,8 +540,10 @@
       /* ── زر التحديث ─────────────────────────────────────── */
       $('#btnRefresh').on('click', function () {
         $(this).find('i').addClass('fa-spin');
-        setTimeout(function () { $('#btnRefresh i').removeClass('fa-spin'); }, 1500);
+        loadDashboard().finally(function () { $('#btnRefresh i').removeClass('fa-spin'); });
       });
+
+      loadDashboard();
     });
   </script>
 </body>

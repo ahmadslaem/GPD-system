@@ -147,19 +147,37 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
+      if (!NDS.auth.guardPage('search')) return;
+      NDS.applyPermissions();
 
-      /* ── بيانات تجريبية ────────────────────────────────── */
-      var families = [
-        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: 'جباليا', gov: 'رفح', phone: '059-456-7890', total: 7, adults: 3, children: 4, pwd: 2, fhh: true, fhhReason: 'وفاة رب الأسرة', shelter: 'B-14', score: 85, level: 'high', regDate: '5 أبريل 2026' },
-        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'خان يونس', gov: 'غزة', phone: '059-222-3344', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhReason: '', shelter: 'A-22', score: 30, level: 'medium', regDate: '4 أبريل 2026' },
-        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: 'النصيرات', gov: 'شمال غزة', phone: '059-887-6655', total: 9, adults: 3, children: 6, pwd: 1, fhh: false, fhhReason: '', shelter: 'C-07', score: 72, level: 'high', regDate: '4 أبريل 2026' },
-        { id: 'F-00844', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: 'رفح', gov: 'رفح', phone: '059-111-2222', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhReason: 'طلاق', shelter: 'D-01', score: 22, level: 'low', regDate: '3 أبريل 2026' },
-        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: 'البريج', gov: 'الوسطى', phone: '059-333-4455', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhReason: '', shelter: 'E-18', score: 40, level: 'medium', regDate: '3 أبريل 2026' },
-        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: 'جباليا', gov: 'غزة', phone: '059-778-9900', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhReason: 'فقدان رب الأسرة', shelter: 'B-32', score: 25, level: 'medium', regDate: '2 أبريل 2026' },
-      ];
+      /* ── بيانات API ─────────────────────────────────────── */
+      var families = [];
+      function mapFamily(f) {
+        return {
+          backend_id: f.id,
+          id: f.family_number || ('F-' + String(f.id).padStart(5, '0')),
+          nid: f.nid || f.national_id || '',
+          name: f.name || f.head_name || '',
+          camp: f.camp || (f.camp_name || ''),
+          gov: f.gov || f.original_governorate || '',
+          phone: f.phone || '',
+          total: Number(f.total || f.members_count || 0),
+          adults: Number(f.adults || f.adults_count || 0),
+          children: Number(f.children || f.children_count || 0),
+          pwd: Number(f.pwd || f.pwd_count || 0),
+          fhh: !!(f.fhh || f.is_female_headed),
+          fhhReason: f.fhhR || f.fhh_reason || '',
+          shelter: f.shelter || f.shelter_number || '',
+          score: Number(f.score || f.vulnerability_score || 0),
+          level: f.level || f.vulnerability_level || 'low',
+          regDate: f.date || ''
+        };
+      }
 
       var selectedFamily = null;
       var activeFilter = 'all';
@@ -178,8 +196,17 @@
       });
 
       /* ── تنفيذ البحث ─────────────────────────────────────── */
-      function doSearch() {
+      async function doSearch() {
         var q = $('#mainSearchInput').val().trim().toLowerCase();
+        $('#resultsList').html('<div style="text-align:center;padding:24px;color:#9aaabb;">جارٍ البحث...</div>');
+        $('#resultsArea').show();
+        try {
+          var response = await NDS.api.search(isGlobal ? 'global' : 'local', q || ' ');
+          families = (response.data || []).map(mapFamily);
+        } catch (error) {
+          $('#resultsList').html('<div style="text-align:center;padding:24px;color:#b03030;">' + (error.message || 'تعذر تنفيذ البحث') + '</div>');
+          return;
+        }
         var filtered = families.filter(function (f) {
           var match = !q || f.name.includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q);
           var filterMatch = activeFilter === 'all' || f.level === activeFilter || (activeFilter === 'fhh' && f.fhh);
@@ -303,7 +330,7 @@
       $('#btnTransferFamily').on('click', function () { window.location.href = 'transfers.html'; });
       $('#btnEditFamily').on('click', function () {
         if (selectedFamily) {
-          window.location.href = 'edit-family.html?familyId=' + encodeURIComponent(selectedFamily.id);
+          window.location.href = 'edit-family.html?familyId=' + encodeURIComponent(selectedFamily.backend_id || selectedFamily.id);
         } else {
           window.location.href = 'families.html';
         }

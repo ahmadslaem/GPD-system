@@ -166,84 +166,77 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
-  <script>
+    <script>
     $(document).ready(function () {
-      var families = [
-        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: 'مخيم جباليا', gov: 'رفح', shelter: 'B-14', phone: '059-456-7890', total: 7, adults: 3, children: 4, pwd: 2, fhh: true, fhhReason: 'وفاة رب الأسرة', city: 'رفح' },
-        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'مخيم خان يونس', gov: 'غزة', shelter: 'A-22', phone: '059-222-3344', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhReason: '', city: 'غزة' },
-        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: 'مخيم النصيرات', gov: 'شمال غزة', shelter: 'C-07', phone: '059-887-6655', total: 9, adults: 3, children: 6, pwd: 1, fhh: false, fhhReason: '', city: 'بيت لاهيا' },
-        { id: 'F-00844', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-01', phone: '059-111-2222', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhReason: 'طلاق', city: 'رفح' },
-        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-18', phone: '059-333-4455', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhReason: '', city: 'الوسطى' }
-      ];
+      if (!NDS.auth.guardPage('families')) return;
+      var familyId = new URLSearchParams(window.location.search).get('familyId');
 
       function toggleFhhReason() {
         $('#fhhReasonWrap').toggleClass('d-none', !$('#editFhh').is(':checked'));
       }
 
       function fillSummary(family) {
-        $('#sumId').text(family.id);
+        $('#sumId').text(family.family_number || familyId || '—');
         $('#sumName').text(family.name || '—');
         $('#sumCamp').text(family.camp || '—');
         $('#sumTotal').text(family.total || '—');
       }
 
-      function loadFamily() {
-        var params = new URLSearchParams(window.location.search);
-        var familyId = params.get('familyId');
-        var family = null;
-
-        if (familyId) {
-          family = families.find(function (item) { return item.id === familyId; });
-        }
-
-        if (!family) {
-          var storedFamily = localStorage.getItem('nds_edit_family');
-          if (storedFamily) {
-            family = JSON.parse(storedFamily);
-          }
-        }
-
-        if (!family) {
+      async function loadFamily() {
+        if (!familyId) {
           $('#editHeaderTitle').text('لم يتم العثور على أسرة');
           $('#editHeaderMeta').text('راجع الرابط أو عد إلى قائمة الأسر');
-          $('#editFamilyBadge').text('غير متوفر');
           return;
         }
-
-        $('#editFamilyId').val(family.id);
-        $('#editNid').val(family.nid || '');
-        $('#editName').val(family.name || '');
-        $('#editPhone').val(family.phone || '');
-        $('#editCamp').val(family.camp || '');
-        $('#editGov').val(family.gov || '');
-        $('#editShelter').val(family.shelter || '');
-        $('#editCity').val(family.city || '');
-        $('#editTotal').val(family.total || '');
-        $('#editAdults').val(family.adults || '');
-        $('#editChildren').val(family.children || '');
-        $('#editPwd').val(family.pwd || '');
-        $('#editFhh').prop('checked', !!family.fhh);
-        $('#editFhhReason').val(family.fhhReason || '');
-        $('#editHeaderTitle').text('تعديل بيانات الأسرة');
-        $('#editHeaderMeta').text('الأسرة: ' + (family.name || family.id));
-        $('#editFamilyBadge').text(family.id || '—');
-        fillSummary(family);
-        toggleFhhReason();
+        try {
+          var response = await NDS.api.family(familyId);
+          var family = response.data || {};
+          $('#editFamilyId').val(family.id || familyId);
+          $('#editNid').val(family.nid || '');
+          $('#editName').val(family.name || '');
+          $('#editPhone').val(family.phone || '');
+          $('#editCamp').val(family.camp || '');
+          $('#editGov').val(family.gov || '');
+          $('#editShelter').val(family.shelter || '');
+          $('#editTotal').val(family.total || '');
+          $('#editAdults').val(family.adults || '');
+          $('#editChildren').val(family.children || '');
+          $('#editPwd').val(family.pwd || '');
+          $('#editFhh').prop('checked', !!family.fhh);
+          $('#editFhhReason').val(family.fhhR || '');
+          $('#editHeaderTitle').text('تعديل بيانات الأسرة');
+          $('#editHeaderMeta').text('الأسرة: ' + (family.name || family.family_number || familyId));
+          $('#editFamilyBadge').text(family.family_number || familyId);
+          fillSummary(family);
+          toggleFhhReason();
+        } catch (error) {
+          $('#editHeaderTitle').text('تعذر تحميل الأسرة');
+          $('#editHeaderMeta').text(error.message || 'حدث خطأ أثناء التحميل');
+        }
       }
 
       $('#editFhh').on('change', toggleFhhReason);
 
-      $('#btnSaveFamily').on('click', function () {
-        var familyId = $('#editFamilyId').val();
-        var familyName = $('#editName').val() || 'الأسرة';
-        if (!familyId) {
-          alert('لا توجد أسرة محددة للتعديل');
+      $('#btnSaveFamily').on('click', async function () {
+        var id = $('#editFamilyId').val();
+        var payload = {
+          head_name: $('#editName').val().trim(),
+          phone: $('#editPhone').val().trim(),
+          birth_date: null
+        };
+        if (!id || !payload.head_name || !payload.phone) {
+          alert('يرجى إدخال اسم رب الأسرة ورقم الهاتف.');
           return;
         }
-
-        alert('تم حفظ التعديلات على ' + familyName + ' بنجاح');
-        window.location.href = 'families.html';
+        try {
+          await NDS.api.updateFamily(id, payload);
+          alert('تم حفظ التعديلات بنجاح');
+          window.location.href = 'families.html';
+        } catch (error) {
+          alert(error.message || 'تعذر حفظ التعديلات');
+        }
       });
 
       if (window.location.pathname.split('/').pop() === 'edit-family.html') {

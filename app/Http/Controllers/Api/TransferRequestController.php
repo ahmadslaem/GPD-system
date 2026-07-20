@@ -210,9 +210,24 @@ public function approve(Request $request, $id)
 
     DB::transaction(function () use ($transfer, $request) {
 
+        $family = $transfer->family;
+        $membersCount = $family->members_count ?? 0;
+
+        if ($transfer->fromCamp) {
+            $transfer->fromCamp->decrement('current_population', $membersCount);
+
+            if ($transfer->fromCamp->current_population < 0) {
+                $transfer->fromCamp->update(['current_population' => 0]);
+            }
+        }
+
+        if ($transfer->toCamp) {
+            $transfer->toCamp->increment('current_population', $membersCount);
+        }
+
 
         // تحديث مكان العائلة
-        $transfer->family->update([
+        $family->update([
             'camp_id' => $transfer->to_camp_id
         ]);
 

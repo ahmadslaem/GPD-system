@@ -42,11 +42,12 @@ Route::middleware('auth:sanctum')->group(function(){
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    Route::get('camps', [CampController::class, 'index']);
 
     Route::middleware(['role:admin'])->apiResource(
         'camps',
         CampController::class
-    );
+    )->except(['index']);
 
 
 });
@@ -111,9 +112,25 @@ TransferRequestController::class,
 ]
 );
 
+Route::patch(
+'transfer-requests/{id}/approve',
+[
+TransferRequestController::class,
+'approve'
+]
+);
+
 
 
 Route::put(
+'transfer-requests/{id}/reject',
+[
+TransferRequestController::class,
+'reject'
+]
+);
+
+Route::patch(
 'transfer-requests/{id}/reject',
 [
 TransferRequestController::class,

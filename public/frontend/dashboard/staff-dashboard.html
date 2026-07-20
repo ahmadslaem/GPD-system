@@ -624,6 +624,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
@@ -893,51 +894,57 @@
       });
 
       /* ── مودال طلب النقل ────────────────────────────────────── */
-      var fakeNids = {
-        '276-1985-0034': 'أحمد محمد سليم الأغا',
-        '291-1979-0112': 'فاطمة إبراهيم النجار',
-        '283-1992-0088': 'خالد يوسف الأغا',
-      };
+      var checkedTransferFamily = null;
+      var campsByName = {};
 
-      $('#btnNtCheck').on('click', function () {
+      async function loadTransferCamps() {
+        try {
+          var camps = await NDS.api.camps();
+          campsByName = {};
+          camps.forEach(function (camp) { campsByName[camp.name] = camp.id; });
+          $('#ntToCamp').html('<option value="">اختر المخيم المقصود...</option>' + camps.map(function (camp) {
+            return '<option value="' + camp.id + '">' + camp.name + '</option>';
+          }).join(''));
+        } catch (error) {}
+      }
+
+      $('#btnNtCheck').on('click', async function () {
         var nid = $('#ntNid').val().trim();
-        var found = fakeNids[nid];
-        if (found) {
-          $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + found + '</b></div>');
-        } else if (nid) {
-          $('#ntResult').html('<div style="background:#fdf0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a2020;"><i class="fa-solid fa-ban me-1"></i>لم يُعثر على أسرة بهذا الرقم</div>');
+        if (!nid) return;
+        try {
+          var response = await NDS.api.search('global', nid);
+          checkedTransferFamily = (response.data || [])[0] || null;
+          if (!checkedTransferFamily) throw new Error('لم يُعثر على أسرة بهذا الرقم');
+          $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + (checkedTransferFamily.head_name || checkedTransferFamily.name || checkedTransferFamily.national_id) + '</b></div>');
+          $('#ntFromCamp').val(checkedTransferFamily.camp && checkedTransferFamily.camp.name ? checkedTransferFamily.camp.name : campName);
+        } catch (error) {
+          checkedTransferFamily = null;
+          $('#ntResult').html('<div style="background:#fdf0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a2020;"><i class="fa-solid fa-ban me-1"></i>' + (error.message || 'لم يُعثر على أسرة بهذا الرقم') + '</div>');
         }
       });
 
-      $('#btnSubmitTransfer').on('click', function () {
-        var nid = $('#ntNid').val().trim();
+      $('#btnSubmitTransfer').on('click', async function () {
         var toCamp = $('#ntToCamp').val();
         var reason = $('#ntReason').val().trim();
-        if (!nid || !toCamp || !reason) { alert('يرجى ملء جميع الحقول.'); return; }
-        if (toCamp === campName) { alert('المخيم المقصود يجب أن يختلف عن مخيمك الحالي.'); return; }
+        var fromCampId = checkedTransferFamily && checkedTransferFamily.camp_id ? checkedTransferFamily.camp_id : (currentUser.camp_id || campsByName[campName]);
+        if (!checkedTransferFamily || !toCamp || !reason) { alert('يرجى التحقق من الأسرة وملء جميع الحقول.'); return; }
+        if (String(toCamp) === String(fromCampId)) { alert('المخيم المقصود يجب أن يختلف عن مخيمك الحالي.'); return; }
 
-        var newT = {
-          id: 'T-' + (Math.floor(Math.random() * 900) + 100),
-          nid: nid,
-          name: fakeNids[nid] || 'أسرة جديدة',
-          from: campName,
-          to: toCamp.replace('مخيم ', ''),
-          status: 'pending',
-          date: 'اليوم'
-        };
-        myTransfers.unshift(newT);
-        bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
-        $('#ntNid,#ntReason').val('');
-        $('#ntResult').html('');
-        $('#ntToCamp').val('');
-        renderMyTransfers('all');
-        $('.filter-chip[data-tfilter]').removeClass('active');
-        $('.filter-chip[data-tfilter="all"]').addClass('active');
-
-        /* رسالة نجاح */
-        $('body').append('<div id="toastMsg" style="position:fixed;bottom:24px;right:24px;background:#1a6a2a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);"><i class="fa-solid fa-check me-2"></i>تم إرسال طلب النقل بنجاح!</div>');
-        setTimeout(function () { $('#toastMsg').fadeOut(300, function () { $(this).remove(); }); }, 3000);
+        try {
+          await NDS.api.createTransfer({ family_id: checkedTransferFamily.id, from_camp_id: fromCampId, to_camp_id: toCamp, reason: reason });
+          bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
+          $('#ntNid,#ntReason').val('');
+          $('#ntResult').html('');
+          $('#ntToCamp').val('');
+          checkedTransferFamily = null;
+          $('body').append('<div id="toastMsg" style="position:fixed;bottom:24px;right:24px;background:#1a6a2a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);"><i class="fa-solid fa-check me-2"></i>تم إرسال طلب النقل بنجاح!</div>');
+          setTimeout(function () { $('#toastMsg').fadeOut(300, function () { $(this).remove(); }); }, 3000);
+        } catch (error) {
+          alert(error.message || 'تعذر إرسال طلب النقل');
+        }
       });
+
+      loadTransferCamps();
 
       /* ── روابط الإجراءات السريعة ────────────────────────────── */
       $('#qaSearch').on('click', function () { $('#staffSearchInput').focus(); });

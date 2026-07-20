@@ -6,7 +6,7 @@
   الأدوار:
     admin   → مدير النظام       (كل الصلاحيات)
     manager → مدير المنظمة      (عرض + تقارير + طلبات النقل)
-    staff   → موظف إدخال بيانات (محدود بمخيمه)
+    data_entry → موظف إدخال بيانات (محدود بمخيمه)
 ================================================================
 */
 
@@ -27,7 +27,7 @@ NDS.permissions = {
                'export','search_global','view_vuln','view_dashboard_full',
                'edit_family']
   },
-  staff: {
+  data_entry: {
     pages:    ['index','register','search','transfers'],
     actions:  ['register_family','edit_family','search_local','search_global',
                'create_transfer','view_transfer_status',
@@ -97,7 +97,7 @@ NDS.auth = {
   },
 
   /* هل هو موظف إدخال؟ */
-  isStaff: function () { return this.role() === 'staff'; },
+  isStaff: function () { return this.role() === 'data_entry'; },
 
   /* هل هو مدير؟ */
   isManager: function () { return this.role() === 'manager'; },
@@ -136,7 +136,7 @@ NDS.applyPermissions = function () {
     }
   });
 
-  /* data-hide-role="staff" — يُخفى من هذا الدور */
+  /* data-hide-role="data_entry" — يُخفى من هذا الدور */
   $('[data-hide-role]').each(function () {
     var roles = $(this).data('hide-role').split(',').map(function(r){ return r.trim(); });
     if (roles.indexOf(self.role()) !== -1) {

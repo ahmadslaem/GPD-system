@@ -225,21 +225,59 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
 <script src="js/layout.js"></script>
 <script>
 $(document).ready(function(){
+  if (!NDS.auth.guardPage('transfers')) return;
+  NDS.applyPermissions();
 
-  var transfers = [
-    { id:'T-047', nid:'276-1985-0034', name:'أحمد محمد سليم',    from:'النصيرات',   to:'جباليا',    status:'pending',  date:'6 أبريل 2026',   submitter:'علاء أبو يوسف', reason:'وجود أقارب في مخيم جباليا يمكنهم تقديم الدعم للأسرة، كما يستدعي الوضع الصحي القرب من مركز الرعاية.', level:'high' },
-    { id:'T-046', nid:'291-1979-0112', name:'منى يوسف حسن',      from:'رفح',         to:'خان يونس', status:'pending',  date:'5 أبريل 2026',   submitter:'محمد الحنجوري', reason:'انتهاء صلاحية المأوى في رفح وتوفر مأوى جديد في خان يونس قريب من مستشفى.', level:'medium' },
-    { id:'T-045', nid:'283-1975-0145', name:'خالد إبراهيم ناصر', from:'جباليا',      to:'البريج',   status:'approved', date:'4 أبريل 2026',   submitter:'أحمد سليم',     reason:'طلب من المنظمة بسبب اكتظاظ مخيم جباليا.', level:'low' },
-    { id:'T-044', nid:'298-1991-0033', name:'سمير علي أبو ظاهر', from:'النصيرات',   to:'مواصي رفح',status:'rejected', date:'3 أبريل 2026',   submitter:'علاء أبو يوسف', reason:'طلب شخصي للانتقال لمنطقة أهدأ.', level:'medium' },
-    { id:'T-043', nid:'265-1995-0208', name:'هناء جمال الصوراني',from:'خان يونس',   to:'جباليا',    status:'pending',  date:'3 أبريل 2026',   submitter:'محمد الحنجوري', reason:'متابعة علاج الابن الأكبر في مستشفى جباليا.', level:'high' },
-    { id:'T-042', nid:'277-1988-0120', name:'إيمان راضي سعيد',   from:'البريج',      to:'النصيرات', status:'approved', date:'2 أبريل 2026',   submitter:'أحمد سليم',     reason:'توفر مأوى مناسب لذوي الإعاقة في النصيرات.', level:'high' },
-  ];
-
+  var transfers = [];
+  var camps = [];
   var selectedTransfer = null;
   var activeStatusFilter = 'all';
+  var checkedFamily = null;
+
+  function mapTransfer(t) {
+    return {
+      backend_id: t.id,
+      id: t.request_number || ('T-' + String(t.id).padStart(3, '0')),
+      nid: t.national_id || '',
+      name: t.head_name || '-',
+      from: t.from_camp || '-',
+      to: t.to_camp || '-',
+      status: t.status || 'pending',
+      date: t.created_at || '-',
+      submitter: t.requested_by || '-',
+      reason: t.reason || '',
+      manager_note: t.manager_note || '',
+      level: t.vulnerability_level || 'medium'
+    };
+  }
+
+  async function loadCamps() {
+    camps = await NDS.api.camps();
+    var options = '<option value="">اختر المخيم...</option>' + camps.map(function (camp) {
+      return '<option value="' + camp.id + '">' + camp.name + '</option>';
+    }).join('');
+    $('#ntFrom,#ntTo').html(options);
+  }
+
+  async function loadTransfers() {
+    $('#transferList').html('<div style="text-align:center;padding:20px;color:#9aaabb;font-size:13px;">جارٍ تحميل الطلبات...</div>');
+    try {
+      var response = await NDS.api.transfers({ status: activeStatusFilter, keyword: $('#transferSearch').val() });
+      transfers = (response.data || []).map(mapTransfer);
+      renderTransfers();
+      if (selectedTransfer) {
+        selectedTransfer = transfers.find(function (t) { return t.backend_id === selectedTransfer.backend_id; }) || null;
+        if (selectedTransfer) renderReview(selectedTransfer);
+      }
+    } catch (error) {
+      $('#transferList').html('<div style="text-align:center;padding:20px;color:#b03030;font-size:13px;">' + (error.message || 'تعذر تحميل الطلبات') + '</div>');
+    }
+  }
 
   function renderTransfers() {
     var q = $('#transferSearch').val().toLowerCase();
@@ -249,79 +287,48 @@ $(document).ready(function(){
       return matchQ && matchS;
     });
 
-    var html = '';
     if (!filtered.length) {
-      html = '<div style="text-align:center;padding:20px;color:#9aaabb;font-size:13px;">لا توجد نتائج</div>';
-    } else {
-      filtered.forEach(function(t){
-        var statusBadge = {
-          pending:  '<span class="badge bg-warning text-dark">معلق</span>',
-          approved: '<span class="badge bg-success">موافق</span>',
-          rejected: '<span class="badge bg-danger">مرفوض</span>'
-        }[t.status];
-        var selected = selectedTransfer && selectedTransfer.id===t.id ? 'selected' : '';
-        html += `
-          <div class="transfer-request-card ${selected}" data-id="${t.id}">
-            <div class="trc-head">
-              <div>
-                <div class="trc-id">${t.id}</div>
-                <div class="trc-name">${t.name}</div>
-                <div class="trc-route">
-                  <span class="trc-from">${t.from}</span>
-                  <span class="arrow"><i class="fa-solid fa-arrow-left"></i></span>
-                  <span class="trc-to">${t.to}</span>
-                </div>
-              </div>
-              <div>${statusBadge}</div>
-            </div>
-            <div class="trc-footer">
-              <span><i class="fa-regular fa-calendar me-1"></i>${t.date}</span>
-              <span><i class="fa-solid fa-user me-1"></i>${t.submitter}</span>
-            </div>
-          </div>`;
-      });
+      $('#transferList').html('<div style="text-align:center;padding:20px;color:#9aaabb;font-size:13px;">لا توجد نتائج</div>');
+      return;
     }
-    $('#transferList').html(html);
+
+    $('#transferList').html(filtered.map(function(t){
+      var statusBadge = { pending: '<span class="badge bg-warning text-dark">معلق</span>', approved: '<span class="badge bg-success">موافق</span>', rejected: '<span class="badge bg-danger">مرفوض</span>' }[t.status];
+      var selected = selectedTransfer && selectedTransfer.backend_id===t.backend_id ? 'selected' : '';
+      return '<div class="transfer-request-card ' + selected + '" data-id="' + t.backend_id + '"><div class="trc-head"><div><div class="trc-id">' + t.id + '</div><div class="trc-name">' + t.name + '</div><div class="trc-route"><span class="trc-from">' + t.from + '</span><span class="arrow"><i class="fa-solid fa-arrow-left"></i></span><span class="trc-to">' + t.to + '</span></div></div><div>' + statusBadge + '</div></div><div class="trc-footer"><span><i class="fa-regular fa-calendar me-1"></i>' + t.date + '</span><span><i class="fa-solid fa-user me-1"></i>' + t.submitter + '</span></div></div>';
+    }).join(''));
   }
 
-  /* ── فلاتر الحالة ───────────────────────────────────── */
   $(document).on('click','.filter-chip[data-status]',function(){
     $('.filter-chip[data-status]').removeClass('active');
     $(this).addClass('active');
     activeStatusFilter = $(this).data('status');
-    renderTransfers();
+    loadTransfers();
   });
 
   $('#transferSearch').on('input', renderTransfers);
 
-  /* ── اختيار طلب ─────────────────────────────────────── */
   $(document).on('click','.transfer-request-card',function(){
-    var id = $(this).data('id');
-    selectedTransfer = transfers.find(function(t){ return t.id===id; });
+    var id = Number($(this).data('id'));
+    selectedTransfer = transfers.find(function(t){ return t.backend_id===id; });
     renderTransfers();
     renderReview(selectedTransfer);
   });
 
   function renderReview(t) {
+    if (!t) return;
     var initials = t.name.slice(0,1) + '.' + (t.name.split(' ')[1]||'')[0];
     $('#rpTitle').text('طلب ' + t.id);
     $('#rpEmpty').addClass('d-none');
     $('#rpDetails').removeClass('d-none');
     $('#rpDecisionResult').addClass('d-none');
     $('#rpActionArea').removeClass('d-none');
-    $('#rpRemarks').val('');
-
-    var statusBadge = {
-      pending:  '<span class="badge bg-warning text-dark">معلق</span>',
-      approved: '<span class="badge bg-success">موافق عليه</span>',
-      rejected: '<span class="badge bg-danger">مرفوض</span>'
-    }[t.status];
-    $('#rpStatus').html(statusBadge);
+    $('#rpRemarks').val(t.manager_note || '');
+    $('#rpStatus').html({ pending: '<span class="badge bg-warning text-dark">معلق</span>', approved: '<span class="badge bg-success">موافق عليه</span>', rejected: '<span class="badge bg-danger">مرفوض</span>' }[t.status]);
     $('#rpAvatar').text(initials);
     $('#rpFamilyName').text(t.name);
-    $('#rpFamilyNid').text('رقم الهوية: ' + t.nid);
-    var lvlBadge = {high:'<span class="badge bg-danger">ضعف عالٍ</span>',medium:'<span class="badge bg-warning text-dark">متوسط</span>',low:'<span class="badge bg-success">منخفض</span>'}[t.level];
-    $('#rpFamilyBadge').html(lvlBadge);
+    $('#rpFamilyNid').text(t.nid ? 'رقم الهوية: ' + t.nid : '');
+    $('#rpFamilyBadge').html({high:'<span class="badge bg-danger">ضعف عالٍ</span>',medium:'<span class="badge bg-warning text-dark">متوسط</span>',low:'<span class="badge bg-success">منخفض</span>'}[t.level] || '');
     $('#rpFrom').text(t.from);
     $('#rpTo').text(t.to);
     $('#rpReason').text(t.reason);
@@ -331,65 +338,63 @@ $(document).ready(function(){
     if (t.status !== 'pending') {
       $('#rpActionArea').addClass('d-none');
       $('#rpDecisionResult').removeClass('d-none');
-      if (t.status === 'approved') {
-        $('#rpDecisionIcon').html('<i class="fa-solid fa-circle-check" style="color:#2d8a4e;"></i>');
-        $('#rpDecisionText').text('تمت الموافقة على هذا الطلب').css('color','#1a6a2a');
-      } else {
-        $('#rpDecisionIcon').html('<i class="fa-solid fa-circle-xmark" style="color:#b03030;"></i>');
-        $('#rpDecisionText').text('تم رفض هذا الطلب').css('color','#8a2020');
-      }
+      $('#rpDecisionIcon').html(t.status === 'approved' ? '<i class="fa-solid fa-circle-check" style="color:#2d8a4e;"></i>' : '<i class="fa-solid fa-circle-xmark" style="color:#b03030;"></i>');
+      $('#rpDecisionText').text(t.status === 'approved' ? 'تمت الموافقة على هذا الطلب' : 'تم رفض هذا الطلب').css('color', t.status === 'approved' ? '#1a6a2a' : '#8a2020');
     }
   }
 
-  /* ── قرار الموافقة/الرفض ─────────────────────────────── */
-  function makeDecision(decision) {
+  async function makeDecision(decision) {
     if (!selectedTransfer || selectedTransfer.status !== 'pending') return;
-    selectedTransfer.status = decision;
-    var idx = transfers.findIndex(function(t){ return t.id===selectedTransfer.id; });
-    if (idx > -1) transfers[idx].status = decision;
-    renderTransfers();
-    renderReview(selectedTransfer);
+    try {
+      if (decision === 'approved') await NDS.api.approveTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
+      else await NDS.api.rejectTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
+      await loadTransfers();
+    } catch (error) {
+      alert(error.message || 'تعذر حفظ القرار');
+    }
   }
 
   $('#btnApproveTransfer').on('click', function(){ makeDecision('approved'); });
   $('#btnRejectTransfer').on('click', function(){
-    if (!$('#rpRemarks').val().trim()) {
-      alert('يرجى إدخال سبب الرفض في ملاحظات القرار.'); return;
-    }
+    if (!$('#rpRemarks').val().trim()) { alert('يرجى إدخال سبب الرفض في ملاحظات القرار.'); return; }
     makeDecision('rejected');
   });
 
-  /* ── طلب جديد ───────────────────────────────────────── */
-  var fakeNids = { '276-1985-0034':'أحمد محمد سليم','291-1979-0112':'فاطمة إبراهيم النجار' };
-  $('#btnNtCheck').on('click', function(){
+  $('#btnNtCheck').on('click', async function(){
     var nid = $('#ntNid').val().trim();
-    if (fakeNids[nid]) {
-      $('#ntFamilyName').text(fakeNids[nid]);
+    try {
+      var response = await NDS.api.search('global', nid);
+      checkedFamily = (response.data || [])[0] || null;
+      if (!checkedFamily) throw new Error('لم يُعثر على أسرة بهذا الرقم.');
+      $('#ntFamilyName').text(checkedFamily.head_name || checkedFamily.name || checkedFamily.national_id);
       $('#ntFamilyFound').removeClass('d-none');
-    } else {
+      if (checkedFamily.camp_id) $('#ntFrom').val(checkedFamily.camp_id);
+    } catch (error) {
+      checkedFamily = null;
       $('#ntFamilyFound').addClass('d-none');
-      alert('لم يُعثر على أسرة بهذا الرقم.');
+      alert(error.message || 'لم يُعثر على أسرة بهذا الرقم.');
     }
   });
 
-  $('#btnSubmitNewTransfer').on('click', function(){
-    var nid    = $('#ntNid').val().trim();
-    var from   = $('#ntFrom').val();
-    var to     = $('#ntTo').val();
+  $('#btnSubmitNewTransfer').on('click', async function(){
+    var from = $('#ntFrom').val();
+    var to = $('#ntTo').val();
     var reason = $('#ntReason').val().trim();
-    if (!nid || from==='اختر المخيم...' || to==='اختر المخيم...' || !reason) {
-      alert('يرجى ملء جميع الحقول.'); return;
+    if (!checkedFamily || !from || !to || !reason) { alert('يرجى التحقق من الأسرة وملء جميع الحقول.'); return; }
+    try {
+      await NDS.api.createTransfer({ family_id: checkedFamily.id, from_camp_id: from, to_camp_id: to, reason: reason });
+      await loadTransfers();
+      bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
+      $('#ntNid,#ntReason').val('');
+      $('#ntFamilyFound').addClass('d-none');
+      checkedFamily = null;
+    } catch (error) {
+      alert(error.message || 'تعذر إرسال الطلب');
     }
-    var newId = 'T-' + (Math.floor(Math.random()*900)+100);
-    transfers.unshift({ id:newId, nid:nid, name:fakeNids[nid]||'أسرة جديدة', from:from.replace('مخيم ',''), to:to.replace('مخيم ',''), status:'pending', date:'اليوم', submitter:'المستخدم الحالي', reason:reason, level:'medium' });
-    renderTransfers();
-    bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
-    $('#ntNid,#ntReason').val('');
-    $('#ntFamilyFound').addClass('d-none');
   });
 
-  /* ── تهيئة ───────────────────────────────────────────── */
-  renderTransfers();
+  loadCamps().catch(function () {});
+  loadTransfers();
 });
 </script>
 </body>

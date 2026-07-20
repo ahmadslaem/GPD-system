@@ -179,7 +179,7 @@ $(document).ready(function () {
     $('#sidebarUserRole').text(session.roleLabel);
 
     /* إخفاء عناصر المدير إذا كان موظف إدخال */
-    if (session.role === 'staff') {
+    if (session.role === 'data_entry') {
       $('.manager-only').hide();
       /* عرض بادج المخيم */
       $('#campBadgeWrap').removeClass('d-none');
@@ -230,9 +230,20 @@ $(document).ready(function () {
     });
 
     /* تسجيل الخروج */
-    $(document).on('click', '#btnLogout', function (e) {
+    $(document).on('click', '#btnLogout', async function (e) {
       e.preventDefault();
-      sessionStorage.removeItem('nds_user');
+      try {
+        if (window.NDS && NDS.api && NDS.api.getToken()) {
+          await NDS.api.logout();
+        }
+      } catch (error) {
+      }
+      if (window.NDS && NDS.api) {
+        NDS.api.clearSession();
+      } else {
+        sessionStorage.removeItem('nds_user');
+        sessionStorage.removeItem('nds_token');
+      }
       window.location.href = 'login.html';
     });
   }

@@ -54,6 +54,8 @@ class UserController extends Controller
             'is_active'=>true
 
         ]);
+
+        $user->syncRoles([$request->role]);
         
 
 
@@ -110,7 +112,19 @@ class UserController extends Controller
 
 
 
-        $user->update($request->all());
+        $data = $request->only([
+            'name',
+            'email',
+            'role',
+            'phone',
+            'camp_id',
+        ]);
+
+        $user->update($data);
+
+        if ($request->filled('role')) {
+            $user->syncRoles([$request->role]);
+        }
 
 
 

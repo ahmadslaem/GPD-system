@@ -38,7 +38,7 @@ class AuthController extends Controller
  
  
         // Check account status
-        if(isset($user->status) && $user->status == 'inactive'){
+        if(!$user->is_active){
  
             return response()->json([
                 'message'=>'Account is disabled'
@@ -65,7 +65,10 @@ class AuthController extends Controller
                 'id'=>$user->id,
                 'name'=>$user->name,
                 'email'=>$user->email,
-                'role'=>$user->role
+                'role'=>$user->role,
+                'role_label'=>$this->roleLabel($user->role),
+                'camp_id'=>$user->camp_id,
+                'camp'=>$user->camp?->name,
             ],
  
             'token'=>$token,
@@ -74,6 +77,16 @@ class AuthController extends Controller
  
         ],200);
  
+    }
+
+    private function roleLabel(string $role): string
+    {
+        return match ($role) {
+            'admin' => 'مدير النظام',
+            'manager' => 'مدير المنظمة',
+            'data_entry' => 'موظف إدخال بيانات',
+            default => $role,
+        };
     }
 
 

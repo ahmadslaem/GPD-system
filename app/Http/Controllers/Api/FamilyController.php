@@ -132,6 +132,8 @@ class FamilyController extends Controller
 
             'pwd_count'=>$request->pwd_count,
 
+            'has_pwd'=>$request->has_pwd ?? (($request->pwd_count ?? 0) > 0),
+
 
             'is_female_headed'=>$request->is_female_headed,
 
@@ -327,6 +329,26 @@ public function addMember(Request $request, Family $family)
         'has_disability'=>$request->has_disability ?? false
     ]);
 
+    $family->increment('members_count');
+
+    if ($request->filled('birth_date')) {
+        if (now()->subYears(18)->greaterThanOrEqualTo($request->date('birth_date'))) {
+            $family->increment('adults_count');
+        } else {
+            $family->increment('children_count');
+        }
+    }
+
+    if ($member->has_disability) {
+        $family->increment('pwd_count');
+        $family->has_pwd = true;
+        $family->save();
+    }
+
+    $family->camp?->increment('current_population');
+
+    $family->refresh();
+
 
     $family->calculateVulnerability();
 
@@ -395,6 +417,8 @@ public function deleteMember($memberId)
     // حذف العضو
     $member->delete();
 
+    $family->camp?->decrement('current_population');
+
 
     // إعادة حساب عدد أفراد الأسرة
     $family->members_count = $family->members()->count();
@@ -462,7 +486,7 @@ public function destroy($id)
 
 
         // العدد الحقيقي للأفراد
-        $membersCount = $family->members()->count();
+        $membersCount = $family->members_count;
 
 
         // حذف أفراد الأسرة أولاً

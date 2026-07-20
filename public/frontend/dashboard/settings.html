@@ -422,9 +422,13 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
+      if (!NDS.auth.guardPage('settings')) return;
+      NDS.applyPermissions();
 
       /* ── تبديل الأقسام ──────────────────────────────────── */
       $(document).on('click', '#settingsTabs .nav-link', function () {
@@ -440,6 +444,19 @@
       $('#wPwd').on('input', function () { $('#wPwdVal').text($(this).val()); });
       $('#wDep').on('input', function () { $('#wDepVal').text($(this).val()); });
       $('#wSize').on('input', function () { $('#wSizeVal').text($(this).val()); });
+
+      async function loadCamps() {
+        try {
+          var camps = await NDS.api.camps();
+          $('#campsTable tbody').html(camps.map(function (camp) {
+            return '<tr><td>' + camp.name + '</td><td>' + camp.location + '</td><td>' + (camp.capacity || '-') + '</td><td>' + (camp.current_population || 0) + '</td><td>' + (camp.is_active ? 'نشط' : 'معطل') + '</td><td><span class="text-muted">API</span></td></tr>';
+          }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">لا توجد مخيمات</td></tr>');
+        } catch (error) {
+          $('#campsTable tbody').html('<tr><td colspan="6" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل المخيمات') + '</td></tr>');
+        }
+      }
+
+      loadCamps();
     });
 
     /* دالة عرض رسالة الحفظ */

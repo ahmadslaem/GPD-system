@@ -23,6 +23,22 @@
       sessionStorage.removeItem('nds_token');
     },
 
+    getSession: function () {
+      var raw = sessionStorage.getItem('nds_user');
+      return raw ? JSON.parse(raw) : null;
+    },
+
+    setSession: function (user) {
+      if (user) {
+        sessionStorage.setItem('nds_user', JSON.stringify(user));
+      }
+    },
+
+    clearSession: function () {
+      sessionStorage.removeItem('nds_user');
+      this.clearToken();
+    },
+
     request: async function (path, options) {
       var method = (options && options.method) || 'GET';
       var headers = Object.assign({
@@ -53,6 +69,9 @@
         : await response.text();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          this.clearSession();
+        }
         var errorMessage = data && (data.message || data.error || data.errors)
           ? (data.message || data.error || JSON.stringify(data.errors))
           : 'فشل الطلب';
@@ -66,18 +85,161 @@
       return this.request('/login', {
         method: 'POST',
         body: {
-          username: username,
           email: username,
           password: password
         }
       });
     },
 
-    addMember: async function (familyId, payload) {
-      return this.request('/family-members', {
-        method: 'POST',
-        body: Object.assign({ family_id: familyId }, payload)
+    logout: async function () {
+      return this.request('/logout', { method: 'POST' });
+    },
+
+    profile: async function () {
+      return this.request('/profile');
+    },
+
+    camps: async function () {
+      return this.request('/camps');
+    },
+
+    selectCamp: async function (campId) {
+      return this.request('/user/select-camp', {
+        method: 'PATCH',
+        body: { camp_id: campId }
       });
+    },
+
+    dashboard: async function () {
+      return this.request('/dashboard');
+    },
+
+    families: async function () {
+      return this.request('/families');
+    },
+
+    family: async function (id) {
+      return this.request('/families/' + encodeURIComponent(id));
+    },
+
+    createFamily: async function (payload) {
+      return this.request('/families', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    updateFamily: async function (id, payload) {
+      return this.request('/families/' + encodeURIComponent(id), {
+        method: 'PUT',
+        body: payload
+      });
+    },
+
+    deleteFamily: async function (id) {
+      return this.request('/families/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    },
+
+    checkNationalId: async function (nationalId) {
+      return this.request('/families/check/' + encodeURIComponent(nationalId));
+    },
+
+    addMember: async function (familyId, payload) {
+      return this.request('/families/' + encodeURIComponent(familyId) + '/members', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    updateMember: async function (memberId, payload) {
+      return this.request('/members/' + encodeURIComponent(memberId), {
+        method: 'PUT',
+        body: payload
+      });
+    },
+
+    deleteMember: async function (memberId) {
+      return this.request('/members/' + encodeURIComponent(memberId), {
+        method: 'DELETE'
+      });
+    },
+
+    transfers: async function (params) {
+      return this.request('/transfer-requests' + this.query(params));
+    },
+
+    createTransfer: async function (payload) {
+      return this.request('/transfer-requests', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    approveTransfer: async function (id, managerNote) {
+      return this.request('/transfer-requests/' + encodeURIComponent(id) + '/approve', {
+        method: 'PATCH',
+        body: { manager_note: managerNote || '' }
+      });
+    },
+
+    rejectTransfer: async function (id, managerNote) {
+      return this.request('/transfer-requests/' + encodeURIComponent(id) + '/reject', {
+        method: 'PATCH',
+        body: { manager_note: managerNote || '' }
+      });
+    },
+
+    users: async function () {
+      return this.request('/users');
+    },
+
+    createUser: async function (payload) {
+      return this.request('/users', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    updateUser: async function (id, payload) {
+      return this.request('/users/' + encodeURIComponent(id), {
+        method: 'PUT',
+        body: payload
+      });
+    },
+
+    deleteUser: async function (id) {
+      return this.request('/users/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    },
+
+    toggleUserStatus: async function (id) {
+      return this.request('/users/' + encodeURIComponent(id) + '/toggle-status', {
+        method: 'POST'
+      });
+    },
+
+    report: async function (type, params) {
+      return this.request('/reports/' + encodeURIComponent(type) + this.query(params));
+    },
+
+    reportExportUrl: function (type, format, params) {
+      return this.baseUrl + '/reports/' + encodeURIComponent(type) + '/export/' + encodeURIComponent(format) + this.query(params);
+    },
+
+    search: async function (scope, keyword) {
+      return this.request('/search/' + encodeURIComponent(scope) + this.query({ keyword: keyword }));
+    },
+
+    query: function (params) {
+      params = params || {};
+      var query = Object.keys(params)
+        .filter(function (key) { return params[key] !== undefined && params[key] !== null && params[key] !== ''; })
+        .map(function (key) { return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]); })
+        .join('&');
+      return query ? '?' + query : '';
     }
   };
 

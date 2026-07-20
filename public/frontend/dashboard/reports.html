@@ -171,9 +171,13 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
+      if (!NDS.auth.guardPage('reports')) return;
+      NDS.applyPermissions();
 
       var currentReport = 'demographic';
 
@@ -286,75 +290,56 @@
         currentReport = $(this).data('report');
       });
 
-      /* ── توليد التقرير ──────────────────────────────────── */
-      $('#btnGenerate').on('click', function () {
-        var camp = $('#repCamp').val() === 'all' ? 'كل المخيمات' : $('#repCamp').val();
-        var from = $('#repFrom').val() || 'يناير 2026';
-        var to = $('#repTo').val() || 'أبريل 2026';
-        var data = reportData[currentReport];
+      function apiReportName() {
+        return ({ demographic: 'demographic', vulnerability: 'vulnerability', transfer: 'transfers', timeline: 'periodic' })[currentReport] || 'demographic';
+      }
 
+      function reportParams() {
+        return { date_from: $('#repFrom').val(), date_to: $('#repTo').val() };
+      }
+
+      /* ── توليد التقرير ──────────────────────────────────── */
+      $('#btnGenerate').on('click', async function () {
         $('#previewEmpty').addClass('d-none');
         $('#previewContent').addClass('d-none');
         $('#generateLoading').removeClass('d-none');
-
-        setTimeout(function () {
+        try {
+          var data = await NDS.api.report(apiReportName(), reportParams());
           $('#generateLoading').addClass('d-none');
           $('#previewContent').removeClass('d-none');
           $('#exportBtns').css('display', 'flex');
-          $('#previewTitle').text('معاينة: ' + data.title);
-          $('#previewMeta').text(camp + ' — ' + from + ' إلى ' + to);
+          $('#previewTitle').text('معاينة: ' + $('.report-type-btn.active .rt-title').text());
+          $('#previewMeta').text(($('#repFrom').val() || 'البداية') + ' إلى ' + ($('#repTo').val() || 'اليوم'));
 
-          /* بطاقات الملخص */
-          var colorMap = { blue: '#1a6bb5', green: '#2d8a4e', red: '#b03030', amber: '#9a6010' };
-          var bgMap = { blue: '#e8f1fb', green: '#eaf5ee', red: '#fdf0f0', amber: '#fdf3e0' };
-          var cardsHtml = data.summary.map(function (s) {
-            return `<div class="col-6 col-xl-3">
-          <div style="background:${bgMap[s.color]};border-radius:10px;padding:12px 14px;">
-            <div style="font-size:11px;color:${colorMap[s.color]};margin-bottom:3px;opacity:0.8;">${s.label}</div>
-            <div style="font-size:18px;font-weight:700;color:${colorMap[s.color]};">${s.val}</div>
-          </div>
-        </div>`;
-          }).join('');
-          $('#summaryCards').html(cardsHtml);
+          var summary = data.summary || data.summary_cards || {};
+          var cards = Array.isArray(summary) ? summary : Object.keys(summary).map(function (key) {
+            var value = summary[key];
+            if (typeof value === 'object' && value !== null) value = value.count !== undefined ? value.count : JSON.stringify(value);
+            return { label: key, value: value };
+          });
+          $('#summaryCards').html(cards.slice(0, 4).map(function (card) {
+            return '<div class="col-6 col-xl-3"><div style="background:#f8fafc;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#7a8a9a;">' + card.label + '</div><div style="font-size:22px;font-weight:700;color:#1a2332;">' + card.value + '</div></div></div>';
+          }).join(''));
 
-          /* الرسم البياني */
-          $('#chartTitle').text(data.chartTitle);
-          var barsHtml = data.chartData.map(function (b) {
-            var pct = Math.round((b.val / b.max) * 100);
-            return `<div class="chart-bar-horiz">
-          <div class="bar-name">${b.name}</div>
-          <div class="bar-track">
-            <div class="bar-fill-rep" data-width="${pct}" style="width:0%;"></div>
-          </div>
-          <div class="bar-count">${b.val.toLocaleString()}</div>
-        </div>`;
-          }).join('');
-          $('#chartBars').html(barsHtml);
-
-          /* تحريك الأشرطة */
-          setTimeout(function () {
-            $('.bar-fill-rep').each(function () {
-              $(this).css('width', $(this).data('width') + '%');
-            });
-          }, 150);
-
-          /* الجدول */
-          var thHtml = data.tableHead.map(function (h) { return '<th>' + h + '</th>'; }).join('');
-          $('#reportTableHead').html('<tr>' + thHtml + '</tr>');
-          var tbHtml = data.tableRows.map(function (row) {
-            return '<tr>' + row.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
-          }).join('');
-          $('#reportTableBody').html(tbHtml);
-
-        }, 1200);
+          var rows = data.details || data.distribution || data.distribution_by_camp || data.monthly_breakdown || data.monthly_chart || [];
+          if (!Array.isArray(rows)) rows = [];
+          var keys = rows[0] ? Object.keys(rows[0]) : [];
+          $('#reportTableHead').html(keys.length ? '<tr>' + keys.map(function (k) { return '<th>' + k + '</th>'; }).join('') + '</tr>' : '');
+          $('#reportTableBody').html(rows.length ? rows.map(function (row) { return '<tr>' + keys.map(function (k) { return '<td>' + row[k] + '</td>'; }).join('') + '</tr>'; }).join('') : '<tr><td class="text-center text-muted py-4">لا توجد بيانات</td></tr>');
+          $('#chartTitle').text('البيانات');
+          $('#chartBars').html('');
+        } catch (error) {
+          $('#generateLoading').addClass('d-none');
+          $('#previewEmpty').removeClass('d-none').html('<i class="fa-solid fa-circle-exclamation" style="font-size:46px;color:#b03030;display:block;margin-bottom:12px;"></i><div style="font-size:15px;font-weight:500;color:#b03030;">' + (error.message || 'تعذر توليد التقرير') + '</div>');
+        }
       });
 
       /* ── أزرار التصدير ──────────────────────────────────── */
       $('#btnExportExcel').on('click', function () {
-        alert('جارٍ تصدير ملف Excel... (يُنفَّذ في مرحلة الـ Backend بـ Laravel Excel)');
+        window.open(NDS.api.reportExportUrl(apiReportName(), 'excel', reportParams()), '_blank');
       });
       $('#btnExportPdf').on('click', function () {
-        alert('جارٍ تصدير ملف PDF... (يُنفَّذ في مرحلة الـ Backend بـ Laravel DomPDF)');
+        window.open(NDS.api.reportExportUrl(apiReportName(), 'pdf', reportParams()), '_blank');
       });
       $('#btnPrint').on('click', function () { window.print(); });
     });
