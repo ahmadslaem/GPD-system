@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Family;
 use App\Models\TransferRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,25 @@ $data=$request->validate([
 
 ]);
 
+$family = Family::findOrFail($data['family_id']);
+
+if ($family->camp_id !== (int) $data['from_camp_id']) {
+    return response()->json([
+        'message' => 'The selected family does not belong to the source camp'
+    ], 422);
+}
+
+if ($request->user()->role === 'data_entry' && $family->camp_id !== $request->user()->camp_id) {
+    return response()->json([
+        'message' => 'Forbidden'
+    ], 403);
+}
+
+if ((int) $data['from_camp_id'] === (int) $data['to_camp_id']) {
+    return response()->json([
+        'message' => 'Target camp must be different from source camp'
+    ], 422);
+}
 
 
 $data['reason'] = strip_tags($data['reason']);
@@ -52,27 +72,6 @@ return response()->json([
 
 
 }
-
-
-
-
-
-// public function index()
-// {
-
-// $requests=TransferRequest::with(
-// [
-// 'family',
-// 'fromCamp',
-// 'toCamp'
-// ]
-// )->latest()->get();
-
-
-
-// return response()->json($requests);
-
-// }
 /*
 |--------------------------------------------------------------------------
 | Index: قائمة الطلبات + الكروت العلوية (الإجمالي / مرفوضة / موافق عليها / معلقة)

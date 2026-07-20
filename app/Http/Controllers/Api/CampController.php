@@ -34,6 +34,11 @@ class CampController extends Controller
 
         ]);
 
+        foreach (['name', 'location'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
 
         $camp = Camp::create($data);
 
@@ -77,6 +82,11 @@ class CampController extends Controller
 
         ]);
 
+        foreach (['name', 'location'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
 
         $camp->update($data);
 

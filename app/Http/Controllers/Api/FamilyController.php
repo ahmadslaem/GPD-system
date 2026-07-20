@@ -64,13 +64,39 @@ class FamilyController extends Controller
 
         'members.*.gender'=>'required|in:male,female',
 
+        'members_count'=>'required|integer|min:1',
+
+        'adults_count'=>'nullable|integer|min:0',
+
+        'children_count'=>'nullable|integer|min:0',
+
+        'pwd_count'=>'nullable|integer|min:0',
+
+        'is_female_headed'=>'nullable|boolean',
+
+        'has_pwd'=>'nullable|boolean',
+
+        'original_governorate'=>'required|string|max:255',
+
+        'original_city'=>'required|string|max:255',
+
+        'shelter_number'=>'nullable|string|max:255',
+
     ]);
 
+    if (!auth()->user()->camp_id) {
+        return response()->json([
+            'status'=>false,
+            'message'=>'A camp must be selected before registering families'
+        ],422);
+    }
+
+    $nationalId = strip_tags($request->national_id);
 
 
     $exists = Family::where(
         'national_id',
-        $request->national_id
+        $nationalId
     )->exists();
 
 
@@ -97,7 +123,7 @@ class FamilyController extends Controller
         $family = Family::create([
 
 
-            'national_id'=>strip_tags($request->national_id),
+            'national_id'=>$nationalId,
 
             'head_name'=>strip_tags($request->head_name),
 
@@ -121,21 +147,21 @@ class FamilyController extends Controller
             'shelter_number'=>strip_tags($request->shelter_number),
 
 
-            'members_count'=>$request->members_count,
+            'members_count'=>$request->integer('members_count'),
 
 
-            'adults_count'=>$request->adults_count,
+            'adults_count'=>$request->integer('adults_count'),
 
 
-            'children_count'=>$request->children_count,
+            'children_count'=>$request->integer('children_count'),
 
 
-            'pwd_count'=>$request->pwd_count,
+            'pwd_count'=>$request->integer('pwd_count'),
 
             'has_pwd'=>$request->has_pwd ?? (($request->pwd_count ?? 0) > 0),
 
 
-            'is_female_headed'=>$request->is_female_headed,
+            'is_female_headed'=>$request->boolean('is_female_headed'),
 
 
             'fhh_reason'=>$request->fhh_reason ? strip_tags($request->fhh_reason) : null,
@@ -206,7 +232,7 @@ class FamilyController extends Controller
 
             'status'=>false,
 
-            'message'=>$e->getMessage()
+            'message'=>'Unable to register family'
 
         ],500);
 

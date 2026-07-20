@@ -248,6 +248,52 @@ class FullStackQaTest extends TestCase
         ]);
     }
 
+    public function test_transfer_requests_require_valid_family_scope_and_distinct_camps(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $family = $this->postJson('/api/families', $this->familyPayload())
+            ->assertCreated()
+            ->json('data');
+
+        $this->postJson('/api/transfer-requests', [
+            'family_id' => $family['id'],
+            'from_camp_id' => $this->targetCamp->id,
+            'to_camp_id' => $this->sourceCamp->id,
+            'reason' => 'Invalid source',
+        ])->assertUnprocessable();
+
+        $this->postJson('/api/transfer-requests', [
+            'family_id' => $family['id'],
+            'from_camp_id' => $this->sourceCamp->id,
+            'to_camp_id' => $this->sourceCamp->id,
+            'reason' => 'Same camp',
+        ])->assertUnprocessable();
+
+        $otherFamily = Family::create([
+            'national_id' => '999-2026-4000',
+            'head_name' => 'Other Camp Family',
+            'phone' => '059-400-0000',
+            'original_governorate' => 'غزة',
+            'original_city' => 'خان يونس',
+            'camp_id' => $this->targetCamp->id,
+            'members_count' => 1,
+            'adults_count' => 1,
+            'children_count' => 0,
+            'pwd_count' => 0,
+            'is_female_headed' => false,
+            'has_pwd' => false,
+            'created_by' => $this->admin->id,
+        ]);
+
+        $this->postJson('/api/transfer-requests', [
+            'family_id' => $otherFamily->id,
+            'from_camp_id' => $this->targetCamp->id,
+            'to_camp_id' => $this->sourceCamp->id,
+            'reason' => 'Out of scope',
+        ])->assertForbidden();
+    }
+
     private function familyPayload(array $overrides = []): array
     {
         return array_merge([

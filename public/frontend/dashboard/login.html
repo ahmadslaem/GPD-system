@@ -59,27 +59,6 @@
         </span>
       </button>
 
-      <!-- بيانات تجريبية للمطورين -->
-      <div style="margin-top:24px;padding:12px;background:#f8fafc;border-radius:9px;border:1px dashed #dde4ee;">
-        <div style="font-size:11px;color:#9aaabb;margin-bottom:8px;text-align:center;">بيانات تجريبية للاختبار</div>
-        <div class="d-flex flex-column gap-2">
-          <button class="demo-btn" data-user="admin@gpd.com" data-pass="ahmad-123"
-            style="background:#e8f1fb;border:1px solid #c5d9f0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a4a7a;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-shield me-1"></i>مدير النظام</span>
-            <span style="color:#7a8a9a;">admin@gpd.com / ahmad-123</span>
-          </button>
-          <button class="demo-btn" data-user="manager@gpd.com" data-pass="manager-123"
-            style="background:#eaf5ee;border:1px solid #a0d8b0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a5a2a;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-tie me-1"></i>مدير المنظمة</span>
-            <span style="color:#7a8a9a;">manager@gpd.com / manager-123</span>
-          </button>
-          <button class="demo-btn" data-user="data@gpd.com" data-pass="data-12345"
-            style="background:#fdf3e0;border:1px solid #f0cc80;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#7a5010;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-pen me-1"></i>موظف إدخال بيانات</span>
-            <span style="color:#7a8a9a;">data@gpd.com / data-12345</span>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- ── مرحلة 2: اختيار المخيم (لموظف الإدخال فقط) ────────── -->
@@ -174,13 +153,6 @@
 
       var currentUser = null;
       var camps = [];
-
-      /* ── ملء البيانات التجريبية ──────────────────────────── */
-      $('.demo-btn').on('click', function () {
-        $('#username').val($(this).data('user'));
-        $('#password').val($(this).data('pass'));
-        $('#loginError').hide();
-      });
 
       /* ── إظهار/إخفاء كلمة المرور ────────────────────────── */
       $('#togglePass').on('click', function () {

@@ -72,7 +72,7 @@ NDS.auth = {
       return false;
     }
     if (!this.canAccessPage(pageKey)) {
-      window.location.href = 'forbidden.html';
+      window.location.href = 'index.html';
       return false;
     }
     return true;

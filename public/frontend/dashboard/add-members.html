@@ -103,6 +103,16 @@
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
+      if (!NDS.auth.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+      }
+      if (!NDS.auth.can('edit_family') && !NDS.auth.can('register_family')) {
+        window.location.href = 'index.html';
+        return;
+      }
+      NDS.applyPermissions();
+
       var params = new URLSearchParams(window.location.search);
       var familyId = params.get('familyId');
       var familyName = params.get('familyName') || '—';
