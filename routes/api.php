@@ -80,6 +80,15 @@ Route::middleware(['auth:sanctum'])
 ->group(function(){
 
 
+Route::get(
+'transfer-requests',
+[
+TransferRequestController::class,
+'index'
+]
+);
+
+
 Route::middleware(['role:data_entry'])
 ->post(
 'transfer-requests',
@@ -92,16 +101,6 @@ TransferRequestController::class,
 
 Route::middleware(['role:manager,admin'])
 ->group(function(){
-
-
-Route::get(
-'transfer-requests',
-[
-TransferRequestController::class,
-'index'
-]
-);
-
 
 
 Route::put(

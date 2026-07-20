@@ -97,11 +97,11 @@ class FamilyController extends Controller
         $family = Family::create([
 
 
-            'national_id'=>$request->national_id,
+            'national_id'=>strip_tags($request->national_id),
 
-            'head_name'=>$request->head_name,
+            'head_name'=>strip_tags($request->head_name),
 
-            'phone'=>$request->phone,
+            'phone'=>strip_tags($request->phone),
 
             'birth_date'=>$request->birth_date,
 
@@ -109,16 +109,16 @@ class FamilyController extends Controller
             'created_by'=>auth()->id(),
 
 
-            'original_governorate'=>$request->original_governorate,
+            'original_governorate'=>strip_tags($request->original_governorate),
 
 
-            'original_city'=>$request->original_city,
+            'original_city'=>strip_tags($request->original_city),
 
 
             'camp_id'=>auth()->user()->camp_id,
 
 
-            'shelter_number'=>$request->shelter_number,
+            'shelter_number'=>strip_tags($request->shelter_number),
 
 
             'members_count'=>$request->members_count,
@@ -138,11 +138,11 @@ class FamilyController extends Controller
             'is_female_headed'=>$request->is_female_headed,
 
 
-            'fhh_reason'=>$request->fhh_reason,
+            'fhh_reason'=>$request->fhh_reason ? strip_tags($request->fhh_reason) : null,
 
-            'pwd_type'=>$request->pwd_type,
+            'pwd_type'=>$request->pwd_type ? strip_tags($request->pwd_type) : null,
 
-            'pwd_cause'=>$request->pwd_cause,
+            'pwd_cause'=>$request->pwd_cause ? strip_tags($request->pwd_cause) : null,
 
         ]);
         
@@ -156,9 +156,9 @@ class FamilyController extends Controller
 
             $family->members()->create([
 
-                'name'=>$member['name'],
+                'name'=>strip_tags($member['name']),
 
-                'national_id'=>$member['national_id'] ?? null,
+                'national_id'=>isset($member['national_id']) ? strip_tags($member['national_id']) : null,
 
                 'birth_date'=>$member['birth_date'] ?? null,
 
@@ -289,8 +289,8 @@ public function update(Request $request, Family $family)
 
 
     $family->update([
-        'head_name'  => $request->head_name,
-        'phone'      => $request->phone,
+        'head_name'  => strip_tags($request->head_name),
+        'phone'      => strip_tags($request->phone),
         'birth_date' => $request->birth_date,
     ]);
 
@@ -322,10 +322,10 @@ public function addMember(Request $request, Family $family)
 
 
     $member = $family->members()->create([
-        'name'=>$request->name,
+        'name'=>strip_tags($request->name),
         'gender'=>$request->gender,
         'birth_date'=>$request->birth_date,
-        'national_id'=>$request->national_id,
+        'national_id'=>$request->national_id ? strip_tags($request->national_id) : null,
         'has_disability'=>$request->has_disability ?? false
     ]);
 
@@ -379,7 +379,7 @@ public function updateMember(Request $request, $memberId)
 
 
     $member->update([
-        'name'=>$request->name,
+        'name'=>strip_tags($request->name),
         'gender'=>$request->gender,
         'birth_date'=>$request->birth_date,
     ]);
@@ -410,6 +410,8 @@ public function deleteMember($memberId)
     }
 
     $family = $member->family;
+    $wasAdult = $member->birth_date && now()->subYears(18)->greaterThanOrEqualTo($member->birth_date);
+    $hadDisability = (bool) $member->has_disability;
 
     $this->authorize('update', $family);
 
@@ -420,25 +422,19 @@ public function deleteMember($memberId)
     $family->camp?->decrement('current_population');
 
 
-    // إعادة حساب عدد أفراد الأسرة
-    $family->members_count = $family->members()->count();
+    $family->members_count = max(0, $family->members_count - 1);
 
+    if ($member->birth_date) {
+        if ($wasAdult) {
+            $family->adults_count = max(0, $family->adults_count - 1);
+        } else {
+            $family->children_count = max(0, $family->children_count - 1);
+        }
+    }
 
-    // حساب البالغين والأطفال
-    $family->adults_count = $family->members()
-        ->whereDate('birth_date', '<=', now()->subYears(18))
-        ->count();
-
-
-    $family->children_count = $family->members()
-        ->whereDate('birth_date', '>', now()->subYears(18))
-        ->count();
-
-
-    // حساب ذوي الإعاقة
-    $family->pwd_count = $family->members()
-        ->where('has_disability', true)
-        ->count();
+    if ($hadDisability) {
+        $family->pwd_count = max(0, $family->pwd_count - 1);
+    }
 
 
     // تحديث حالة الإعاقة
@@ -498,22 +494,11 @@ public function destroy($id)
 
 
         // تحديث تعداد المخيم
-        if($camp){
+    if($camp){
 
-            $camp->decrement(
-                'current_population',
-                $membersCount
-            );
-
-
-            // حماية من القيم السالبة
-            if($camp->current_population < 0){
-
-                $camp->update([
-                    'current_population'=>0
-                ]);
-
-            }
+            $camp->update([
+                'current_population' => max(0, $camp->current_population - $membersCount),
+            ]);
 
         }
 

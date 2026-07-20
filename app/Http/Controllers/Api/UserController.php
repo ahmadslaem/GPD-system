@@ -42,14 +42,14 @@ class UserController extends Controller
 
         $user = User::create([
 
-            'name'=>$request->name,
+            'name'=>strip_tags($request->name),
 
-            'email'=>$request->email,
+            'email'=>strip_tags($request->email),
 
             'password'=>Hash::make($request->password),
 
             'role'=>$request->role,
-            'phone'=>$request->phone,
+            'phone'=>$request->phone ? strip_tags($request->phone) : null,
             'camp_id'=>$request->camp_id,
             'is_active'=>true
 
@@ -102,7 +102,7 @@ class UserController extends Controller
 
             'name'=>'sometimes|string',
 
-            'email'=>'sometimes|email',
+            'email'=>'sometimes|email|unique:users,email,' . $user->id,
 
             'role'=>'sometimes|in:admin,manager,data_entry',
             'phone'=>'sometimes|string',
@@ -119,6 +119,12 @@ class UserController extends Controller
             'phone',
             'camp_id',
         ]);
+
+        foreach (['name', 'email', 'phone'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
 
         $user->update($data);
 

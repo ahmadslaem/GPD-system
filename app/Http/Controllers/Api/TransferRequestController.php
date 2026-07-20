@@ -31,6 +31,8 @@ $data=$request->validate([
 
 
 
+$data['reason'] = strip_tags($data['reason']);
+
 $data['requested_by']=auth()->id();
 
 
@@ -79,12 +81,19 @@ return response()->json([
 public function index(Request $request)
 {
  
+    $summaryQuery = TransferRequest::query();
+
     $query = TransferRequest::with([
         'family',
         'fromCamp',
         'toCamp',
         'requester',
     ]);
+
+    if ($request->user()->role === 'data_entry') {
+        $summaryQuery->where('requested_by', $request->user()->id);
+        $query->where('requested_by', $request->user()->id);
+    }
  
  
     // فلترة حسب الحالة (تبويبات: الكل / معلق / موافق / مرفوض)
@@ -133,13 +142,13 @@ public function index(Request $request)
     */
     $summary = [
  
-        'total' => TransferRequest::count(),
+        'total' => (clone $summaryQuery)->count(),
  
-        'approved' => TransferRequest::where('status', 'approved')->count(),
+        'approved' => (clone $summaryQuery)->where('status', 'approved')->count(),
  
-        'rejected' => TransferRequest::where('status', 'rejected')->count(),
+        'rejected' => (clone $summaryQuery)->where('status', 'rejected')->count(),
  
-        'pending' => TransferRequest::where('status', 'pending')->count(),
+        'pending' => (clone $summaryQuery)->where('status', 'pending')->count(),
  
     ];
  
@@ -214,11 +223,9 @@ public function approve(Request $request, $id)
         $membersCount = $family->members_count ?? 0;
 
         if ($transfer->fromCamp) {
-            $transfer->fromCamp->decrement('current_population', $membersCount);
-
-            if ($transfer->fromCamp->current_population < 0) {
-                $transfer->fromCamp->update(['current_population' => 0]);
-            }
+            $transfer->fromCamp->update([
+                'current_population' => max(0, $transfer->fromCamp->current_population - $membersCount),
+            ]);
         }
 
         if ($transfer->toCamp) {
@@ -237,7 +244,7 @@ public function approve(Request $request, $id)
 
             'status' => 'approved',
 
-            'manager_note' => $request->manager_note,
+            'manager_note' => $request->manager_note ? strip_tags($request->manager_note) : null,
 
             'reviewed_by' => auth()->id()
 
@@ -278,7 +285,7 @@ public function reject(Request $request, $id)
 
         'status' => 'rejected',
 
-        'manager_note' => $request->manager_note,
+        'manager_note' => $request->manager_note ? strip_tags($request->manager_note) : null,
 
         'reviewed_by' => auth()->id()
 
