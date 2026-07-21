@@ -12,10 +12,16 @@ class CampController extends Controller
 {
 
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Camp::query();
+
+        if ($request->boolean('active')) {
+            $query->where('is_active', true);
+        }
+
         return response()->json(
-            Camp::all()
+            $query->orderBy('id')->get()
         );
     }
 

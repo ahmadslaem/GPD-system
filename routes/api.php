@@ -162,7 +162,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get(
         '/search/global',
         [SearchController::class,'global']
-    );
+    )->middleware(['role:manager,admin']);
 
 
 });

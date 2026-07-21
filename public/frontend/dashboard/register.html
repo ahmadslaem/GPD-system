@@ -133,8 +133,10 @@
                     <input type="text" id="s2City" class="form-control" placeholder="مثال: رفح" />
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="field-label">المخيم الحالي</label>
-                    <input type="text" id="s2Camp" class="form-control" readonly style="background:#f8fafc;" />
+                    <label class="field-label">المخيم الحالي <span class="field-required">*</span></label>
+                    <select id="s2Camp" class="form-select">
+                      <option value="">جارٍ تحميل المخيمات...</option>
+                    </select>
                   </div>
                   <div class="col-12 col-sm-6">
                     <label class="field-label">رقم المأوى / الوحدة</label>
@@ -380,8 +382,52 @@
 
       /* ── الخطوة 1: فحص الهوية ──────────────────────────── */
       var session = JSON.parse(sessionStorage.getItem('nds_user') || '{}');
-      var currentCamp = session.camp || 'مخيم جباليا';
-      $('#s2Camp, #sumCamp').val(currentCamp).text(currentCamp);
+      var activeCamps = [];
+      var currentCamp = session.camp || '—';
+      var selectedCampId = session.camp_id || '';
+
+      function setSelectedCamp(campId) {
+        selectedCampId = campId || '';
+        var camp = activeCamps.find(function (item) {
+          return String(item.id) === String(selectedCampId);
+        });
+        currentCamp = camp ? camp.name : '—';
+        $('#sumCamp').text(currentCamp);
+      }
+
+      async function loadActiveCamps() {
+        try {
+          activeCamps = await NDS.api.camps({ active: 1 });
+
+          if (session.role === 'data_entry' && session.camp_id) {
+            activeCamps = activeCamps.filter(function (camp) {
+              return String(camp.id) === String(session.camp_id);
+            });
+          }
+
+          var options = '<option value="">اختر المخيم...</option>' + activeCamps.map(function (camp) {
+            return '<option value="' + camp.id + '">' + camp.name + '</option>';
+          }).join('');
+
+          $('#s2Camp').html(options || '<option value="">لا توجد مخيمات نشطة</option>');
+
+          if (selectedCampId && activeCamps.some(function (camp) { return String(camp.id) === String(selectedCampId); })) {
+            $('#s2Camp').val(String(selectedCampId));
+          }
+
+          setSelectedCamp($('#s2Camp').val());
+        } catch (error) {
+          $('#s2Camp').html('<option value="">تعذر تحميل المخيمات</option>');
+          $('#sumCamp').text('—');
+          alert(error.message || 'تعذر تحميل المخيمات');
+        }
+      }
+
+      $('#s2Camp').on('change', function () {
+        setSelectedCamp($(this).val());
+      });
+
+      loadActiveCamps();
 
       async function checkNid() {
         var nid = $('#nidInput').val().trim();
@@ -442,9 +488,10 @@
       $('#btnStep1Next').on('click', function () { if (nidVerified) goStep(2); });
       $('#btnStep2Back').on('click', function () { goStep(1); });
       $('#btnStep2Next').on('click', function () {
-        if (!$('#s2Name').val() || !$('#s2Phone').val() || !$('#s2Gov').val()) {
+        if (!$('#s2Name').val() || !$('#s2Phone').val() || !$('#s2Gov').val() || !$('#s2Camp').val()) {
           alert('يرجى ملء جميع الحقول الإلزامية'); return;
         }
+        setSelectedCamp($('#s2Camp').val());
         $('#sumName').text($('#s2Name').val());
         $('#sumTotal').text($('#s2Total').val());
         goStep(3);
@@ -574,6 +621,7 @@
           head_name: $('#s2Name').val(),
           phone: $('#s2Phone').val(),
           birth_date: $('#s2Dob').val() || null,
+          camp_id: Number($('#s2Camp').val()),
           original_governorate: $('#s2Gov').val(),
           original_city: $('#s2City').val(),
           shelter_number: $('#s2Shelter').val(),

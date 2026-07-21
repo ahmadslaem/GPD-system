@@ -294,6 +294,102 @@ class FullStackQaTest extends TestCase
         ])->assertForbidden();
     }
 
+    public function test_family_registration_requires_active_current_camp_selection(): void
+    {
+        $inactiveCamp = Camp::create([
+            'name' => 'Inactive QA Camp',
+            'location' => 'QA',
+            'capacity' => 100,
+            'current_population' => 0,
+            'is_active' => false,
+        ]);
+
+        Sanctum::actingAs($this->dataEntry);
+
+        $this->getJson('/api/camps?active=1')
+            ->assertOk()
+            ->assertJsonMissing(['name' => 'Inactive QA Camp']);
+
+        $this->patchJson('/api/user/select-camp', ['camp_id' => $inactiveCamp->id])
+            ->assertUnprocessable();
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'camp_id' => $inactiveCamp->id,
+            'national_id' => '999-2026-5000',
+        ]))->assertUnprocessable();
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'camp_id' => $this->targetCamp->id,
+            'national_id' => '999-2026-5001',
+        ]))->assertUnprocessable();
+
+        $family = $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-5002',
+        ]))->assertCreated();
+
+        $this->assertDatabaseHas('families', [
+            'id' => $family->json('data.id'),
+            'camp_id' => $this->sourceCamp->id,
+        ]);
+        $this->assertSame(3, $this->sourceCamp->fresh()->current_population);
+    }
+
+    public function test_search_supports_phone_and_secures_global_scope(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $family = $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-6000',
+            'phone' => '059-600-6000',
+        ]))->assertCreated()->json('data');
+
+        $this->getJson('/api/search/local?keyword=059-600')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $family['id']);
+
+        $this->getJson('/api/search/global?keyword=059-600')
+            ->assertForbidden();
+
+        Sanctum::actingAs($this->manager);
+
+        $this->getJson('/api/search/global?keyword=059-600')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $family['id']);
+
+        Sanctum::actingAs($this->admin);
+
+        $this->getJson('/api/search/global?keyword=059-600')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $family['id']);
+    }
+
+    public function test_report_filters_and_exports_use_registered_family_counts(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-7000',
+            'members_count' => 5,
+            'adults_count' => 2,
+            'children_count' => 3,
+        ]))->assertCreated();
+
+        Sanctum::actingAs($this->manager);
+
+        $this->getJson('/api/reports/demographic?camp_id='.$this->sourceCamp->id.'&vulnerability_level=low')
+            ->assertOk()
+            ->assertJsonPath('summary.total_families', 1)
+            ->assertJsonPath('summary.total_individuals', 5);
+
+        $this->get('/api/reports/demographic/export/excel?camp_id='.$this->sourceCamp->id)
+            ->assertOk()
+            ->assertHeader('content-disposition');
+
+        $this->get('/api/reports/demographic/export/pdf?camp_id='.$this->sourceCamp->id)
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
     private function familyPayload(array $overrides = []): array
     {
         return array_merge([
@@ -310,6 +406,7 @@ class FullStackQaTest extends TestCase
             'pwd_count' => 0,
             'is_female_headed' => false,
             'has_pwd' => false,
+            'camp_id' => $this->sourceCamp->id,
         ], $overrides);
     }
 }

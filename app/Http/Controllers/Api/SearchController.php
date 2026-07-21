@@ -45,6 +45,12 @@ public function local(Request $request)
                 'head_name',
                 'like',
                 '%'.$keyword.'%'
+            )
+
+            ->orWhere(
+                'phone',
+                'like',
+                '%'.$keyword.'%'
             );
 
             if(is_numeric($numericId) && $numericId !== ''){
@@ -107,6 +113,13 @@ public function global(Request $request)
 
         ->orWhere(
             'head_name',
+            'like',
+            '%'.$keyword.'%'
+        )
+
+
+        ->orWhere(
+            'phone',
             'like',
             '%'.$keyword.'%'
         );

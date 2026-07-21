@@ -82,10 +82,6 @@
               <i class="fa-solid fa-filter me-1"></i>الفلاتر
               <span class="badge bg-primary ms-1" id="fcnt" style="display:none;">0</span>
             </button>
-            <button class="btn btn-sm btn-outline-success" id="btnExportExcel"><i
-                class="fa-solid fa-file-excel me-1"></i><span class="d-none d-sm-inline">Excel</span></button>
-            <button class="btn btn-sm btn-outline-danger" id="btnExportPdf"><i
-                class="fa-solid fa-file-pdf me-1"></i><span class="d-none d-sm-inline">PDF</span></button>
             <a href="register.html" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus me-1"></i><span
                 class="d-none d-sm-inline">تسجيل أسرة</span></a>
           </div>
@@ -665,9 +661,6 @@
           alert(error.message || 'تعذر حذف الأسرة');
         }
       });
-
-      $('#btnExportExcel').on('click', function () { alert('تصدير Excel — يُنفَّذ في Backend بـ Laravel Excel'); });
-      $('#btnExportPdf').on('click', function () { alert('تصدير PDF — يُنفَّذ في Backend بـ Laravel DomPDF'); });
 
       async function loadFamilies() {
         $('#emptyState').hide();

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FamilyResource;
+use App\Models\Camp;
 use App\Models\Family;
 use App\Models\FamilyMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class FamilyController extends Controller
 {
@@ -48,7 +50,7 @@ class FamilyController extends Controller
  public function store(Request $request)
    {         $this->authorize('create', Family::class);
 
-    $request->validate([
+    $validated = $request->validate([
 
         'national_id'=>'required|string|max:20',
 
@@ -57,6 +59,12 @@ class FamilyController extends Controller
         'phone'=>'required|string|max:20',
 
         'birth_date'=>'nullable|date',
+
+        'camp_id'=>[
+            'required',
+            'integer',
+            Rule::exists('camps', 'id')->where('is_active', true),
+        ],
 
         'members'=>'nullable|array',
 
@@ -84,10 +92,20 @@ class FamilyController extends Controller
 
     ]);
 
-    if (!auth()->user()->camp_id) {
+    $user = auth()->user();
+    $campId = (int) $validated['camp_id'];
+
+    if ($user->role === 'data_entry' && !$user->camp_id) {
         return response()->json([
             'status'=>false,
             'message'=>'A camp must be selected before registering families'
+        ],422);
+    }
+
+    if ($user->role === 'data_entry' && (int) $user->camp_id !== $campId) {
+        return response()->json([
+            'status'=>false,
+            'message'=>'Selected camp must match the current user camp'
         ],422);
     }
 
@@ -141,7 +159,7 @@ class FamilyController extends Controller
             'original_city'=>strip_tags($request->original_city),
 
 
-            'camp_id'=>auth()->user()->camp_id,
+            'camp_id'=>$campId,
 
 
             'shelter_number'=>strip_tags($request->shelter_number),
@@ -197,7 +215,7 @@ class FamilyController extends Controller
         }
     $family->calculateVulnerability();
     // Update camp population
-    $camp = $family->camp;
+    $camp = Camp::find($campId);
 
     $camp->increment(
     'current_population',

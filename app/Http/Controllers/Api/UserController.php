@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 
 class UserController extends Controller
@@ -200,7 +201,11 @@ class UserController extends Controller
     public function selectCamp(Request $request)
 {
     $validated = $request->validate([
-        'camp_id' => 'required|integer|exists:camps,id',
+        'camp_id' => [
+            'required',
+            'integer',
+            Rule::exists('camps', 'id')->where('is_active', true),
+        ],
     ]);
 
     $request->user()->update([

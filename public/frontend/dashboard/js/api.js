@@ -99,8 +99,8 @@
       return this.request('/profile');
     },
 
-    camps: async function () {
-      return this.request('/camps');
+    camps: async function (params) {
+      return this.request('/camps' + this.query(params));
     },
 
     selectCamp: async function (campId) {
@@ -227,6 +227,48 @@
 
     reportExportUrl: function (type, format, params) {
       return this.baseUrl + '/reports/' + encodeURIComponent(type) + '/export/' + encodeURIComponent(format) + this.query(params);
+    },
+
+    downloadFile: async function (path, filename) {
+      var headers = { 'Accept': '*/*' };
+      var token = this.getToken();
+      if (token) {
+        headers.Authorization = 'Bearer ' + token;
+      }
+
+      var url = path.indexOf('http') === 0 ? path : this.baseUrl + path;
+      var response = await fetch(url, {
+        method: 'GET',
+        headers: headers
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          this.clearSession();
+        }
+
+        var contentType = response.headers.get('content-type') || '';
+        var data = contentType.includes('application/json')
+          ? await response.json()
+          : await response.text();
+        var errorMessage = data && (data.message || data.error || data.errors)
+          ? (data.message || data.error || JSON.stringify(data.errors))
+          : 'فشل تحميل الملف';
+        throw new Error(errorMessage);
+      }
+
+      var blob = await response.blob();
+      var disposition = response.headers.get('content-disposition') || '';
+      var match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^"]+)"?/i);
+      var downloadName = filename || (match ? decodeURIComponent(match[1] || match[2]) : 'download');
+      var objectUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = downloadName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
     },
 
     search: async function (scope, keyword) {

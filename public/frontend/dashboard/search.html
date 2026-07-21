@@ -30,7 +30,7 @@
             <div class="col-12 col-md-auto">
               <label style="font-size:12px;color:#5a6a7a;display:block;margin-bottom:5px;">نطاق البحث</label>
               <div class="search-mode-tabs">
-                <button class="search-mode-tab active" id="tabLocal">
+                <button class="search-mode-tab" id="tabLocal">
                   <i class="fa-solid fa-tent me-1"></i>محلي
                 </button>
                 <button class="search-mode-tab" id="tabGlobal">
@@ -43,7 +43,7 @@
               <div class="search-input-wrap">
                 <i class="fa-solid fa-magnifying-glass search-icon-abs"></i>
                 <input type="text" id="mainSearchInput" class="form-control search-big-input w-100"
-                  placeholder="ابحث بالاسم أو رقم الهوية أو رقم الأسرة..." />
+                  placeholder="ابحث بالاسم أو رقم الهوية أو رقم الأسرة أو الهاتف..." />
               </div>
             </div>
             <div class="col-12 col-md-auto">
@@ -138,7 +138,7 @@
           <div style="font-size:50px;color:#dde4ee;margin-bottom:16px;"><i class="fa-solid fa-magnifying-glass"></i>
           </div>
           <div style="font-size:15px;font-weight:500;color:#9aaabb;">ابدأ البحث للعثور على أسرة</div>
-          <div style="font-size:13px;color:#b0bbc8;margin-top:6px;">يمكنك البحث بالاسم أو رقم الهوية أو رقم الأسرة</div>
+          <div style="font-size:13px;color:#b0bbc8;margin-top:6px;">يمكنك البحث بالاسم أو رقم الهوية أو رقم الأسرة أو الهاتف</div>
         </div>
 
       </main>
@@ -157,13 +157,24 @@
 
       /* ── بيانات API ─────────────────────────────────────── */
       var families = [];
+      var visibleFamilies = [];
       function mapFamily(f) {
+        var camp = '';
+        if (typeof f.camp === 'object' && f.camp) {
+          camp = f.camp.name || '';
+        } else {
+          camp = f.camp || f.camp_name || '';
+        }
+        if (!camp && Number(f.camp_id || 0) === Number(session.camp_id || 0)) {
+          camp = session.camp || '';
+        }
+
         return {
           backend_id: f.id,
           id: f.family_number || ('F-' + String(f.id).padStart(5, '0')),
           nid: f.nid || f.national_id || '',
           name: f.name || f.head_name || '',
-          camp: f.camp || (f.camp_name || ''),
+          camp: camp,
           gov: f.gov || f.original_governorate || '',
           phone: f.phone || '',
           total: Number(f.total || f.members_count || 0),
@@ -175,44 +186,93 @@
           shelter: f.shelter || f.shelter_number || '',
           score: Number(f.score || f.vulnerability_score || 0),
           level: f.level || f.vulnerability_level || 'low',
-          regDate: f.date || ''
+          regDate: f.date || (f.created_at ? String(f.created_at).slice(0, 10) : ''),
+          members: f.members || []
         };
       }
 
       var selectedFamily = null;
       var activeFilter = 'all';
-      var isGlobal = false;
+      var session = NDS.auth.getSession() || {};
+      var canGlobalSearch = session.role === 'admin' || session.role === 'manager';
+      var isGlobal = canGlobalSearch;
+
+      function updateSearchScopeUi() {
+        $('#tabLocal').toggleClass('active', !isGlobal);
+        $('#tabGlobal').toggleClass('active', isGlobal);
+        if (!canGlobalSearch) {
+          $('#tabGlobal').remove();
+        }
+      }
+
+      updateSearchScopeUi();
 
       /* ── وضع البحث ──────────────────────────────────────── */
-      $('#tabLocal').on('click', function () { isGlobal = false; $(this).addClass('active'); $('#tabGlobal').removeClass('active'); });
-      $('#tabGlobal').on('click', function () { isGlobal = true; $(this).addClass('active'); $('#tabLocal').removeClass('active'); });
+      $('#tabLocal').on('click', function () {
+        isGlobal = false;
+        updateSearchScopeUi();
+        searchFamilies($('#mainSearchInput').val());
+      });
+      $('#tabGlobal').on('click', function () {
+        if (!canGlobalSearch) return;
+        isGlobal = true;
+        updateSearchScopeUi();
+        searchFamilies($('#mainSearchInput').val());
+      });
 
       /* ── الفلاتر ─────────────────────────────────────────── */
       $(document).on('click', '.filter-chip', function () {
         $('.filter-chip').removeClass('active');
         $(this).addClass('active');
         activeFilter = $(this).data('filter');
-        if ($('#resultsArea').is(':visible')) doSearch();
+        renderFamilies(visibleFamilies);
       });
 
-      /* ── تنفيذ البحث ─────────────────────────────────────── */
-      async function doSearch() {
-        var q = $('#mainSearchInput').val().trim().toLowerCase();
-        $('#resultsList').html('<div style="text-align:center;padding:24px;color:#9aaabb;">جارٍ البحث...</div>');
-        $('#resultsArea').show();
-        try {
-          var response = await NDS.api.search(isGlobal ? 'global' : 'local', q || ' ');
-          families = (response.data || []).map(mapFamily);
-        } catch (error) {
-          $('#resultsList').html('<div style="text-align:center;padding:24px;color:#b03030;">' + (error.message || 'تعذر تنفيذ البحث') + '</div>');
-          return;
-        }
-        var filtered = families.filter(function (f) {
-          var match = !q || f.name.includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q);
-          var filterMatch = activeFilter === 'all' || f.level === activeFilter || (activeFilter === 'fhh' && f.fhh);
-          return match && filterMatch;
-        });
+      function showLoading(message) {
+        $('#emptyState').hide();
+        $('#resultsArea').css('display', 'flex');
+        $('#resultsCount').text('');
+        $('#resultsContainer').html('<div style="text-align:center;padding:24px;color:#9aaabb;">' + (message || 'جارٍ التحميل...') + '</div>');
+      }
 
+      function showError(message) {
+        $('#emptyState').hide();
+        $('#resultsArea').css('display', 'flex');
+        $('#resultsCount').text('');
+        $('#resultsContainer').html('<div style="text-align:center;padding:24px;color:#b03030;">' + (message || 'تعذر تحميل البيانات') + '</div>');
+      }
+
+      function resetProfile() {
+        selectedFamily = null;
+        $('#profileAvatar').text('—');
+        $('#profileName').text('اختر أسرة من القائمة');
+        $('#profileMeta').text('—');
+        $('#profileBadges').html('');
+        $('#profileActions').css('display', 'none');
+        $('#basicInfoContent').html('اختر أسرة لعرض بياناتها');
+        $('#membersContent,#vulnContent,#historyContent').html('');
+      }
+
+      function applyActiveFilter(rows) {
+        return rows.filter(function (f) {
+          return activeFilter === 'all' || f.level === activeFilter || (activeFilter === 'fhh' && f.fhh);
+        });
+      }
+
+      async function loadFamilies() {
+        showLoading('جارٍ تحميل الأسر...');
+        try {
+          var response = await NDS.api.families();
+          families = (response.data || []).map(mapFamily);
+          visibleFamilies = families.slice();
+          renderFamilies(visibleFamilies);
+        } catch (error) {
+          showError(error.message || 'تعذر تحميل الأسر');
+        }
+      }
+
+      function renderFamilies(rows) {
+        var filtered = applyActiveFilter(rows || []);
         $('#emptyState').hide();
         $('#resultsArea').css('display', 'flex');
         $('#resultsCount').text('وجدنا ' + filtered.length + ' نتيجة' + (isGlobal ? ' (بحث شامل)' : ' (بحث محلي)'));
@@ -235,15 +295,40 @@
           });
         }
         $('#resultsContainer').html(html);
+        resetProfile();
       }
 
-      $('#btnSearch').on('click', doSearch);
-      $('#mainSearchInput').on('keypress', function (e) { if (e.which === 13) doSearch(); });
+      async function searchFamilies(keyword) {
+        var q = (keyword || '').trim();
+        if (!q) {
+          await loadFamilies();
+          return;
+        }
+
+        showLoading('جارٍ البحث...');
+        try {
+          var response = await NDS.api.search(isGlobal ? 'global' : 'local', q);
+          visibleFamilies = (response.data || []).map(mapFamily);
+          renderFamilies(visibleFamilies);
+        } catch (error) {
+          showError(error.message || 'تعذر تنفيذ البحث');
+        }
+      }
+
+      $('#btnSearch').on('click', function () {
+        searchFamilies($('#mainSearchInput').val());
+      });
+      $('#mainSearchInput').on('keypress', function (e) {
+        if (e.which === 13) searchFamilies($(this).val());
+      });
+      $('#mainSearchInput').on('input', function () {
+        if (!$(this).val().trim()) loadFamilies();
+      });
 
       /* ── اختيار أسرة ─────────────────────────────────────── */
       $(document).on('click', '.family-result-card', function () {
         var id = $(this).data('id');
-        selectedFamily = families.find(function (f) { return f.id === id; });
+        selectedFamily = visibleFamilies.find(function (f) { return f.id === id; });
         if (!selectedFamily) return;
 
         $('.family-result-card').removeClass('selected');
@@ -278,18 +363,27 @@
     `);
 
         /* تبويب الأفراد (تجريبي) */
-        var mems = [
-          { n: f.name, rel: 'رب أسرة', y: '1985', pwd: false },
-          { n: 'زوجة رب الأسرة', rel: 'زوجة', y: '1990', pwd: f.pwd > 0 },
-          { n: 'الابن الأول', rel: 'ابن', y: '2010', pwd: false },
-        ];
+        var mems = (f.members || []).map(function (member) {
+          return {
+            n: member.name || '—',
+            rel: member.relationship || '',
+            y: member.birth_date ? String(member.birth_date).slice(0, 10) : '—',
+            pwd: !!member.has_disability
+          };
+        });
+        if (!mems.length) {
+          mems = [{ n: f.name, rel: 'رب أسرة', y: '—', pwd: f.pwd > 0 }];
+        }
         var memsHtml = mems.map(function (m, i) {
           return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-radius:9px;margin-bottom:6px;">
         <div class="member-avatar-sm">${i + 1}</div>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#1a2332;">${m.n}</div><div style="font-size:11.5px;color:#7a8a9a;">${m.rel} · ${m.y}</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:500;color:#1a2332;">${m.n}</div><div style="font-size:11.5px;color:#7a8a9a;">${m.rel || 'فرد'} · ${m.y}</div></div>
         ${m.pwd ? '<span class="badge bg-warning text-dark">PWD</span>' : ''}
       </div>`;
-        }).join('') + `<div style="font-size:12px;color:#9aaabb;text-align:center;margin-top:6px;">+ ${f.total - 3} أفراد آخرين</div>`;
+        }).join('');
+        if (f.total > mems.length) {
+          memsHtml += `<div style="font-size:12px;color:#9aaabb;text-align:center;margin-top:6px;">+ ${f.total - mems.length} أفراد آخرين</div>`;
+        }
         $('#membersContent').html(memsHtml);
 
         /* تبويب الضعف */
@@ -338,7 +432,12 @@
 
       /* ── من URL query ────────────────────────────────────── */
       var urlQ = new URLSearchParams(window.location.search).get('q');
-      if (urlQ) { $('#mainSearchInput').val(urlQ); doSearch(); }
+      if (urlQ) {
+        $('#mainSearchInput').val(urlQ);
+        searchFamilies(urlQ);
+      } else {
+        loadFamilies();
+      }
     });
   </script>
 </body>

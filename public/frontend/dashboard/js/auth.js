@@ -29,7 +29,7 @@ NDS.permissions = {
   },
   data_entry: {
     pages:    ['index','register','search','transfers'],
-    actions:  ['register_family','edit_family','search_local','search_global',
+    actions:  ['register_family','edit_family','search_local',
                'create_transfer','view_transfer_status',
                'view_dashboard_camp']
   }

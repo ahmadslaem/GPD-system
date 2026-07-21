@@ -793,11 +793,17 @@
       });
 
       $('#btnScopeGlobal').on('click', function () {
+        if (session.role === 'data_entry') return;
         searchScope = 'global';
         $(this).addClass('active'); $('#btnScopeLocal').removeClass('active');
         $('#searchScopeBadge').addClass('global').html('<i class="fa-solid fa-globe me-1"></i>شامل — كل المخيمات');
         doStaffSearch($('#staffSearchInput').val());
       });
+
+      if (session.role === 'data_entry') {
+        $('#btnScopeGlobal').remove();
+        searchScope = 'local';
+      }
 
       $('#staffSearchInput').on('input', function () {
         doStaffSearch($(this).val());
@@ -942,7 +948,7 @@
         var nid = $('#ntNid').val().trim();
         if (!nid) return;
         try {
-          var response = await NDS.api.search('global', nid);
+          var response = await NDS.api.search('local', nid);
           checkedTransferFamily = (response.data || [])[0] || null;
           if (!checkedTransferFamily) throw new Error('لم يُعثر على أسرة بهذا الرقم');
           $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + (checkedTransferFamily.head_name || checkedTransferFamily.name || checkedTransferFamily.national_id) + '</b></div>');

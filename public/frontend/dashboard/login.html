@@ -168,7 +168,7 @@
       }
 
       async function loadCamps() {
-        camps = await NDS.api.camps();
+        camps = await NDS.api.camps({ active: 1 });
         var html = camps.map(function (camp) {
           return '<li class="camp-list-item" data-camp-id="' + camp.id + '" data-camp="' + camp.name + '">'
             + '<div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>'

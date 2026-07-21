@@ -70,21 +70,16 @@
                 <div class="mb-3">
                   <label class="field-label">المخيم / الموقع</label>
                   <select class="form-select" id="repCamp">
-                    <option value="all">كل المخيمات</option>
-                    <option>مخيم جباليا</option>
-                    <option>مخيم خان يونس</option>
-                    <option>مواصي رفح</option>
-                    <option>مخيم النصيرات</option>
-                    <option>مخيم البريج</option>
+                    <option value="">كل المخيمات</option>
                   </select>
                 </div>
                 <div class="mb-3">
                   <label class="field-label">من تاريخ</label>
-                  <input type="date" class="form-control" id="repFrom" value="2026-01-01" />
+                  <input type="date" class="form-control" id="repFrom" />
                 </div>
                 <div class="mb-3">
                   <label class="field-label">إلى تاريخ</label>
-                  <input type="date" class="form-control" id="repTo" value="2026-04-07" />
+                  <input type="date" class="form-control" id="repTo" />
                 </div>
                 <div class="mb-3">
                   <label class="field-label">مستوى الضعف</label>
@@ -180,6 +175,7 @@
       NDS.applyPermissions();
 
       var currentReport = 'demographic';
+      var campsById = {};
 
       var reportData = {
         demographic: {
@@ -295,7 +291,43 @@
       }
 
       function reportParams() {
-        return { date_from: $('#repFrom').val(), date_to: $('#repTo').val() };
+        return {
+          camp_id: $('#repCamp').val(),
+          date_from: $('#repFrom').val(),
+          date_to: $('#repTo').val(),
+          vulnerability_level: $('#repLevel').val() === 'all' ? '' : $('#repLevel').val()
+        };
+      }
+
+      async function loadReportCamps() {
+        try {
+          var camps = await NDS.api.camps({ active: 1 });
+          campsById = {};
+          camps.forEach(function (camp) { campsById[String(camp.id)] = camp.name; });
+          $('#repCamp').html('<option value="">كل المخيمات</option>' + camps.map(function (camp) {
+            return '<option value="' + camp.id + '">' + camp.name + '</option>';
+          }).join(''));
+        } catch (error) {
+          $('#repCamp').html('<option value="">كل المخيمات</option>');
+        }
+      }
+
+      function selectedCampLabel() {
+        var campId = $('#repCamp').val();
+        return campId ? (campsById[String(campId)] || 'مخيم محدد') : 'كل المخيمات';
+      }
+
+      function cardValue(card) {
+        if (card.value !== undefined) return card.value;
+        if (card.val !== undefined) return card.val;
+        if (card.count !== undefined && card.percentage !== undefined) return card.count + ' (' + card.percentage + '%)';
+        if (card.count !== undefined) return card.count;
+        if (card.new_registrations !== undefined) return card.new_registrations;
+        return '';
+      }
+
+      function cardLabel(card) {
+        return card.label || card.month || card.name || '';
       }
 
       /* ── توليد التقرير ──────────────────────────────────── */
@@ -308,8 +340,8 @@
           $('#generateLoading').addClass('d-none');
           $('#previewContent').removeClass('d-none');
           $('#exportBtns').css('display', 'flex');
-          $('#previewTitle').text('معاينة: ' + $('.report-type-btn.active .rt-title').text());
-          $('#previewMeta').text(($('#repFrom').val() || 'البداية') + ' إلى ' + ($('#repTo').val() || 'اليوم'));
+          $('#previewTitle').text('معاينة: ' + $('.report-type-btn.active .rt-name').text());
+          $('#previewMeta').text(selectedCampLabel() + ' — ' + (($('#repFrom').val() || 'البداية') + ' إلى ' + ($('#repTo').val() || 'اليوم')));
 
           var summary = data.summary || data.summary_cards || {};
           var cards = Array.isArray(summary) ? summary : Object.keys(summary).map(function (key) {
@@ -318,7 +350,7 @@
             return { label: key, value: value };
           });
           $('#summaryCards').html(cards.slice(0, 4).map(function (card) {
-            return '<div class="col-6 col-xl-3"><div style="background:#f8fafc;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#7a8a9a;">' + card.label + '</div><div style="font-size:22px;font-weight:700;color:#1a2332;">' + card.value + '</div></div></div>';
+            return '<div class="col-6 col-xl-3"><div style="background:#f8fafc;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#7a8a9a;">' + cardLabel(card) + '</div><div style="font-size:22px;font-weight:700;color:#1a2332;">' + cardValue(card) + '</div></div></div>';
           }).join(''));
 
           var rows = data.details || data.distribution || data.distribution_by_camp || data.monthly_breakdown || data.monthly_chart || [];
@@ -335,13 +367,37 @@
       });
 
       /* ── أزرار التصدير ──────────────────────────────────── */
-      $('#btnExportExcel').on('click', function () {
-        window.open(NDS.api.reportExportUrl(apiReportName(), 'excel', reportParams()), '_blank');
+      $('#btnExportExcel').on('click', async function () {
+        var $btn = $(this);
+        try {
+          $btn.prop('disabled', true);
+          await NDS.api.downloadFile(
+            '/reports/' + encodeURIComponent(apiReportName()) + '/export/excel' + NDS.api.query(reportParams()),
+            apiReportName() + '_report.xlsx'
+          );
+        } catch (error) {
+          alert(error.message || 'تعذر تصدير Excel');
+        } finally {
+          $btn.prop('disabled', false);
+        }
       });
-      $('#btnExportPdf').on('click', function () {
-        window.open(NDS.api.reportExportUrl(apiReportName(), 'pdf', reportParams()), '_blank');
+      $('#btnExportPdf').on('click', async function () {
+        var $btn = $(this);
+        try {
+          $btn.prop('disabled', true);
+          await NDS.api.downloadFile(
+            '/reports/' + encodeURIComponent(apiReportName()) + '/export/pdf' + NDS.api.query(reportParams()),
+            apiReportName() + '_report.pdf'
+          );
+        } catch (error) {
+          alert(error.message || 'تعذر تصدير PDF');
+        } finally {
+          $btn.prop('disabled', false);
+        }
       });
       $('#btnPrint').on('click', function () { window.print(); });
+
+      loadReportCamps();
     });
   </script>
 </body>
