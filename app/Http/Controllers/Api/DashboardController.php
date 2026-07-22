@@ -160,6 +160,7 @@ class DashboardController extends Controller
                     'from_camp'  => $transfer->fromCamp->name ?? null,
                     'to_camp'    => $transfer->toCamp->name ?? null,
                     'status'     => $transfer->status,
+                    'created_at'  => $transfer->created_at?->toDateString(),
                 ];
             });
 

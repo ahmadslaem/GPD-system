@@ -186,25 +186,25 @@
                   <div class="vuln-item">
                     <div class="vuln-row d-flex justify-content-between mb-1"><span
                         class="vuln-label vuln-label--high"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
-                        عالٍ</span><span class="vuln-pct">25% — 3,218</span></div>
+                        عالٍ</span><span class="vuln-pct">0% — 0</span></div>
                     <div class="progress" style="height:8px;">
-                      <div class="progress-bar bg-danger" data-width="25" style="width:0%"></div>
+                      <div class="progress-bar bg-danger" data-width="0" style="width:0%"></div>
                     </div>
                   </div>
                   <div class="vuln-item mt-2">
                     <div class="vuln-row d-flex justify-content-between mb-1"><span
                         class="vuln-label vuln-label--med"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
-                        متوسط</span><span class="vuln-pct">45% — 5,781</span></div>
+                        متوسط</span><span class="vuln-pct">0% — 0</span></div>
                     <div class="progress" style="height:8px;">
-                      <div class="progress-bar bg-warning" data-width="45" style="width:0%"></div>
+                      <div class="progress-bar bg-warning" data-width="0" style="width:0%"></div>
                     </div>
                   </div>
                   <div class="vuln-item mt-2">
                     <div class="vuln-row d-flex justify-content-between mb-1"><span
                         class="vuln-label vuln-label--low"><i class="fa-solid fa-circle-dot me-1"></i>ضعف
-                        منخفض</span><span class="vuln-pct">30% — 3,848</span></div>
+                        منخفض</span><span class="vuln-pct">0% — 0</span></div>
                     <div class="progress" style="height:8px;">
-                      <div class="progress-bar bg-success" data-width="30" style="width:0%"></div>
+                      <div class="progress-bar bg-success" data-width="0" style="width:0%"></div>
                     </div>
                   </div>
                 </div>
@@ -212,19 +212,19 @@
                 <div class="section-mini-title mb-2">التركيبة الديموغرافية</div>
                 <div class="demo-grid">
                   <div class="demo-item demo-item--blue"><i class="fa-solid fa-person"></i>
-                    <div class="demo-val">41,230</div>
-                    <div class="demo-lbl">بالغون (58%)</div>
+                    <div class="demo-val">0</div>
+                    <div class="demo-lbl">بالغون (0%)</div>
                   </div>
                   <div class="demo-item demo-item--teal"><i class="fa-solid fa-child"></i>
-                    <div class="demo-val">23,470</div>
-                    <div class="demo-lbl">أطفال &lt;16 (33%)</div>
+                    <div class="demo-val">0</div>
+                    <div class="demo-lbl">أطفال &lt;16 (0%)</div>
                   </div>
                   <div class="demo-item demo-item--amber"><i class="fa-solid fa-wheelchair"></i>
-                    <div class="demo-val">6,730</div>
-                    <div class="demo-lbl">ذوو إعاقة (9%)</div>
+                    <div class="demo-val">0</div>
+                    <div class="demo-lbl">ذوو إعاقة (0%)</div>
                   </div>
                   <div class="demo-item demo-item--pink"><i class="fa-solid fa-venus"></i>
-                    <div class="demo-val">2,140</div>
+                    <div class="demo-val">0</div>
                     <div class="demo-lbl">أسر FHH</div>
                   </div>
                 </div>
@@ -350,9 +350,9 @@
                     <i class="fa-solid fa-right-left" style="font-size:13px;"></i></div>
                   <div>
                     <div style="font-size:13px;font-weight:600;color:#7a5010;">مراجعة طلبات النقل</div>
-                    <div style="font-size:11px;color:#9a7a30;margin-top:1px;">47 طلب بانتظار القرار</div>
+                    <div id="pendingTransfersActionText" style="font-size:11px;color:#9a7a30;margin-top:1px;">0 طلب بانتظار القرار</div>
                   </div>
-                  <span class="badge bg-warning text-dark ms-auto">47</span>
+                  <span id="pendingTransfersActionBadge" class="badge bg-warning text-dark ms-auto">0</span>
                 </a>
                 <a href="reports.html"
                   style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#e8f1fb;border-radius:9px;text-decoration:none;transition:opacity 0.15s;"
@@ -373,7 +373,7 @@
                     <i class="fa-solid fa-users-gear" style="font-size:13px;"></i></div>
                   <div>
                     <div style="font-size:13px;font-weight:600;color:#1a5a2a;">إدارة المستخدمين</div>
-                    <div style="font-size:11px;color:#2a7a3a;margin-top:1px;">24 مستخدم مسجل</div>
+                    <div id="usersActionText" style="font-size:11px;color:#2a7a3a;margin-top:1px;">0 مستخدم مسجل</div>
                   </div>
                 </a>
                 <a href="search.html"
@@ -397,40 +397,8 @@
                     class="fa-solid fa-clock me-2 text-warning"></i>أحدث طلبات النقل المعلقة</h2>
                 <a href="transfers.html" style="font-size:12px;color:#1a6bb5;">عرض الكل</a>
               </div>
-              <div class="content-card__body p-0">
-                <div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">أحمد محمد سليم</div>
-                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span
-                          style="color:#b03030;">النصيرات</span> <i class="fa-solid fa-arrow-left mx-1"
-                          style="font-size:9px;color:#9aaabb;"></i><span style="color:#1a6a2a;">جباليا</span></div>
-                    </div>
-                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
-                  </div>
-                </div>
-                <div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">منى يوسف حسن</div>
-                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span style="color:#b03030;">رفح</span>
-                        <i class="fa-solid fa-arrow-left mx-1" style="font-size:9px;color:#9aaabb;"></i><span
-                          style="color:#1a6a2a;">خان يونس</span></div>
-                    </div>
-                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
-                  </div>
-                </div>
-                <div style="padding:10px 16px;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                      <div style="font-size:12.5px;font-weight:600;color:#1a2332;">هناء جمال الصوراني</div>
-                      <div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span style="color:#b03030;">خان
-                          يونس</span> <i class="fa-solid fa-arrow-left mx-1"
-                          style="font-size:9px;color:#9aaabb;"></i><span style="color:#1a6a2a;">جباليا</span></div>
-                    </div>
-                    <span class="badge bg-warning text-dark" style="font-size:10px;">معلق</span>
-                  </div>
-                </div>
+              <div id="latestPendingTransfers" class="content-card__body p-0">
+                <div style="padding:16px;text-align:center;color:#9aaabb;font-size:12px;">جارٍ تحميل طلبات النقل...</div>
               </div>
             </div>
           </div>
@@ -484,6 +452,100 @@
         });
       }
 
+      function fmtNumber(value) {
+        return Number(value || 0).toLocaleString('ar-EG');
+      }
+
+      function fmtPercent(value) {
+        var percent = Number(value || 0);
+        return Math.max(0, Math.min(100, percent));
+      }
+
+      function escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function formatDate(value) {
+        if (!value) return '-';
+        var date = new Date(value);
+        if (Number.isNaN(date.getTime())) return escapeHtml(value);
+        return date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+
+      function renderPendingTransferActions(count) {
+        var safeCount = Number(count || 0);
+        $('#pendingTransfersActionText').text(fmtNumber(safeCount) + ' طلب بانتظار القرار');
+        $('#pendingTransfersActionBadge').text(fmtNumber(safeCount));
+      }
+
+      function renderUsersAction(count) {
+        $('#usersActionText').text(fmtNumber(count) + ' مستخدم مسجل');
+      }
+
+      async function loadUsersActionCount() {
+        if (!NDS.auth.can('manage_users')) return;
+
+        try {
+          var response = await NDS.api.usersStatistics();
+          renderUsersAction(response.total_users || 0);
+        } catch (error) {
+          $('#usersActionText').text('تعذر تحميل المستخدمين');
+        }
+      }
+
+      function transferStatusLabel(status) {
+        return {
+          pending: 'معلق',
+          approved: 'موافق عليه',
+          rejected: 'مرفوض'
+        }[status] || status || '-';
+      }
+
+      function renderLatestPendingTransfers(transfers) {
+        var list = Array.isArray(transfers) ? transfers : [];
+
+        if (!list.length) {
+          $('#latestPendingTransfers').html('<div style="padding:16px;text-align:center;color:#9aaabb;font-size:12px;">لا توجد طلبات نقل معلقة</div>');
+          return;
+        }
+
+        $('#latestPendingTransfers').html(list.map(function (transfer, index) {
+          var border = index < list.length - 1 ? 'border-bottom:1px solid #f0f4f8;' : '';
+          return '<div style="padding:10px 16px;' + border + '">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+              '<div>' +
+                '<div style="font-size:12.5px;font-weight:600;color:#1a2332;">' + escapeHtml(transfer.head_name || '-') + '</div>' +
+                '<div style="font-size:11px;color:#5a6a7a;margin-top:1px;"><span style="color:#b03030;">' + escapeHtml(transfer.from_camp || '-') + '</span> <i class="fa-solid fa-arrow-left mx-1" style="font-size:9px;color:#9aaabb;"></i><span style="color:#1a6a2a;">' + escapeHtml(transfer.to_camp || '-') + '</span></div>' +
+                '<div style="font-size:10.5px;color:#9aaabb;margin-top:3px;"><i class="fa-regular fa-calendar me-1"></i>' + formatDate(transfer.created_at) + '</div>' +
+              '</div>' +
+              '<span class="badge bg-warning text-dark" style="font-size:10px;">' + escapeHtml(transferStatusLabel(transfer.status)) + '</span>' +
+            '</div>' +
+          '</div>';
+        }).join(''));
+      }
+
+      function renderVulnerabilityLevel(labelClass, barClass, level) {
+        var count = level && level.count !== undefined ? level.count : 0;
+        var percentage = fmtPercent(level && level.percentage !== undefined ? level.percentage : 0);
+        $('.' + labelClass).closest('.vuln-row').find('.vuln-pct')
+          .text(fmtNumber(percentage) + '% — ' + fmtNumber(count));
+        $('.progress-bar.' + barClass)
+          .attr('data-width', percentage)
+          .data('width', percentage)
+          .css('width', '0%');
+      }
+
+      function renderDemographicItem(itemClass, count, label, percentage) {
+        var $item = $('.' + itemClass);
+        $item.find('.demo-val').text(fmtNumber(count));
+        $item.find('.demo-lbl').text(percentage === null ? label : label + ' (' + fmtNumber(fmtPercent(percentage)) + '%)');
+      }
+
       async function loadDashboard() {
         try {
           var response = await NDS.api.dashboard();
@@ -495,9 +557,11 @@
             cards.high_vulnerability_cases ? cards.high_vulnerability_cases.count : 0,
             cards.pending_transfers ? cards.pending_transfers.count : 0
           ];
+          var pendingTransfersCount = cards.pending_transfers ? cards.pending_transfers.count : 0;
           $('.stat-card__value[data-target]').each(function (index) {
             $(this).attr('data-target', values[index] || 0).data('target', values[index] || 0).text('0');
           });
+          renderPendingTransferActions(pendingTransfersCount);
 
           if (cards.total_families) {
             $('.stat-card__change').eq(0).html('<i class="fa-solid fa-arrow-trend-up"></i> +' + (cards.total_families.new_this_week || 0) + ' هذا الأسبوع');
@@ -511,20 +575,30 @@
           }).join('') || '<div class="text-muted text-center py-3">لا توجد بيانات مخيمات</div>');
 
           var vuln = data.vulnerability_levels || {};
-          $('.progress-bar.bg-danger').attr('data-width', vuln.high ? vuln.high.percentage : 0).data('width', vuln.high ? vuln.high.percentage : 0).css('width', '0%');
-          $('.progress-bar.bg-warning').attr('data-width', vuln.medium ? vuln.medium.percentage : 0).data('width', vuln.medium ? vuln.medium.percentage : 0).css('width', '0%');
-          $('.progress-bar.bg-success').attr('data-width', vuln.low ? vuln.low.percentage : 0).data('width', vuln.low ? vuln.low.percentage : 0).css('width', '0%');
+          renderVulnerabilityLevel('vuln-label--high', 'bg-danger', vuln.high);
+          renderVulnerabilityLevel('vuln-label--med', 'bg-warning', vuln.medium);
+          renderVulnerabilityLevel('vuln-label--low', 'bg-success', vuln.low);
+
+          var demographics = data.demographics || {};
+          renderDemographicItem('demo-item--blue', demographics.adults && demographics.adults.count, 'بالغون', demographics.adults ? demographics.adults.percentage : 0);
+          renderDemographicItem('demo-item--teal', demographics.children && demographics.children.count, 'أطفال <16', demographics.children ? demographics.children.percentage : 0);
+          renderDemographicItem('demo-item--amber', demographics.pwd && demographics.pwd.count, 'ذوو إعاقة', demographics.pwd ? demographics.pwd.percentage : 0);
+          renderDemographicItem('demo-item--pink', demographics.female_headed_families, 'أسر FHH', null);
 
           var latest = data.latest_families || [];
           $('#familiesTable tbody').html(latest.map(function (f) {
             return '<tr><td><span class="family-id">' + f.family_number + '</span></td><td>' + f.head_name + '</td><td>' + (f.camp_name || '-') + '</td><td>' + (f.members_count || 0) + '</td><td>' + (f.vulnerability_label || f.vulnerability_level || '-') + '</td><td>' + (f.registered_at || '-') + '</td></tr>';
           }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">لا توجد أسر مسجلة بعد</td></tr>');
+          renderLatestPendingTransfers(data.latest_pending_transfers || []);
 
           $('#lastUpdate').text(data.last_updated || new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
           animateCounters();
           setTimeout(animateBars, 350);
+          loadUsersActionCount();
         } catch (error) {
           $('.stat-card__value').text('!');
+          renderPendingTransferActions(0);
+          $('#latestPendingTransfers').html('<div style="padding:16px;text-align:center;color:#b03030;font-size:12px;">تعذر تحميل طلبات النقل المعلقة</div>');
           $('#familiesTable tbody').html('<tr><td colspan="6" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل لوحة التحكم') + '</td></tr>');
         }
       }
