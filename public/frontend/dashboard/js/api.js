@@ -99,6 +99,20 @@
       return this.request('/profile');
     },
 
+    updateProfile: async function (payload) {
+      return this.request('/profile', {
+        method: 'PUT',
+        body: payload
+      });
+    },
+
+    changePassword: async function (payload) {
+      return this.request('/profile/change-password', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
     camps: async function (params) {
       return this.request('/camps' + this.query(params));
     },

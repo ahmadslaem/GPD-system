@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use Carbon\Carbon;
 class AuthController extends Controller
@@ -103,6 +105,65 @@ class AuthController extends Controller
 
         ],200);
 
+    }
+
+    /**
+     * Update Current User Profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        foreach (['name', 'email', 'phone'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(),
+        ]);
+    }
+
+    /**
+     * Change Current User Password
+     */
+    public function changePassword(Request $request)
+    {
+        $data = $request->validate([
+            'current_password' => ['required'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($data['current_password'], $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['كلمة المرور الحالية غير صحيحة'],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($data['password']),
+        ]);
+
+        return response()->json([
+            'message' => 'Password changed successfully',
+        ]);
     }
 
 
