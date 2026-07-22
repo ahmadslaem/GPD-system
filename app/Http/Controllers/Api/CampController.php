@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Camp;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 
 class CampController extends Controller
@@ -21,7 +22,7 @@ class CampController extends Controller
         }
 
         return response()->json(
-            $query->orderBy('id')->get()
+            $query->withCount('families')->orderBy('id')->get()
         );
     }
 
@@ -36,7 +37,9 @@ class CampController extends Controller
 
             'location'=>'required|string',
 
-            'capacity'=>'nullable|integer'
+            'capacity'=>'nullable|integer',
+
+            'is_active'=>'sometimes|boolean'
 
         ]);
 
@@ -114,7 +117,13 @@ class CampController extends Controller
     public function destroy(Camp $camp)
     {
 
-        $camp->delete();
+        try {
+            $camp->delete();
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'لا يمكن حذف المخيم لأنه مرتبط بأسر مسجلة'
+            ], 409);
+        }
 
 
         return response()->json([

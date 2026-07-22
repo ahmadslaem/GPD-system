@@ -103,6 +103,26 @@
       return this.request('/camps' + this.query(params));
     },
 
+    createCamp: async function (payload) {
+      return this.request('/camps', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    updateCamp: async function (id, payload) {
+      return this.request('/camps/' + encodeURIComponent(id), {
+        method: 'PUT',
+        body: payload
+      });
+    },
+
+    deleteCamp: async function (id) {
+      return this.request('/camps/' + encodeURIComponent(id), {
+        method: 'DELETE'
+      });
+    },
+
     selectCamp: async function (campId) {
       return this.request('/user/select-camp', {
         method: 'PATCH',
