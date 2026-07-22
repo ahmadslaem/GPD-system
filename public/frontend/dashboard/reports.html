@@ -183,12 +183,11 @@
           { key: 'total_families', label: 'إجمالي الأسر', icon: 'fa-house-chimney-user', color: 'blue' },
           { key: 'total_individuals', label: 'إجمالي الأفراد', icon: 'fa-people-group', color: 'green' },
           { key: 'vulnerable_families', label: 'الأسر الضعيفة', icon: 'fa-triangle-exclamation', color: 'red' },
-          { key: 'pwd', label: 'ذوو الإعاقة', icon: 'fa-wheelchair', color: 'amber' },
-          { key: 'female_headed', label: 'أسر برئاسة أنثى', icon: 'fa-venus', color: 'red' }
+          { key: 'pwd', label: 'ذوو الإعاقة', icon: 'fa-wheelchair', color: 'orange' }
         ],
         vulnerability: [
           { key: 'high', label: 'ضعف عالٍ', icon: 'fa-triangle-exclamation', color: 'red' },
-          { key: 'medium', label: 'ضعف متوسط', icon: 'fa-circle-half-stroke', color: 'amber' },
+          { key: 'medium', label: 'ضعف متوسط', icon: 'fa-circle-half-stroke', color: 'orange' },
           { key: 'low', label: 'ضعف منخفض', icon: 'fa-circle-check', color: 'green' },
           { key: 'average_score', label: 'متوسط الدرجة', icon: 'fa-gauge-high', color: 'blue', suffix: ' / 100' }
         ],
@@ -196,7 +195,7 @@
           { key: 'total_requests', label: 'إجمالي الطلبات', icon: 'fa-list', color: 'blue' },
           { key: 'approved', label: 'موافق عليها', icon: 'fa-circle-check', color: 'green' },
           { key: 'rejected', label: 'مرفوضة', icon: 'fa-ban', color: 'red' },
-          { key: 'pending', label: 'معلقة', icon: 'fa-hourglass-half', color: 'amber' }
+          { key: 'pending', label: 'معلقة', icon: 'fa-hourglass-half', color: 'orange' }
         ],
         timeline: []
       };
@@ -314,18 +313,20 @@
 
       function summaryCards(data) {
         if (currentReport === 'timeline') {
-          return (data.summary_cards || []).slice(-4).map(function (row) {
+          return (data.summary_cards || []).slice(-4).map(function (row, index) {
             return {
               label: row.month || 'فترة',
               value: formatNumber(row.new_registrations || 0),
               icon: 'fa-calendar-days',
-              color: 'blue'
+              color: ['blue', 'green', 'red', 'orange'][index % 4]
             };
           });
         }
 
         var summary = data.summary || {};
-        return (summaryMappings[currentReport] || []).map(function (mapping) {
+        return (summaryMappings[currentReport] || []).filter(function (mapping) {
+          return Object.prototype.hasOwnProperty.call(summary, mapping.key);
+        }).map(function (mapping) {
           return {
             label: mapping.label,
             value: formatCardValue(summary[mapping.key], mapping),
@@ -342,7 +343,7 @@
           return;
         }
         $('#summaryCards').html(cards.map(function (card) {
-          return '<div class="col-6 col-xl-3"><div class="stat-card stat-card--' + card.color + '" style="padding:12px 14px;box-shadow:none;"><div class="stat-card__icon" style="width:38px;height:38px;font-size:16px;"><i class="fa-solid ' + card.icon + '"></i></div><div class="stat-card__body"><div class="stat-card__label">' + escapeHtml(card.label) + '</div><div class="stat-card__value" style="font-size:22px;">' + escapeHtml(card.value) + '</div></div></div></div>';
+          return '<div class="col-6 col-xl-3"><div class="stat-card report-kpi-card report-kpi-card--' + card.color + '" style="padding:12px 14px;box-shadow:none;"><div class="stat-card__icon" style="width:38px;height:38px;font-size:16px;"><i class="fa-solid ' + card.icon + '"></i></div><div class="stat-card__body"><div class="stat-card__label">' + escapeHtml(card.label) + '</div><div class="stat-card__value" style="font-size:22px;">' + escapeHtml(card.value) + '</div></div></div></div>';
         }).join(''));
       }
 
