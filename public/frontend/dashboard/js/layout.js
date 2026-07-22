@@ -62,7 +62,6 @@ $(document).ready(function () {
         <li class="nav-item">
           <a href="transfers.html" class="nav-link d-flex justify-content-between align-items-center" data-page="transfers.html">
             <span><i class="fa-solid fa-right-left nav-icon"></i><span>طلبات النقل</span></span>
-            <span class="badge-count">47</span>
           </a>
         </li>
         <li class="nav-section-label manager-only">التقارير</li>
@@ -120,25 +119,15 @@ $(document).ready(function () {
         <div class="position-relative">
           <button class="btn-icon" id="btnNotifications" title="الإشعارات">
             <i class="fa-solid fa-bell"></i>
-            <span class="notif-dot">3</span>
           </button>
           <div class="notif-dropdown" id="notifDropdown">
-            <div class="notif-header">الإشعارات <span class="badge-count">3</span></div>
+            <div class="notif-header">الإشعارات</div>
             <ul class="notif-list">
-              <li class="notif-item notif-warning">
-                <i class="fa-solid fa-right-left"></i>
-                <div><div class="notif-title">طلب نقل جديد بانتظار الموافقة</div><div class="notif-time">منذ 5 دقائق</div></div>
-              </li>
-              <li class="notif-item notif-danger">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <div><div class="notif-title">أسرة ذات ضعف عالٍ تحتاج متابعة</div><div class="notif-time">منذ 20 دقيقة</div></div>
-              </li>
               <li class="notif-item notif-info">
-                <i class="fa-solid fa-user-plus"></i>
-                <div><div class="notif-title">تسجيل 12 أسرة جديدة اليوم</div><div class="notif-time">منذ ساعة</div></div>
+                <i class="fa-solid fa-circle-info"></i>
+                <div><div class="notif-title">لا توجد إشعارات جديدة</div><div class="notif-time">الآن</div></div>
               </li>
             </ul>
-            <div class="notif-footer">عرض كل الإشعارات</div>
           </div>
         </div>
         <div class="topbar-user d-flex align-items-center gap-2">
@@ -179,7 +168,7 @@ $(document).ready(function () {
     $('#sidebarUserRole').text(session.roleLabel);
 
     /* إخفاء عناصر المدير إذا كان موظف إدخال */
-    if (session.role === 'staff') {
+    if (session.role === 'data_entry') {
       $('.manager-only').hide();
       /* عرض بادج المخيم */
       $('#campBadgeWrap').removeClass('d-none');
@@ -230,9 +219,20 @@ $(document).ready(function () {
     });
 
     /* تسجيل الخروج */
-    $(document).on('click', '#btnLogout', function (e) {
+    $(document).on('click', '#btnLogout', async function (e) {
       e.preventDefault();
-      sessionStorage.removeItem('nds_user');
+      try {
+        if (window.NDS && NDS.api && NDS.api.getToken()) {
+          await NDS.api.logout();
+        }
+      } catch (error) {
+      }
+      if (window.NDS && NDS.api) {
+        NDS.api.clearSession();
+      } else {
+        sessionStorage.removeItem('nds_user');
+        sessionStorage.removeItem('nds_token');
+      }
       window.location.href = 'login.html';
     });
   }

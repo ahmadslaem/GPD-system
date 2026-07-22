@@ -82,10 +82,6 @@
               <i class="fa-solid fa-filter me-1"></i>الفلاتر
               <span class="badge bg-primary ms-1" id="fcnt" style="display:none;">0</span>
             </button>
-            <button class="btn btn-sm btn-outline-success" id="btnExportExcel"><i
-                class="fa-solid fa-file-excel me-1"></i><span class="d-none d-sm-inline">Excel</span></button>
-            <button class="btn btn-sm btn-outline-danger" id="btnExportPdf"><i
-                class="fa-solid fa-file-pdf me-1"></i><span class="d-none d-sm-inline">PDF</span></button>
             <a href="register.html" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus me-1"></i><span
                 class="d-none d-sm-inline">تسجيل أسرة</span></a>
           </div>
@@ -305,6 +301,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
@@ -312,33 +309,30 @@
       NDS.applyPermissions();
 
       /* ══ البيانات ══════════════════════════════════════════ */
-      var DB = [
-        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: 'مخيم جباليا', gov: 'رفح', shelter: 'B-14', phone: '059-456-7890', total: 7, adults: 3, children: 4, pwd: 2, fhh: true, fhhR: 'وفاة رب الأسرة', score: 85, level: 'high', date: '2026-04-05' },
-        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'مخيم خان يونس', gov: 'غزة', shelter: 'A-22', phone: '059-222-3344', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhR: '', score: 30, level: 'medium', date: '2026-04-04' },
-        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: 'مخيم النصيرات', gov: 'شمال غزة', shelter: 'C-07', phone: '059-887-6655', total: 9, adults: 3, children: 6, pwd: 1, fhh: false, fhhR: '', score: 72, level: 'high', date: '2026-04-04' },
-        { id: 'F-00844', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-01', phone: '059-111-2222', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'طلاق', score: 22, level: 'low', date: '2026-04-03' },
-        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-18', phone: '059-333-4455', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhR: '', score: 40, level: 'medium', date: '2026-04-03' },
-        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: 'مخيم جباليا', gov: 'غزة', shelter: 'B-32', phone: '059-778-9900', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhR: 'فقدان رب الأسرة', score: 25, level: 'medium', date: '2026-04-02' },
-        { id: 'F-00841', nid: '302-1987-0055', name: 'ماجد رامز الشوبكي', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-08', phone: '059-444-5566', total: 8, adults: 4, children: 4, pwd: 2, fhh: false, fhhR: '', score: 68, level: 'high', date: '2026-04-02' },
-        { id: 'F-00840', nid: '288-1975-0201', name: 'رانيا فارس العمر', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-44', phone: '059-999-0011', total: 2, adults: 2, children: 0, pwd: 1, fhh: true, fhhR: 'وفاة رب الأسرة', score: 35, level: 'medium', date: '2026-04-01' },
-        { id: 'F-00839', nid: '310-1990-0088', name: 'إبراهيم نظمي الكرد', camp: 'مخيم جباليا', gov: 'شمال غزة', shelter: 'B-05', phone: '059-122-3344', total: 11, adults: 5, children: 6, pwd: 3, fhh: false, fhhR: '', score: 90, level: 'high', date: '2026-03-31' },
-        { id: 'F-00838', nid: '274-1983-0144', name: 'سوسن حمدي القاسم', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-03', phone: '059-566-7788', total: 4, adults: 2, children: 2, pwd: 0, fhh: true, fhhR: 'إعاقة رب الأسرة', score: 28, level: 'medium', date: '2026-03-30' },
-        { id: 'F-00837', nid: '295-1978-0177', name: 'طارق عصام الجمل', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-19', phone: '059-677-8899', total: 7, adults: 3, children: 4, pwd: 0, fhh: false, fhhR: '', score: 35, level: 'medium', date: '2026-03-29' },
-        { id: 'F-00836', nid: '261-1993-0022', name: 'أميرة ناصر الهباش', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-61', phone: '059-800-9011', total: 1, adults: 1, children: 0, pwd: 0, fhh: true, fhhR: 'طلاق', score: 15, level: 'low', date: '2026-03-28' },
-        { id: 'F-00835', nid: '307-1986-0033', name: 'علي محمود الأسطل', camp: 'مخيم جباليا', gov: 'غزة', shelter: 'B-21', phone: '059-233-4456', total: 6, adults: 4, children: 2, pwd: 1, fhh: false, fhhR: '', score: 45, level: 'medium', date: '2026-03-27' },
-        { id: 'F-00834', nid: '279-1981-0066', name: 'نور سالم الشيخ', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-15', phone: '059-344-5567', total: 3, adults: 2, children: 1, pwd: 0, fhh: false, fhhR: '', score: 10, level: 'low', date: '2026-03-26' },
-        { id: 'F-00833', nid: '318-1994-0099', name: 'جمال عادل أبو صالح', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-33', phone: '059-455-6678', total: 8, adults: 3, children: 5, pwd: 2, fhh: false, fhhR: '', score: 78, level: 'high', date: '2026-03-25' },
-        { id: 'F-00832', nid: '268-1977-0111', name: 'وفاء عمر البلبيسي', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-27', phone: '059-566-7780', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'فقدان رب الأسرة', score: 32, level: 'medium', date: '2026-03-24' },
-        { id: 'F-00831', nid: '285-1989-0155', name: 'هشام كمال الزعنون', camp: 'مخيم جباليا', gov: 'شمال غزة', shelter: 'B-40', phone: '059-677-8892', total: 10, adults: 4, children: 6, pwd: 1, fhh: false, fhhR: '', score: 82, level: 'high', date: '2026-03-23' },
-        { id: 'F-00830', nid: '299-1982-0188', name: 'دلال سامي عوض', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-78', phone: '059-788-9903', total: 4, adults: 2, children: 2, pwd: 1, fhh: true, fhhR: 'وفاة رب الأسرة', score: 55, level: 'high', date: '2026-03-22' },
-        { id: 'F-00829', nid: '272-1984-0222', name: 'يوسف خليل البنا', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-22', phone: '059-899-0014', total: 6, adults: 4, children: 2, pwd: 0, fhh: false, fhhR: '', score: 20, level: 'low', date: '2026-03-21' },
-        { id: 'F-00828', nid: '314-1991-0044', name: 'أسماء حاتم النحال', camp: 'مخيم النصيرات', gov: 'غزة', shelter: 'C-41', phone: '059-900-1125', total: 3, adults: 2, children: 1, pwd: 0, fhh: true, fhhR: 'طلاق', score: 18, level: 'low', date: '2026-03-20' },
-        { id: 'F-00827', nid: '282-1976-0133', name: 'ربيع صلاح الرنتيسي', camp: 'مخيم البريج', gov: 'الوسطى', shelter: 'E-12', phone: '059-011-2236', total: 9, adults: 4, children: 5, pwd: 2, fhh: false, fhhR: '', score: 75, level: 'high', date: '2026-03-19' },
-        { id: 'F-00826', nid: '293-1985-0166', name: 'نسرين فايز الحساسنة', camp: 'مخيم جباليا', gov: 'رفح', shelter: 'B-55', phone: '059-122-3347', total: 5, adults: 3, children: 2, pwd: 0, fhh: true, fhhR: 'إعاقة رب الأسرة', score: 30, level: 'medium', date: '2026-03-18' },
-        { id: 'F-00825', nid: '306-1988-0077', name: 'زياد عبد الله الغول', camp: 'مخيم خان يونس', gov: 'خان يونس', shelter: 'A-92', phone: '059-233-4458', total: 7, adults: 3, children: 4, pwd: 1, fhh: false, fhhR: '', score: 52, level: 'high', date: '2026-03-17' },
-        { id: 'F-00824', nid: '271-1980-0199', name: 'صفاء محمود الحايك', camp: 'مواصي رفح', gov: 'رفح', shelter: 'D-29', phone: '059-344-5569', total: 4, adults: 2, children: 2, pwd: 0, fhh: false, fhhR: '', score: 15, level: 'low', date: '2026-03-16' },
-        { id: 'F-00823', nid: '315-1993-0055', name: 'مروان فتحي العجرمي', camp: 'مخيم النصيرات', gov: 'الوسطى', shelter: 'C-50', phone: '059-455-6670', total: 8, adults: 3, children: 5, pwd: 3, fhh: false, fhhR: '', score: 88, level: 'high', date: '2026-03-15' },
-      ];
+      var DB = [];
+
+      function mapFamily(f) {
+        return {
+          backend_id: f.id,
+          id: f.family_number || ('F-' + String(f.id).padStart(5, '0')),
+          nid: f.nid || f.national_id || '',
+          name: f.name || f.head_name || '',
+          camp: f.camp || '',
+          gov: f.gov || f.original_governorate || '',
+          shelter: f.shelter || f.shelter_number || '',
+          phone: f.phone || '',
+          total: Number(f.total || f.members_count || 0),
+          adults: Number(f.adults || f.adults_count || 0),
+          children: Number(f.children || f.children_count || 0),
+          pwd: Number(f.pwd || f.pwd_count || 0),
+          fhh: !!(f.fhh || f.is_female_headed),
+          fhhR: f.fhhR || f.fhh_reason || '',
+          score: Number(f.score || f.vulnerability_score || 0),
+          level: f.level || f.vulnerability_level || 'low',
+          date: f.date || '',
+          members: f.members || []
+        };
+      }
 
       /* ══ الحالة ════════════════════════════════════════════ */
       var S = { data: DB, filtered: DB, page: 1, perPage: 25, sortCol: 'id', sortDir: 'asc', search: '', view: 'table', sel: [], openIdx: -1, filters: {} };
@@ -404,9 +398,9 @@
             + '<td class="d-none d-xl-table-cell text-center"><b>' + f.score + '</b></td>'
             + '<td class="d-none d-xl-table-cell text-muted" style="font-size:12px;">' + f.date + '</td>'
             + '<td><div class="d-flex gap-1">'
-            + '<a href="edit-family.html?familyId=' + f.id + '" class="btn btn-xs btn-outline-secondary" title="تعديل"><i class="fa-solid fa-pen"></i></a>'
-            + '<a href="add-members.html?familyId=' + f.id + '&familyName=' + encodeURIComponent(f.name) + '" class="btn btn-xs btn-outline-success" title="إضافة أفراد"><i class="fa-solid fa-users"></i></a>'
-            + '<a href="family-view.html?familyId=' + f.id + '&familyName=' + encodeURIComponent(f.name) + '&familyCamp=' + encodeURIComponent(f.camp) + '&familyGov=' + encodeURIComponent(f.gov) + '" class="btn btn-xs btn-outline-info" title="عرض العائلة"><i class="fa-solid fa-house-user"></i></a>'
+            + '<a href="edit-family.html?familyId=' + f.backend_id + '" class="btn btn-xs btn-outline-secondary" title="تعديل"><i class="fa-solid fa-pen"></i></a>'
+            + '<a href="add-members.html?familyId=' + f.backend_id + '&familyName=' + encodeURIComponent(f.name) + '" class="btn btn-xs btn-outline-success" title="إضافة أفراد"><i class="fa-solid fa-users"></i></a>'
+            + '<a href="family-view.html?familyId=' + f.backend_id + '&familyName=' + encodeURIComponent(f.name) + '&familyCamp=' + encodeURIComponent(f.camp) + '&familyGov=' + encodeURIComponent(f.gov) + '" class="btn btn-xs btn-outline-info" title="عرض العائلة"><i class="fa-solid fa-house-user"></i></a>'
             + '<button class="btn btn-xs btn-outline-danger bdel" data-id="' + f.id + '" title="حذف"><i class="fa-solid fa-trash"></i></button></div></td></tr>';
         }).join('');
         $('#tableBody').html(html);
@@ -519,7 +513,7 @@
           + (f.fhh ? '<div class="mi"><div class="mi-av" style="background:#9a2050;">ز</div><div><div style="font-size:12.5px;font-weight:500;">زوجة رب الأسرة</div><div style="font-size:11px;color:#7a8a9a;">زوجة · FHH</div></div></div>' : '')
           + (f.children > 0 ? '<div class="mi"><div class="mi-av" style="background:#2d8a4e;">ط</div><div><div style="font-size:12.5px;font-weight:500;">الأطفال (' + f.children + ')</div><div style="font-size:11px;color:#7a8a9a;">أقل من 16 سنة</div></div></div>' : '')
           + (f.pwd > 0 ? '<div class="mi"><div class="mi-av" style="background:#9a6010;">إ</div><div><div style="font-size:12.5px;font-weight:500;">ذوو إعاقة (' + f.pwd + ') <span class="badge bg-warning text-dark" style="font-size:10px;">PWD</span></div><div style="font-size:11px;color:#7a8a9a;">يحتاجون رعاية خاصة</div></div></div>' : '')
-          + '<div style="text-align:center;padding-top:10px;"><a href="edit-family.html?familyId=' + f.id + '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen me-1"></i>تعديل الأفراد</a></div>'
+          + '<div style="text-align:center;padding-top:10px;"><a href="edit-family.html?familyId=' + f.backend_id + '" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen me-1"></i>تعديل الأفراد</a></div>'
           + '</div>'
           /* تبويب الضعف */
           + '<div id="dt-vuln" style="display:none;">'
@@ -654,17 +648,36 @@
         $('#delText').text('سيتم حذف بيانات الأسرة: ' + (f ? f.name : delId));
         new bootstrap.Modal($('#deleteModal')[0]).show();
       });
-      $('#btnConfirmDel').on('click', function () {
-        DB = DB.filter(function (f) { return f.id !== delId; });
-        S.data = DB;
-        bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
-        closeDrawer(); applyFilters();
+      $('#btnConfirmDel').on('click', async function () {
+        var family = DB.find(function (f) { return f.id === delId; });
+        if (!family) return;
+        try {
+          await NDS.api.deleteFamily(family.backend_id);
+          DB = DB.filter(function (f) { return f.id !== delId; });
+          S.data = DB;
+          bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
+          closeDrawer(); applyFilters();
+        } catch (error) {
+          alert(error.message || 'تعذر حذف الأسرة');
+        }
       });
 
-      $('#btnExportExcel').on('click', function () { alert('تصدير Excel — يُنفَّذ في Backend بـ Laravel Excel'); });
-      $('#btnExportPdf').on('click', function () { alert('تصدير PDF — يُنفَّذ في Backend بـ Laravel DomPDF'); });
+      async function loadFamilies() {
+        $('#emptyState').hide();
+        $('#tableBody').html('<tr><td colspan="12" class="text-center text-muted py-4">جارٍ تحميل البيانات...</td></tr>');
+        try {
+          var response = await NDS.api.families();
+          DB = (response.data || []).map(mapFamily);
+          S.data = DB;
+          S.page = 1;
+          $('#totalCount').text(DB.length.toLocaleString('ar-EG'));
+          applyFilters();
+        } catch (error) {
+          $('#tableBody').html('<tr><td colspan="12" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل الأسر') + '</td></tr>');
+        }
+      }
 
-      applyFilters();
+      loadFamilies();
     });
   </script>
 </body>

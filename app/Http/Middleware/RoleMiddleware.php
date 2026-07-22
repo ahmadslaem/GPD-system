@@ -10,14 +10,16 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!auth()->check()) {
+        $user = $request->user();
+
+        if (!$user) {
             return response()->json([
                 'message' => 'Unauthorized'
             ],401);
         }
 
 
-        if (!in_array(auth()->user()->role, $roles)) {
+        if (!in_array($user->role, $roles) && !$user->hasAnyRole($roles)) {
 
             return response()->json([
                 'message' => 'Forbidden'

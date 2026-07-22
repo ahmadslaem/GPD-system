@@ -24,10 +24,24 @@ class Camp extends Model
     {
         return $this->hasMany(Family::class);
     }
-public function transferRequests()
+public function outgoingTransferRequests()
 {
     return $this->hasMany(
-        TransferRequest::class
+        TransferRequest::class,
+        'from_camp_id'
     );
+}
+
+public function incomingTransferRequests()
+{
+    return $this->hasMany(
+        TransferRequest::class,
+        'to_camp_id'
+    );
+}
+
+public function transferRequests()
+{
+    return $this->outgoingTransferRequests();
 }
 }

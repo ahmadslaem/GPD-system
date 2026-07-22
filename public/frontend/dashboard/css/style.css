@@ -121,13 +121,14 @@ a {
 #main-content {
   flex: 1;                    /* يملأ كل المساحة المتبقية */
   min-width: 0;               /* يمنع تمدد Flexbox أكثر من اللازم */
+  min-height: 100vh;
   transition: margin-right 0.3s ease;
 }
 
 /* على الشاشات الكبيرة: أضف مسافة لتعويض السايدبار */
 @media (min-width: 992px) {
   #main-content {
-    /* السايدبار ثابت ومحسوب من العرض الكلي */
+    margin-right: var(--sidebar-width);
   }
 }
 
@@ -139,13 +140,15 @@ a {
 ================================================================ */
 #sidebar {
   width: var(--sidebar-width);
-  min-height: 100vh;
+  height: 100vh;
   background-color: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   padding: 20px 0;
   flex-shrink: 0;             /* لا يتقلص */
-  position: relative;
+  position: fixed;
+  top: 0;
+  right: 0;
   z-index: 1000;
 }
 
@@ -244,6 +247,8 @@ a {
 .sidebar-nav {
   padding: 0 10px;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .nav-section-label {
@@ -312,7 +317,8 @@ a {
 .sidebar-footer {
   padding: 12px 10px 0;
   border-top: 1px solid rgba(255,255,255,0.08);
-  margin: 0 0 0 0;
+  margin: auto 0 0 0;
+  flex-shrink: 0;
 }
 
 .logout-link {

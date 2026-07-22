@@ -34,7 +34,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-users"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">إجمالي المستخدمين</div>
-                <div class="stat-card__value">24</div>
+                <div class="stat-card__value" id="usersTotalCount">0</div>
               </div>
             </div>
           </div>
@@ -43,7 +43,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-circle-dot"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">نشطون</div>
-                <div class="stat-card__value">21</div>
+                <div class="stat-card__value" id="usersActiveCount">0</div>
               </div>
             </div>
           </div>
@@ -52,7 +52,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-user-pen"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">موظفو إدخال</div>
-                <div class="stat-card__value">18</div>
+                <div class="stat-card__value" id="usersDataEntryCount">0</div>
               </div>
             </div>
           </div>
@@ -61,7 +61,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-user-slash"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">معطّلون</div>
-                <div class="stat-card__value">3</div>
+                <div class="stat-card__value" id="usersInactiveCount">0</div>
               </div>
             </div>
           </div>
@@ -81,7 +81,7 @@
               <option value="all">كل الأدوار</option>
               <option value="admin">مدير النظام</option>
               <option value="manager">مدير المنظمة</option>
-              <option value="staff">موظف إدخال</option>
+              <option value="data_entry">موظف إدخال</option>
             </select>
             <select class="form-select form-select-sm" id="statusFilter" style="width:130px;">
               <option value="all">كل الحالات</option>
@@ -142,7 +142,7 @@
                 <option value="">اختر الدور...</option>
                 <option value="admin">مدير النظام</option>
                 <option value="manager">مدير المنظمة</option>
-                <option value="staff">موظف إدخال بيانات</option>
+                <option value="data_entry">موظف إدخال بيانات</option>
               </select>
             </div>
             <div class="col-12 col-sm-6" id="campFieldWrap">
@@ -200,27 +200,97 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
-  <script>
+    <script>
     $(document).ready(function () {
+      if (!NDS.auth.guardPage('users')) return;
+      NDS.applyPermissions();
 
-      var users = [
-        { id: 1, name: 'محمد أبو حماد', username: 'admin', email: 'm.abuhammad@nds.ps', role: 'admin', roleLabel: 'مدير النظام', camp: '—', status: 'active', phone: '059-100-1001', avatar: 'م.أ', avatarBg: '#e8f1fb', avatarColor: '#1a6bb5' },
-        { id: 2, name: 'أحمد سليم', username: 'manager', email: 'a.sleem@nds.ps', role: 'manager', roleLabel: 'مدير المنظمة', camp: '—', status: 'active', phone: '059-200-2002', avatar: 'أ.س', avatarBg: '#eaf5ee', avatarColor: '#1a6a2a' },
-        { id: 3, name: 'علاء أبو يوسف', username: 'staff1', email: 'a.yousef@nds.ps', role: 'staff', roleLabel: 'موظف إدخال', camp: 'مخيم جباليا', status: 'active', phone: '059-300-3003', avatar: 'ع.أ', avatarBg: '#fdf3e0', avatarColor: '#9a6010' },
-        { id: 4, name: 'محمد الحنجوري', username: 'staff2', email: 'm.hanjouri@nds.ps', role: 'staff', roleLabel: 'موظف إدخال', camp: 'مخيم خان يونس', status: 'active', phone: '059-400-4004', avatar: 'م.ح', avatarBg: '#fdf3e0', avatarColor: '#9a6010' },
-        { id: 5, name: 'سارة خالد', username: 'staff3', email: 's.khalid@nds.ps', role: 'staff', roleLabel: 'موظف إدخال', camp: 'مواصي رفح', status: 'active', phone: '059-500-5005', avatar: 'س.خ', avatarBg: '#fdf3e0', avatarColor: '#9a6010' },
-        { id: 6, name: 'ياسر نجم', username: 'staff4', email: 'y.najm@nds.ps', role: 'staff', roleLabel: 'موظف إدخال', camp: 'مخيم النصيرات', status: 'inactive', phone: '059-600-6006', avatar: 'ي.ن', avatarBg: '#f5f5f5', avatarColor: '#7a8a9a' },
-        { id: 7, name: 'إيمان الراضي', username: 'staff5', email: 'i.radi@nds.ps', role: 'staff', roleLabel: 'موظف إدخال', camp: 'مخيم البريج', status: 'active', phone: '059-700-7007', avatar: 'إ.ر', avatarBg: '#fdf3e0', avatarColor: '#9a6010' },
-      ];
-
+      var users = [];
+      var camps = [];
       var deleteTargetId = null;
+      var userSaving = false;
+      var userDeleting = false;
+      var togglingUsers = {};
+
+      function labelRole(role) {
+        return ({ admin: 'مدير النظام', manager: 'مدير المنظمة', data_entry: 'موظف إدخال' })[role] || role;
+      }
+
+      function initials(name) {
+        return (name || '').split(' ').slice(0, 2).map(function (w) { return w[0]; }).join('.') || '؟';
+      }
+
+      function formatNumber(value) {
+        return Number(value || 0).toLocaleString('ar-EG');
+      }
+
+      function setButtonLoading($btn, loading, html) {
+        if (loading) {
+          $btn.data('originalHtml', $btn.html()).prop('disabled', true).html(html);
+        } else {
+          $btn.prop('disabled', false).html($btn.data('originalHtml'));
+        }
+      }
+
+      function mapUser(u) {
+        var camp = camps.find(function (c) { return c.id === u.camp_id; });
+        return {
+          id: u.id,
+          name: u.name,
+          username: u.email,
+          email: u.email,
+          role: u.role,
+          roleLabel: labelRole(u.role),
+          camp_id: u.camp_id || '',
+          camp: camp ? camp.name : '—',
+          status: u.is_active === false ? 'inactive' : 'active',
+          phone: u.phone || '',
+          avatar: initials(u.name),
+          avatarBg: ({ admin: '#e8f1fb', manager: '#eaf5ee', data_entry: '#fdf3e0' })[u.role] || '#f5f5f5',
+          avatarColor: ({ admin: '#1a6bb5', manager: '#1a6a2a', data_entry: '#9a6010' })[u.role] || '#7a8a9a'
+        };
+      }
+
+      async function loadCamps() {
+        camps = await NDS.api.camps();
+        $('#umCamp').html('<option value="">اختر المخيم...</option>' + camps.map(function (camp) {
+          return '<option value="' + camp.id + '">' + camp.name + '</option>';
+        }).join(''));
+      }
+
+      async function loadUserStatistics() {
+        var stats = await NDS.api.usersStatistics();
+        $('#usersTotalCount').text(formatNumber(stats.total_users));
+        $('#usersActiveCount').text(formatNumber(stats.active_users));
+        $('#usersDataEntryCount').text(formatNumber(stats.data_entry_users));
+        $('#usersInactiveCount').text(formatNumber(stats.inactive_users));
+      }
+
+      async function refreshUsersPage() {
+        await Promise.all([
+          loadUsers(),
+          loadUserStatistics()
+        ]);
+      }
+
+      async function loadUsers() {
+        $('#usersList').html('<div style="text-align:center;padding:40px;color:#9aaabb;">جارٍ تحميل المستخدمين...</div>');
+        try {
+          var response = await NDS.api.users();
+          users = (response.users || response.data || []).map(mapUser);
+          renderUsers();
+        } catch (error) {
+          $('#usersList').html('<div style="text-align:center;padding:40px;color:#b03030;">' + (error.message || 'تعذر تحميل المستخدمين') + '</div>');
+        }
+      }
 
       function renderUsers() {
         var q = $('#userSearch').val().toLowerCase();
         var role = $('#roleFilter').val();
         var status = $('#statusFilter').val();
-
         var filtered = users.filter(function (u) {
           var mq = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
           var mr = role === 'all' || u.role === role;
@@ -233,143 +303,114 @@
           return;
         }
 
-        var html = filtered.map(function (u) {
-          var roleCls = { admin: 'admin', manager: 'manager', staff: 'staff' }[u.role];
-          var statusDot = u.status === 'active' ? 'active' : 'inactive';
-          var statusText = u.status === 'active' ? 'نشط' : 'معطّل';
-          return `
-        <div class="user-card" data-id="${u.id}">
-          <div class="uc-avatar" style="background:${u.avatarBg};color:${u.avatarColor};">${u.avatar}</div>
-          <div class="uc-status-dot ${statusDot}" title="${statusText}"></div>
-          <div style="flex:1;min-width:0;">
-            <div class="uc-name">${u.name}</div>
-            <div class="uc-email">${u.email}</div>
-          </div>
-          <div class="d-none d-sm-block">
-            <span class="uc-role ${roleCls}">${u.roleLabel}</span>
-          </div>
-          <div class="d-none d-md-block" style="font-size:12px;color:#7a8a9a;min-width:100px;">${u.camp}</div>
-          <div class="d-flex gap-1">
-            <button class="btn btn-xs btn-outline-primary btn-edit-user" data-id="${u.id}" title="تعديل">
-              <i class="fa-solid fa-pen"></i>
-            </button>
-            <button class="btn btn-xs ${u.status === 'active' ? 'btn-outline-warning' : 'btn-outline-success'} btn-toggle-status" data-id="${u.id}" title="${u.status === 'active' ? 'تعطيل' : 'تفعيل'}">
-              <i class="fa-solid ${u.status === 'active' ? 'fa-ban' : 'fa-check'}"></i>
-            </button>
-            <button class="btn btn-xs btn-outline-danger btn-delete-user" data-id="${u.id}" title="حذف">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        </div>`;
-        }).join('');
-        $('#usersList').html(html);
+        $('#usersList').html(filtered.map(function (u) {
+          return '<div class="user-card" data-id="' + u.id + '"><div class="uc-avatar" style="background:' + u.avatarBg + ';color:' + u.avatarColor + ';">' + u.avatar + '</div><div class="uc-status-dot ' + (u.status === 'active' ? 'active' : 'inactive') + '" title="' + (u.status === 'active' ? 'نشط' : 'معطّل') + '"></div><div style="flex:1;min-width:0;"><div class="uc-name">' + u.name + '</div><div class="uc-email">' + u.email + '</div></div><div class="d-none d-sm-block"><span class="uc-role ' + u.role + '">' + u.roleLabel + '</span></div><div class="d-none d-md-block" style="font-size:12px;color:#7a8a9a;min-width:100px;">' + u.camp + '</div><div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary btn-edit-user" data-id="' + u.id + '" title="تعديل"><i class="fa-solid fa-pen"></i></button><button class="btn btn-xs ' + (u.status === 'active' ? 'btn-outline-warning' : 'btn-outline-success') + ' btn-toggle-status" data-id="' + u.id + '" title="' + (u.status === 'active' ? 'تعطيل' : 'تفعيل') + '"><i class="fa-solid ' + (u.status === 'active' ? 'fa-ban' : 'fa-check') + '"></i></button><button class="btn btn-xs btn-outline-danger btn-delete-user" data-id="' + u.id + '" title="حذف"><i class="fa-solid fa-trash"></i></button></div></div>';
+        }).join(''));
       }
 
-      /* ── فلاتر ───────────────────────────────────────────── */
       $('#userSearch, #roleFilter, #statusFilter').on('input change', renderUsers);
+      $('#umRole').on('change', function () { $('#campFieldWrap').toggle($(this).val() === 'data_entry'); });
 
-      /* ── إخفاء حقل المخيم إذا لم يكن staff ──────────────── */
-      $('#umRole').on('change', function () {
-        $('#campFieldWrap').toggle($(this).val() === 'staff');
-      });
-
-      /* ── تعديل مستخدم ────────────────────────────────────── */
       $(document).on('click', '.btn-edit-user', function (e) {
         e.stopPropagation();
-        var id = $(this).data('id');
+        var id = Number($(this).data('id'));
         var u = users.find(function (x) { return x.id === id; });
         if (!u) return;
-
         $('#userModalTitle').html('<i class="fa-solid fa-user-pen me-2 text-warning"></i>تعديل المستخدم');
         $('#umName').val(u.name);
         $('#umEmail').val(u.email);
         $('#umUsername').val(u.username);
         $('#umPassword').val('');
         $('#umRole').val(u.role).trigger('change');
-        $('#umCamp').val(u.camp === '—' ? '' : u.camp);
+        $('#umCamp').val(u.camp_id || '');
         $('#umPhone').val(u.phone);
         $('#umActive').prop('checked', u.status === 'active');
         $('#btnSaveUser').data('editId', id);
-
         new bootstrap.Modal($('#userModal')[0]).show();
       });
 
-      /* ── حفظ مستخدم ─────────────────────────────────────── */
-      $('#btnSaveUser').on('click', function () {
-        var name = $('#umName').val().trim();
-        var email = $('#umEmail').val().trim();
-        var uname = $('#umUsername').val().trim();
-        var role = $('#umRole').val();
+      $('#btnSaveUser').on('click', async function () {
+        if (userSaving) return;
 
-        if (!name || !email || !uname || !role) {
-          alert('يرجى ملء الحقول الإلزامية.'); return;
-        }
-
+        var payload = {
+          name: $('#umName').val().trim(),
+          email: $('#umEmail').val().trim(),
+          role: $('#umRole').val(),
+          phone: $('#umPhone').val().trim(),
+          camp_id: $('#umRole').val() === 'data_entry' ? $('#umCamp').val() : null
+        };
+        var password = $('#umPassword').val();
+        if (password) payload.password = password;
+        if (!payload.name || !payload.email || !payload.role) { alert('يرجى ملء الحقول الإلزامية.'); return; }
         var editId = $(this).data('editId');
-        if (editId) {
-          var idx = users.findIndex(function (x) { return x.id === editId; });
-          if (idx > -1) {
-            users[idx].name = name;
-            users[idx].email = email;
-            users[idx].status = $('#umActive').is(':checked') ? 'active' : 'inactive';
-          }
-          $(this).removeData('editId');
-        } else {
-          var colors = { admin: ['#e8f1fb', '#1a6bb5'], manager: ['#eaf5ee', '#1a6a2a'], staff: ['#fdf3e0', '#9a6010'] };
-          var roleLabels = { admin: 'مدير النظام', manager: 'مدير المنظمة', staff: 'موظف إدخال' };
-          var initials = name.split(' ').slice(0, 2).map(function (w) { return w[0]; }).join('.');
-          users.push({
-            id: users.length + 1, name, username: uname, email, role,
-            roleLabel: roleLabels[role], camp: $('#umCamp').val() || '—',
-            status: $('#umActive').is(':checked') ? 'active' : 'inactive',
-            phone: $('#umPhone').val(),
-            avatar: initials,
-            avatarBg: colors[role][0], avatarColor: colors[role][1]
-          });
+        userSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحفظ...');
+        try {
+          if (editId) await NDS.api.updateUser(editId, payload);
+          else await NDS.api.createUser(payload);
+          bootstrap.Modal.getInstance($('#userModal')[0]).hide();
+          $('#btnSaveUser').removeData('editId');
+          await refreshUsersPage();
+        } catch (error) {
+          alert(error.message || 'تعذر حفظ المستخدم');
+        } finally {
+          userSaving = false;
+          setButtonLoading($btn, false);
         }
-
-        bootstrap.Modal.getInstance($('#userModal')[0]).hide();
-        $('#umName,#umEmail,#umUsername,#umPassword,#umPhone').val('');
-        $('#umRole').val('').trigger('change');
-        renderUsers();
       });
 
-      /* ── تغيير الحالة ────────────────────────────────────── */
-      $(document).on('click', '.btn-toggle-status', function (e) {
+      $(document).on('click', '.btn-toggle-status', async function (e) {
         e.stopPropagation();
         var id = $(this).data('id');
-        var idx = users.findIndex(function (x) { return x.id === id; });
-        if (idx > -1) {
-          users[idx].status = users[idx].status === 'active' ? 'inactive' : 'active';
-          renderUsers();
+        if (togglingUsers[id]) return;
+        togglingUsers[id] = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin"></i>');
+        try { await NDS.api.toggleUserStatus(id); await refreshUsersPage(); }
+        catch (error) { alert(error.message || 'تعذر تغيير حالة المستخدم'); }
+        finally {
+          delete togglingUsers[id];
+          setButtonLoading($btn, false);
         }
       });
 
-      /* ── حذف مستخدم ─────────────────────────────────────── */
       $(document).on('click', '.btn-delete-user', function (e) {
         e.stopPropagation();
-        deleteTargetId = $(this).data('id');
+        deleteTargetId = Number($(this).data('id'));
         var u = users.find(function (x) { return x.id === deleteTargetId; });
         $('#deleteUserName').text('سيتم حذف: ' + (u ? u.name : ''));
         new bootstrap.Modal($('#deleteModal')[0]).show();
       });
 
-      $('#btnConfirmDelete').on('click', function () {
-        users = users.filter(function (u) { return u.id !== deleteTargetId; });
-        bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
-        renderUsers();
+      $('#btnConfirmDelete').on('click', async function () {
+        if (userDeleting) return;
+        userDeleting = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحذف...');
+        try {
+          await NDS.api.deleteUser(deleteTargetId);
+          bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
+          await refreshUsersPage();
+        } catch (error) { alert(error.message || 'تعذر حذف المستخدم'); }
+        finally {
+          userDeleting = false;
+          setButtonLoading($btn, false);
+        }
       });
 
-      /* ── إضافة جديد: نظّف المودال ────────────────────────── */
       $('#btnAddUser').on('click', function () {
         $('#userModalTitle').html('<i class="fa-solid fa-user-plus me-2 text-primary"></i>إضافة مستخدم جديد');
         $('#umName,#umEmail,#umUsername,#umPassword,#umPhone').val('');
         $('#umRole').val('').trigger('change');
+        $('#umCamp').val('');
         $('#umActive').prop('checked', true);
         $('#btnSaveUser').removeData('editId');
       });
 
-      renderUsers();
+      loadCamps().then(refreshUsersPage).catch(function (error) {
+        $('#usersList').html('<div style="text-align:center;padding:40px;color:#b03030;">' + (error.message || 'تعذر التحميل') + '</div>');
+      });
     });
   </script>
 </body>

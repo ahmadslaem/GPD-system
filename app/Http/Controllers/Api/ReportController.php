@@ -47,9 +47,7 @@ public function demographic(Request $request)
             $families->count(),
 
         "total_individuals" =>
-            $families->sum(function ($family) {
-                return $family->members->count();
-            }),
+            $families->sum('members_count'),
 
         "vulnerable_families" =>
             $families->whereNotNull('vulnerability_level')->count(),
@@ -98,9 +96,7 @@ public function demographic(Request $request)
                     $items->count(),
 
                 "individuals" =>
-                    $items->sum(function ($family) {
-                        return $family->members->count();
-                    }),
+                    $items->sum('members_count'),
 
                 "vulnerable" =>
                     $items->whereNotNull('vulnerability_level')->count(),
@@ -160,7 +156,7 @@ public function exportDemographicExcel(Request $request)
             return [
                 $items->first()->camp->name ?? 'Unknown',
                 $items->count(),
-                $items->sum(fn ($f) => $f->members->count()),
+                $items->sum('members_count'),
                 $items->whereNotNull('vulnerability_level')->count(),
                 $items->sum('pwd_count'),
                 $items->where('is_female_headed', true)->count(),
@@ -172,7 +168,7 @@ public function exportDemographicExcel(Request $request)
     $details[] = [
         'الإجمالي',
         $families->count(),
-        $families->sum(fn ($f) => $f->members->count()),
+        $families->sum('members_count'),
         $families->whereNotNull('vulnerability_level')->count(),
         $families->sum('pwd_count'),
         $families->where('is_female_headed', true)->count(),
@@ -207,7 +203,7 @@ public function exportDemographicPdf(Request $request)
 
     $summary = [
         "total_families"      => $families->count(),
-        "total_individuals"   => $families->sum(fn ($f) => $f->members->count()),
+        "total_individuals"   => $families->sum('members_count'),
         "vulnerable_families" => $families->whereNotNull('vulnerability_level')->count(),
         "pwd"                 => $families->sum('pwd_count'),
         "female_headed"       => $families->where('is_female_headed', true)->count(),
@@ -226,7 +222,7 @@ public function exportDemographicPdf(Request $request)
         ->map(fn ($items) => [
             "camp_name"     => $items->first()->camp->name ?? null,
             "families"      => $items->count(),
-            "individuals"   => $items->sum(fn ($f) => $f->members->count()),
+            "individuals"   => $items->sum('members_count'),
             "vulnerable"    => $items->whereNotNull('vulnerability_level')->count(),
             "pwd"           => $items->sum('pwd_count'),
             "female_headed" => $items->where('is_female_headed', true)->count(),

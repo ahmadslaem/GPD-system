@@ -624,6 +624,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
@@ -634,36 +635,13 @@
       var session = NDS.auth.getSession();
       var campName = session.camp || 'مخيم جباليا';
 
-      /* ── بيانات المخيمات (تجريبية — ستُجلب من API) ─────────── */
-      var campData = {
-        'مخيم جباليا': { families: 3412, persons: 18976, high: 812, pending: 12, adults: 11300, children: 5810, pwd: 1240 },
-        'مخيم خان يونس': { families: 2710, persons: 15090, high: 645, pending: 8, adults: 8900, children: 4610, pwd: 980 },
-        'مواصي رفح': { families: 980, persons: 5440, high: 234, pending: 5, adults: 3200, children: 1780, pwd: 360 },
-        'مخيم النصيرات': { families: 1830, persons: 10186, high: 436, pending: 9, adults: 6100, children: 3320, pwd: 662 },
-        'مخيم البريج': { families: 1495, persons: 8318, high: 356, pending: 6, adults: 4990, children: 2710, pwd: 541 },
-      };
-
-      var myTransfers = [
-        { id: 'T-047', nid: '276-1985-0034', name: 'أحمد محمد سليم', from: campName, to: 'جباليا', status: 'pending', date: '6 أبريل' },
-        { id: 'T-044', nid: '291-1979-0112', name: 'فاطمة إبراهيم', from: campName, to: 'رفح', status: 'approved', date: '3 أبريل' },
-        { id: 'T-038', nid: '283-1992-0088', name: 'خالد يوسف الأغا', from: campName, to: 'النصيرات', status: 'rejected', date: '1 أبريل' },
-      ];
-
-      var allFamilies = [
-        { id: 'F-00847', nid: '276-1985-0034', name: 'أحمد محمد سليم الأغا', camp: campName, total: 7, level: 'high', fhh: true },
-        { id: 'F-00845', nid: '283-1992-0088', name: 'خالد يوسف الأغا', camp: campName, total: 9, level: 'high', fhh: false },
-        { id: 'F-00843', nid: '298-1980-0033', name: 'سمير علي أبو ظاهر', camp: campName, total: 6, level: 'medium', fhh: false },
-        { id: 'F-00842', nid: '277-1988-0120', name: 'هناء جمال الصوراني', camp: campName, total: 3, level: 'medium', fhh: true },
-        { id: 'F-00840', nid: '265-1995-0208', name: 'منى صالح أبو غالي', camp: campName, total: 5, level: 'low', fhh: true },
-        { id: 'F-00846', nid: '291-1979-0112', name: 'فاطمة إبراهيم النجار', camp: 'مخيم خان يونس', total: 4, level: 'medium', fhh: false },
-        { id: 'F-00844', nid: '302-1987-0055', name: 'ماجد رامز الشوبكي', camp: 'مواصي رفح', total: 8, level: 'high', fhh: false },
-      ];
-
+      var myTransfers = [];
+      var currentSearchResults = [];
       var searchScope = 'local'; /* local | global */
       var activeFilter = 'all';
 
       /* ── تهيئة واجهة الموظف ────────────────────────────────── */
-      function initStaffUI() {
+      async function initStaffUI() {
         /* اسم + تاريخ */
         var firstName = session.name.split(' ')[0];
         $('#heroTitle').text('مرحباً، ' + firstName);
@@ -676,31 +654,45 @@
         $('#heroCamp').text(campName.replace('مخيم ', ''));
         $('#campStatTitle').text(campName);
         $('#scopeCampName').text(campName.replace('مخيم ', ''));
-
-        /* إحصاءات المخيم */
-        var data = campData[campName] || campData['مخيم جباليا'];
-        $('#heroCampCount').text(data.families.toLocaleString('ar-EG') + ' أسرة مسجلة');
-
-        /* عداد تصاعدي للبطاقات */
-        animateNum($('#cs1'), data.families);
-        animateNum($('#cs2'), data.persons);
-        animateNum($('#cs3'), data.high);
-        animateNum($('#cs4'), data.pending);
-
-        /* أشرطة الديموغرافيا */
-        var total = data.persons;
-        $('#demoAdults').text(data.adults.toLocaleString('ar-EG') + ' (' + Math.round(data.adults / total * 100) + '%)');
-        $('#demoChildren').text(data.children.toLocaleString('ar-EG') + ' (' + Math.round(data.children / total * 100) + '%)');
-        $('#demoPwd').text(data.pwd.toLocaleString('ar-EG') + ' (' + Math.round(data.pwd / total * 100) + '%)');
-
-        setTimeout(function () {
-          $('[data-demo="adults"]').css('width', Math.round(data.adults / total * 100) + '%');
-          $('[data-demo="children"]').css('width', Math.round(data.children / total * 100) + '%');
-          $('[data-demo="pwd"]').css('width', Math.round(data.pwd / total * 100) + '%');
-        }, 400);
-
-        /* حقل "من مخيم" في مودال النقل */
         $('#ntFromCamp').val(campName);
+
+        try {
+          var response = await NDS.api.dashboard();
+          var dashboard = response.data || {};
+          var cards = dashboard.cards || {};
+          var geo = dashboard.geographic_distribution || [];
+          var demographics = dashboard.demographics || {};
+          var currentCamp = geo.find(function (camp) { return camp.camp_name === campName; }) || {};
+          var familiesCount = Number(currentCamp.families_count || cards.total_families?.count || 0);
+          var personsCount = Number(currentCamp.individuals_count || cards.total_individuals?.count || 0);
+          var highCount = Number(cards.high_vulnerability_cases?.count || 0);
+          var pendingCount = Number(cards.pending_transfers?.count || 0);
+          var adults = Number(demographics.adults?.count || 0);
+          var children = Number(demographics.children?.count || 0);
+          var pwd = Number(demographics.pwd?.count || 0);
+          var total = personsCount || (adults + children) || 1;
+
+          $('#heroCampCount').text(familiesCount.toLocaleString('ar-EG') + ' أسرة مسجلة');
+
+          /* عداد تصاعدي للبطاقات */
+          animateNum($('#cs1'), familiesCount);
+          animateNum($('#cs2'), personsCount);
+          animateNum($('#cs3'), highCount);
+          animateNum($('#cs4'), pendingCount);
+
+          /* أشرطة الديموغرافيا */
+          $('#demoAdults').text(adults.toLocaleString('ar-EG') + ' (' + Math.round(adults / total * 100) + '%)');
+          $('#demoChildren').text(children.toLocaleString('ar-EG') + ' (' + Math.round(children / total * 100) + '%)');
+          $('#demoPwd').text(pwd.toLocaleString('ar-EG') + ' (' + Math.round(pwd / total * 100) + '%)');
+
+          setTimeout(function () {
+            $('[data-demo="adults"]').css('width', Math.round(adults / total * 100) + '%');
+            $('[data-demo="children"]').css('width', Math.round(children / total * 100) + '%');
+            $('[data-demo="pwd"]').css('width', Math.round(pwd / total * 100) + '%');
+          }, 400);
+        } catch (error) {
+          $('#heroCampCount').text('تعذر تحميل الإحصاءات');
+        }
       }
 
       /* عداد تصاعدي */
@@ -772,6 +764,25 @@
         renderMyTransfers(activeFilter);
       });
 
+      async function loadMyTransfers() {
+        try {
+          var response = await NDS.api.transfers();
+          myTransfers = (response.data || []).map(function (t) {
+            return {
+              id: t.request_number || ('T-' + String(t.id).padStart(3, '0')),
+              name: t.head_name || '',
+              from: t.from_camp || '',
+              to: t.to_camp || '',
+              status: t.status || 'pending',
+              date: t.created_at || ''
+            };
+          });
+        } catch (error) {
+          myTransfers = [];
+        }
+        renderMyTransfers(activeFilter);
+      }
+
       /* ── البحث ─────────────────────────────────────────────── */
       /* وضع البحث */
       $('#btnScopeLocal').on('click', function () {
@@ -782,28 +793,39 @@
       });
 
       $('#btnScopeGlobal').on('click', function () {
+        if (session.role === 'data_entry') return;
         searchScope = 'global';
         $(this).addClass('active'); $('#btnScopeLocal').removeClass('active');
         $('#searchScopeBadge').addClass('global').html('<i class="fa-solid fa-globe me-1"></i>شامل — كل المخيمات');
         doStaffSearch($('#staffSearchInput').val());
       });
 
+      if (session.role === 'data_entry') {
+        $('#btnScopeGlobal').remove();
+        searchScope = 'local';
+      }
+
       $('#staffSearchInput').on('input', function () {
         doStaffSearch($(this).val());
       });
 
-      function doStaffSearch(q) {
+      async function doStaffSearch(q) {
         q = (q || '').trim().toLowerCase();
         if (!q) {
           $('#staffSearchResults').html('<div style="text-align:center;padding:24px;color:#b0bbc8;" id="searchPlaceholder"><i class="fa-solid fa-magnifying-glass" style="font-size:28px;display:block;margin-bottom:8px;opacity:0.4;"></i><div style="font-size:13px;">اكتب للبحث</div></div>');
           return;
         }
 
-        var results = allFamilies.filter(function (f) {
-          var matchQ = f.name.toLowerCase().includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q);
-          var matchScope = searchScope === 'global' || f.camp === campName;
-          return matchQ && matchScope;
-        });
+        $('#staffSearchResults').html('<div style="text-align:center;padding:20px;color:#b0bbc8;font-size:13px;"><i class="fa-solid fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.6;"></i>جاري البحث...</div>');
+
+        try {
+          var response = await NDS.api.search(searchScope, q);
+          currentSearchResults = (response.data || []).map(mapSearchFamily);
+        } catch (error) {
+          currentSearchResults = [];
+        }
+
+        var results = currentSearchResults;
 
         if (!results.length) {
           $('#staffSearchResults').html('<div style="text-align:center;padding:20px;color:#b0bbc8;font-size:13px;"><i class="fa-solid fa-face-frown" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.4;"></i>لا توجد نتائج مطابقة</div>');
@@ -836,10 +858,25 @@
         $('#staffSearchResults').html(html);
       }
 
+      function mapSearchFamily(f) {
+        var camp = typeof f.camp === 'object' && f.camp ? f.camp.name : (f.camp || f.camp_name || campName);
+        return {
+          backend_id: f.id,
+          id: f.family_number || ('F-' + String(f.id).padStart(5, '0')),
+          nid: f.national_id || f.nid || '',
+          name: f.head_name || f.name || '',
+          camp: camp,
+          camp_id: f.camp_id || (typeof f.camp === 'object' && f.camp ? f.camp.id : null),
+          total: Number(f.members_count || f.total || 0),
+          level: f.vulnerability_level || f.level || 'low',
+          fhh: !!(f.is_female_headed || f.fhh)
+        };
+      }
+
       /* ── فتح ملف الأسرة (عرض مبسط) ─────────────────────────── */
       $(document).on('click', '.staff-search-result', function () {
         var fid = $(this).data('fid');
-        var f = allFamilies.find(function (x) { return x.id === fid; });
+        var f = currentSearchResults.find(function (x) { return x.id === fid; });
         if (!f) return;
 
         $('#fqmTitle').text('ملف الأسرة — ' + f.id);
@@ -893,51 +930,67 @@
       });
 
       /* ── مودال طلب النقل ────────────────────────────────────── */
-      var fakeNids = {
-        '276-1985-0034': 'أحمد محمد سليم الأغا',
-        '291-1979-0112': 'فاطمة إبراهيم النجار',
-        '283-1992-0088': 'خالد يوسف الأغا',
-      };
+      var checkedTransferFamily = null;
+      var campsByName = {};
+      var transferSubmitting = false;
 
-      $('#btnNtCheck').on('click', function () {
+      async function loadTransferCamps() {
+        try {
+          var camps = await NDS.api.camps();
+          campsByName = {};
+          camps.forEach(function (camp) { campsByName[camp.name] = camp.id; });
+          $('#ntToCamp').html('<option value="">اختر المخيم المقصود...</option>' + camps.map(function (camp) {
+            return '<option value="' + camp.id + '">' + camp.name + '</option>';
+          }).join(''));
+        } catch (error) {}
+      }
+
+      $('#btnNtCheck').on('click', async function () {
         var nid = $('#ntNid').val().trim();
-        var found = fakeNids[nid];
-        if (found) {
-          $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + found + '</b></div>');
-        } else if (nid) {
-          $('#ntResult').html('<div style="background:#fdf0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a2020;"><i class="fa-solid fa-ban me-1"></i>لم يُعثر على أسرة بهذا الرقم</div>');
+        if (!nid) return;
+        try {
+          var response = await NDS.api.search('local', nid);
+          checkedTransferFamily = (response.data || [])[0] || null;
+          if (!checkedTransferFamily) throw new Error('لم يُعثر على أسرة بهذا الرقم');
+          $('#ntResult').html('<div style="background:#eaf5ee;border:1px solid #b0ddc0;border-radius:8px;padding:8px 12px;font-size:13px;color:#1a5a2a;"><i class="fa-solid fa-circle-check me-1"></i>تم العثور على: <b>' + (checkedTransferFamily.head_name || checkedTransferFamily.name || checkedTransferFamily.national_id) + '</b></div>');
+          $('#ntFromCamp').val(checkedTransferFamily.camp && checkedTransferFamily.camp.name ? checkedTransferFamily.camp.name : campName);
+        } catch (error) {
+          checkedTransferFamily = null;
+          $('#ntResult').html('<div style="background:#fdf0f0;border:1px solid #f5c0c0;border-radius:8px;padding:8px 12px;font-size:13px;color:#8a2020;"><i class="fa-solid fa-ban me-1"></i>' + (error.message || 'لم يُعثر على أسرة بهذا الرقم') + '</div>');
         }
       });
 
-      $('#btnSubmitTransfer').on('click', function () {
-        var nid = $('#ntNid').val().trim();
+      $('#btnSubmitTransfer').on('click', async function () {
+        if (transferSubmitting) return;
         var toCamp = $('#ntToCamp').val();
         var reason = $('#ntReason').val().trim();
-        if (!nid || !toCamp || !reason) { alert('يرجى ملء جميع الحقول.'); return; }
-        if (toCamp === campName) { alert('المخيم المقصود يجب أن يختلف عن مخيمك الحالي.'); return; }
+        var fromCampId = checkedTransferFamily && checkedTransferFamily.camp_id ? checkedTransferFamily.camp_id : (session.camp_id || campsByName[campName]);
+        if (!checkedTransferFamily || !toCamp || !reason) { alert('يرجى التحقق من الأسرة وملء جميع الحقول.'); return; }
+        if (String(toCamp) === String(fromCampId)) { alert('المخيم المقصود يجب أن يختلف عن مخيمك الحالي.'); return; }
 
-        var newT = {
-          id: 'T-' + (Math.floor(Math.random() * 900) + 100),
-          nid: nid,
-          name: fakeNids[nid] || 'أسرة جديدة',
-          from: campName,
-          to: toCamp.replace('مخيم ', ''),
-          status: 'pending',
-          date: 'اليوم'
-        };
-        myTransfers.unshift(newT);
-        bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
-        $('#ntNid,#ntReason').val('');
-        $('#ntResult').html('');
-        $('#ntToCamp').val('');
-        renderMyTransfers('all');
-        $('.filter-chip[data-tfilter]').removeClass('active');
-        $('.filter-chip[data-tfilter="all"]').addClass('active');
-
-        /* رسالة نجاح */
-        $('body').append('<div id="toastMsg" style="position:fixed;bottom:24px;right:24px;background:#1a6a2a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);"><i class="fa-solid fa-check me-2"></i>تم إرسال طلب النقل بنجاح!</div>');
-        setTimeout(function () { $('#toastMsg').fadeOut(300, function () { $(this).remove(); }); }, 3000);
+        transferSubmitting = true;
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الإرسال...');
+        try {
+          await NDS.api.createTransfer({ family_id: checkedTransferFamily.id, from_camp_id: fromCampId, to_camp_id: toCamp, reason: reason });
+          bootstrap.Modal.getInstance($('#newTransferModal')[0]).hide();
+          $('#ntNid,#ntReason').val('');
+          $('#ntResult').html('');
+          $('#ntToCamp').val('');
+          checkedTransferFamily = null;
+          loadMyTransfers();
+          $('body').append('<div id="toastMsg" style="position:fixed;bottom:24px;right:24px;background:#1a6a2a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);"><i class="fa-solid fa-check me-2"></i>تم إرسال طلب النقل بنجاح!</div>');
+          setTimeout(function () { $('#toastMsg').fadeOut(300, function () { $(this).remove(); }); }, 3000);
+        } catch (error) {
+          alert(error.message || 'تعذر إرسال طلب النقل');
+        } finally {
+          transferSubmitting = false;
+          $btn.prop('disabled', false).html(originalHtml);
+        }
       });
+
+      loadTransferCamps();
 
       /* ── روابط الإجراءات السريعة ────────────────────────────── */
       $('#qaSearch').on('click', function () { $('#staffSearchInput').focus(); });
@@ -950,7 +1003,7 @@
 
       /* ── تهيئة ──────────────────────────────────────────────── */
       initStaffUI();
-      renderMyTransfers('all');
+      loadMyTransfers();
     });
   </script>
 </body>

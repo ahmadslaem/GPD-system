@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 
 class UserController extends Controller
@@ -17,6 +18,16 @@ class UserController extends Controller
     {
         return response()->json([
             'users'=>User::all()
+        ]);
+    }
+
+    public function statistics()
+    {
+        return response()->json([
+            'total_users' => User::count(),
+            'active_users' => User::where('is_active', true)->count(),
+            'inactive_users' => User::where('is_active', false)->count(),
+            'data_entry_users' => User::where('role', 'data_entry')->count(),
         ]);
     }
 
@@ -42,18 +53,20 @@ class UserController extends Controller
 
         $user = User::create([
 
-            'name'=>$request->name,
+            'name'=>strip_tags($request->name),
 
-            'email'=>$request->email,
+            'email'=>strip_tags($request->email),
 
             'password'=>Hash::make($request->password),
 
             'role'=>$request->role,
-            'phone'=>$request->phone,
+            'phone'=>$request->phone ? strip_tags($request->phone) : null,
             'camp_id'=>$request->camp_id,
             'is_active'=>true
 
         ]);
+
+        $user->syncRoles([$request->role]);
         
 
 
@@ -100,7 +113,7 @@ class UserController extends Controller
 
             'name'=>'sometimes|string',
 
-            'email'=>'sometimes|email',
+            'email'=>'sometimes|email|unique:users,email,' . $user->id,
 
             'role'=>'sometimes|in:admin,manager,data_entry',
             'phone'=>'sometimes|string',
@@ -110,7 +123,25 @@ class UserController extends Controller
 
 
 
-        $user->update($request->all());
+        $data = $request->only([
+            'name',
+            'email',
+            'role',
+            'phone',
+            'camp_id',
+        ]);
+
+        foreach (['name', 'email', 'phone'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
+
+        $user->update($data);
+
+        if ($request->filled('role')) {
+            $user->syncRoles([$request->role]);
+        }
 
 
 
@@ -180,7 +211,11 @@ class UserController extends Controller
     public function selectCamp(Request $request)
 {
     $validated = $request->validate([
-        'camp_id' => 'required|integer|exists:camps,id',
+        'camp_id' => [
+            'required',
+            'integer',
+            Rule::exists('camps', 'id')->where('is_active', true),
+        ],
     ]);
 
     $request->user()->update([

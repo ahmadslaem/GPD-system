@@ -17,6 +17,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [AuthController::class, 'profile']);
 
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+
+    Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
 });
@@ -24,6 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    Route::middleware(['role:admin'])->get(
+        'users/statistics',
+        [UserController::class,'statistics']
+    );
 
     Route::middleware(['role:admin'])->apiResource(
         'users',
@@ -42,11 +50,12 @@ Route::middleware('auth:sanctum')->group(function(){
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    Route::get('camps', [CampController::class, 'index']);
 
     Route::middleware(['role:admin'])->apiResource(
         'camps',
         CampController::class
-    );
+    )->except(['index']);
 
 
 });
@@ -79,6 +88,15 @@ Route::middleware(['auth:sanctum'])
 ->group(function(){
 
 
+Route::get(
+'transfer-requests',
+[
+TransferRequestController::class,
+'index'
+]
+);
+
+
 Route::middleware(['role:data_entry'])
 ->post(
 'transfer-requests',
@@ -93,17 +111,15 @@ Route::middleware(['role:manager,admin'])
 ->group(function(){
 
 
-Route::get(
-'transfer-requests',
+Route::put(
+'transfer-requests/{id}/approve',
 [
 TransferRequestController::class,
-'index'
+'approve'
 ]
 );
 
-
-
-Route::put(
+Route::patch(
 'transfer-requests/{id}/approve',
 [
 TransferRequestController::class,
@@ -114,6 +130,14 @@ TransferRequestController::class,
 
 
 Route::put(
+'transfer-requests/{id}/reject',
+[
+TransferRequestController::class,
+'reject'
+]
+);
+
+Route::patch(
 'transfer-requests/{id}/reject',
 [
 TransferRequestController::class,
@@ -146,7 +170,7 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::get(
         '/search/global',
         [SearchController::class,'global']
-    );
+    )->middleware(['role:manager,admin']);
 
 
 });

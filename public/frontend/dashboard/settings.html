@@ -122,11 +122,12 @@
                 <div class="content-card__header d-flex justify-content-between align-items-center">
                   <div class="settings-section-title mb-0"><i class="fa-solid fa-tent me-2 text-primary"></i>إدارة
                     المخيمات</div>
-                  <button class="btn btn-sm btn-primary" id="btnAddCamp">
+                  <button class="btn btn-sm btn-primary" id="btnAddCamp" data-require="manage_camps">
                     <i class="fa-solid fa-plus me-1"></i>إضافة مخيم
                   </button>
                 </div>
                 <div class="content-card__body p-0">
+                  <div id="campFeedback" class="d-none m-3 mb-0 alert" style="font-size:13px;"></div>
                   <div class="table-responsive">
                     <table class="table table-hover mb-0" id="campsTable">
                       <thead>
@@ -140,66 +141,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td class="fw-medium">مخيم جباليا</td>
-                          <td>شمال غزة</td>
-                          <td>3,412</td>
-                          <td>4,000</td>
-                          <td><span class="badge bg-success">نشط</span></td>
-                          <td>
-                            <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
-                                  class="fa-solid fa-pen"></i></button><button class="btn btn-xs btn-outline-danger"><i
-                                  class="fa-solid fa-trash"></i></button></div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="fw-medium">مخيم خان يونس</td>
-                          <td>خان يونس</td>
-                          <td>2,710</td>
-                          <td>3,000</td>
-                          <td><span class="badge bg-success">نشط</span></td>
-                          <td>
-                            <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
-                                  class="fa-solid fa-pen"></i></button><button class="btn btn-xs btn-outline-danger"><i
-                                  class="fa-solid fa-trash"></i></button></div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="fw-medium">مواصي رفح</td>
-                          <td>رفح</td>
-                          <td>980</td>
-                          <td>2,000</td>
-                          <td><span class="badge bg-success">نشط</span></td>
-                          <td>
-                            <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
-                                  class="fa-solid fa-pen"></i></button><button class="btn btn-xs btn-outline-danger"><i
-                                  class="fa-solid fa-trash"></i></button></div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="fw-medium">مخيم النصيرات</td>
-                          <td>الوسطى</td>
-                          <td>1,830</td>
-                          <td>2,500</td>
-                          <td><span class="badge bg-success">نشط</span></td>
-                          <td>
-                            <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
-                                  class="fa-solid fa-pen"></i></button><button class="btn btn-xs btn-outline-danger"><i
-                                  class="fa-solid fa-trash"></i></button></div>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="fw-medium">مخيم البريج</td>
-                          <td>الوسطى</td>
-                          <td>1,495</td>
-                          <td>2,000</td>
-                          <td><span class="badge bg-warning text-dark">مكتظ</span></td>
-                          <td>
-                            <div class="d-flex gap-1"><button class="btn btn-xs btn-outline-primary"><i
-                                  class="fa-solid fa-pen"></i></button><button class="btn btn-xs btn-outline-danger"><i
-                                  class="fa-solid fa-trash"></i></button></div>
-                          </td>
-                        </tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">جارٍ تحميل المخيمات...</td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -378,36 +320,42 @@
                   <div class="row g-3 mb-4">
                     <div class="col-12 col-sm-6">
                       <label class="field-label">الاسم الكامل</label>
-                      <input type="text" class="form-control" id="profileName" value="محمد أبو حماد" />
+                      <input type="text" class="form-control" id="profileName" />
                     </div>
                     <div class="col-12 col-sm-6">
                       <label class="field-label">البريد الإلكتروني</label>
-                      <input type="email" class="form-control" value="m.abuhammad@nds.ps" />
+                      <input type="email" class="form-control" id="profileEmail" />
                     </div>
                     <div class="col-12 col-sm-6">
                       <label class="field-label">رقم الهاتف</label>
-                      <input type="tel" class="form-control" value="059-100-1001" />
+                      <input type="tel" class="form-control" id="profilePhone" />
                     </div>
+                  </div>
+                  <div id="profileFeedback" class="d-none alert" style="font-size:13px;"></div>
+                  <div class="d-flex justify-content-end mt-3 mb-3">
+                    <button class="btn btn-primary" id="btnSaveProfile"><i class="fa-solid fa-check me-1"></i>حفظ
+                      البيانات</button>
                   </div>
                   <hr style="border-color:#eef2f7;" />
                   <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:#1a2332;">تغيير كلمة المرور</div>
                   <div class="row g-3">
                     <div class="col-12 col-sm-4">
                       <label class="field-label">كلمة المرور الحالية</label>
-                      <input type="password" class="form-control" placeholder="••••••••" />
+                      <input type="password" class="form-control" id="currentPassword" placeholder="••••••••" />
                     </div>
                     <div class="col-12 col-sm-4">
                       <label class="field-label">كلمة المرور الجديدة</label>
-                      <input type="password" class="form-control" placeholder="8 أحرف على الأقل" />
+                      <input type="password" class="form-control" id="newPassword" placeholder="8 أحرف على الأقل" />
                     </div>
                     <div class="col-12 col-sm-4">
                       <label class="field-label">تأكيد كلمة المرور</label>
-                      <input type="password" class="form-control" placeholder="أعد الإدخال" />
+                      <input type="password" class="form-control" id="confirmPassword" placeholder="أعد الإدخال" />
                     </div>
                   </div>
+                  <div id="passwordFeedback" class="d-none alert mt-3 mb-0" style="font-size:13px;"></div>
                   <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-primary" onclick="showSaved(this)"><i class="fa-solid fa-check me-1"></i>حفظ
-                      التغييرات</button>
+                    <button class="btn btn-primary" id="btnChangePassword"><i class="fa-solid fa-key me-1"></i>تغيير
+                      كلمة المرور</button>
                   </div>
                 </div>
               </div>
@@ -420,11 +368,75 @@
     </div>
   </div>
 
+  <!-- مودال إضافة/تعديل مخيم -->
+  <div class="modal fade" id="campModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="campModalTitle"><i class="fa-solid fa-tent me-2 text-primary"></i>إضافة مخيم</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12 col-sm-6">
+              <label class="field-label">اسم المخيم <span class="field-required">*</span></label>
+              <input type="text" id="campName" class="form-control" placeholder="اسم المخيم" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="field-label">الموقع / المحافظة <span class="field-required">*</span></label>
+              <input type="text" id="campLocation" class="form-control" placeholder="المحافظة" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="field-label">السعة الاستيعابية <span class="field-required">*</span></label>
+              <input type="number" id="campCapacity" class="form-control" min="0" placeholder="0" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="field-label">الحالة</label>
+              <select class="form-select" id="campActive">
+                <option value="1">نشط</option>
+                <option value="0">غير نشط</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+          <button type="button" class="btn btn-primary" id="btnSaveCamp">
+            <i class="fa-solid fa-check me-1"></i>حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال تأكيد حذف مخيم -->
+  <div class="modal fade" id="deleteCampModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger"><i class="fa-solid fa-triangle-exclamation me-2"></i>تأكيد الحذف</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteCampName" class="mb-0" style="font-size:14px;color:#5a6a7a;">هل تريد حذف هذا المخيم؟</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+          <button type="button" class="btn btn-danger" id="btnConfirmDeleteCamp">تأكيد الحذف</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
+      if (!NDS.auth.guardPage('settings')) return;
+      NDS.applyPermissions();
 
       /* ── تبديل الأقسام ──────────────────────────────────── */
       $(document).on('click', '#settingsTabs .nav-link', function () {
@@ -440,6 +452,293 @@
       $('#wPwd').on('input', function () { $('#wPwdVal').text($(this).val()); });
       $('#wDep').on('input', function () { $('#wDepVal').text($(this).val()); });
       $('#wSize').on('input', function () { $('#wSizeVal').text($(this).val()); });
+
+      var camps = [];
+      var deleteCampId = null;
+      var canManageCamps = NDS.auth.can('manage_camps');
+      var campSaving = false;
+      var campDeleting = false;
+      var profileSaving = false;
+      var passwordSaving = false;
+
+      function escapeHtml(value) {
+        return String(value === null || value === undefined ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function formatNumber(value) {
+        return Number(value || 0).toLocaleString('ar-EG');
+      }
+
+      function showCampFeedback(message, type) {
+        $('#campFeedback')
+          .removeClass('d-none alert-success alert-danger')
+          .addClass(type === 'danger' ? 'alert-danger' : 'alert-success')
+          .text(message);
+      }
+
+      function hideCampFeedback() {
+        $('#campFeedback').addClass('d-none').removeClass('alert-success alert-danger').text('');
+      }
+
+      function showFeedback(selector, message, type) {
+        $(selector)
+          .removeClass('d-none alert-success alert-danger')
+          .addClass(type === 'danger' ? 'alert-danger' : 'alert-success')
+          .text(message);
+      }
+
+      function hideFeedback(selector) {
+        $(selector).addClass('d-none').removeClass('alert-success alert-danger').text('');
+      }
+
+      function setButtonLoading($btn, loading, html) {
+        if (loading) {
+          $btn.data('originalHtml', $btn.html()).prop('disabled', true).html(html);
+        } else {
+          $btn.prop('disabled', false).html($btn.data('originalHtml'));
+        }
+      }
+
+      function profilePayload() {
+        return {
+          name: $('#profileName').val().trim(),
+          email: $('#profileEmail').val().trim(),
+          phone: $('#profilePhone').val().trim()
+        };
+      }
+
+      function passwordPayload() {
+        return {
+          current_password: $('#currentPassword').val(),
+          password: $('#newPassword').val(),
+          password_confirmation: $('#confirmPassword').val()
+        };
+      }
+
+      function updateStoredProfile(user) {
+        var session = NDS.auth.getSession();
+        if (!session || !user) return;
+
+        session.name = user.name;
+        session.email = user.email;
+        NDS.api.setSession(session);
+      }
+
+      async function loadProfile() {
+        try {
+          var response = await NDS.api.profile();
+          var user = response.user || response.data || {};
+          $('#profileName').val(user.name || '');
+          $('#profileEmail').val(user.email || '');
+          $('#profilePhone').val(user.phone || '');
+          updateStoredProfile(user);
+        } catch (error) {
+          showFeedback('#profileFeedback', error.message || 'تعذر تحميل بيانات الملف الشخصي', 'danger');
+        }
+      }
+
+      function statusBadge(camp) {
+        return camp.is_active
+          ? '<span class="badge bg-success">نشط</span>'
+          : '<span class="badge bg-secondary">غير نشط</span>';
+      }
+
+      function renderCampActions(camp) {
+        if (!canManageCamps) {
+          return '<span class="text-muted">عرض فقط</span>';
+        }
+
+        return '<div class="d-flex gap-1">' +
+          '<button class="btn btn-xs btn-outline-primary btn-edit-camp" data-id="' + camp.id + '" title="تعديل"><i class="fa-solid fa-pen"></i></button>' +
+          '<button class="btn btn-xs btn-outline-danger btn-delete-camp" data-id="' + camp.id + '" title="حذف"><i class="fa-solid fa-trash"></i></button>' +
+        '</div>';
+      }
+
+      function renderCamps() {
+        $('#campsTable tbody').html(camps.map(function (camp) {
+          return '<tr>' +
+            '<td class="fw-medium">' + escapeHtml(camp.name) + '</td>' +
+            '<td>' + escapeHtml(camp.location || '-') + '</td>' +
+            '<td>' + formatNumber(camp.families_count || 0) + '</td>' +
+            '<td>' + (camp.capacity === null || camp.capacity === undefined ? '-' : formatNumber(camp.capacity)) + '</td>' +
+            '<td>' + statusBadge(camp) + '</td>' +
+            '<td>' + renderCampActions(camp) + '</td>' +
+          '</tr>';
+        }).join('') || '<tr><td colspan="6" class="text-center text-muted py-4">لا توجد مخيمات</td></tr>');
+      }
+
+      async function loadCamps() {
+        $('#campsTable tbody').html('<tr><td colspan="6" class="text-center text-muted py-4">جارٍ تحميل المخيمات...</td></tr>');
+        try {
+          camps = await NDS.api.camps();
+          renderCamps();
+        } catch (error) {
+          $('#campsTable tbody').html('<tr><td colspan="6" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل المخيمات') + '</td></tr>');
+        }
+      }
+
+      function resetCampForm() {
+        $('#campModalTitle').html('<i class="fa-solid fa-tent me-2 text-primary"></i>إضافة مخيم');
+        $('#campName,#campLocation,#campCapacity').val('');
+        $('#campActive').val('1');
+        $('#btnSaveCamp').removeData('editId');
+      }
+
+      function campPayload() {
+        return {
+          name: $('#campName').val().trim(),
+          location: $('#campLocation').val().trim(),
+          capacity: $('#campCapacity').val(),
+          is_active: $('#campActive').val() === '1'
+        };
+      }
+
+      $('#btnAddCamp').on('click', function () {
+        resetCampForm();
+        hideCampFeedback();
+        new bootstrap.Modal($('#campModal')[0]).show();
+      });
+
+      $(document).on('click', '.btn-edit-camp', function () {
+        var id = Number($(this).data('id'));
+        var camp = camps.find(function (item) { return item.id === id; });
+        if (!camp) return;
+
+        $('#campModalTitle').html('<i class="fa-solid fa-pen me-2 text-warning"></i>تعديل مخيم');
+        $('#campName').val(camp.name);
+        $('#campLocation').val(camp.location || '');
+        $('#campCapacity').val(camp.capacity || '');
+        $('#campActive').val(camp.is_active ? '1' : '0');
+        $('#btnSaveCamp').data('editId', id);
+        hideCampFeedback();
+        new bootstrap.Modal($('#campModal')[0]).show();
+      });
+
+      $('#btnSaveCamp').on('click', async function () {
+        if (campSaving) return;
+
+        var payload = campPayload();
+        if (!payload.name || !payload.location || payload.capacity === '') {
+          alert('يرجى ملء الحقول الإلزامية.');
+          return;
+        }
+
+        campSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحفظ...');
+        var editId = $(this).data('editId');
+        try {
+          if (editId) {
+            await NDS.api.updateCamp(editId, payload);
+            showCampFeedback('تم تحديث بيانات المخيم بنجاح');
+          } else {
+            await NDS.api.createCamp(payload);
+            showCampFeedback('تمت إضافة المخيم بنجاح');
+          }
+          bootstrap.Modal.getInstance($('#campModal')[0]).hide();
+          resetCampForm();
+          await loadCamps();
+        } catch (error) {
+          alert(error.message || 'تعذر حفظ المخيم');
+        } finally {
+          campSaving = false;
+          setButtonLoading($btn, false);
+        }
+      });
+
+      $(document).on('click', '.btn-delete-camp', function () {
+        deleteCampId = Number($(this).data('id'));
+        var camp = camps.find(function (item) { return item.id === deleteCampId; });
+        $('#deleteCampName').text('سيتم حذف: ' + (camp ? camp.name : 'المخيم المحدد'));
+        hideCampFeedback();
+        new bootstrap.Modal($('#deleteCampModal')[0]).show();
+      });
+
+      $('#btnConfirmDeleteCamp').on('click', async function () {
+        if (campDeleting) return;
+        if (!deleteCampId) return;
+
+        campDeleting = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحذف...');
+        try {
+          await NDS.api.deleteCamp(deleteCampId);
+          bootstrap.Modal.getInstance($('#deleteCampModal')[0]).hide();
+          showCampFeedback('تم حذف المخيم بنجاح');
+          deleteCampId = null;
+          await loadCamps();
+        } catch (error) {
+          bootstrap.Modal.getInstance($('#deleteCampModal')[0]).hide();
+          showCampFeedback(error.message || 'لا يمكن حذف المخيم لأنه مرتبط ببيانات مسجلة', 'danger');
+        } finally {
+          campDeleting = false;
+          setButtonLoading($btn, false);
+        }
+      });
+
+      $('#btnSaveProfile').on('click', async function () {
+        if (profileSaving) return;
+
+        var payload = profilePayload();
+        if (!payload.name || !payload.email) {
+          showFeedback('#profileFeedback', 'يرجى إدخال الاسم والبريد الإلكتروني.', 'danger');
+          return;
+        }
+
+        profileSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحفظ...');
+        hideFeedback('#profileFeedback');
+        try {
+          var response = await NDS.api.updateProfile(payload);
+          updateStoredProfile(response.user);
+          showFeedback('#profileFeedback', response.message || 'تم تحديث بيانات الملف الشخصي بنجاح');
+          await loadProfile();
+        } catch (error) {
+          showFeedback('#profileFeedback', error.message || 'تعذر تحديث بيانات الملف الشخصي', 'danger');
+        } finally {
+          profileSaving = false;
+          setButtonLoading($btn, false);
+        }
+      });
+
+      $('#btnChangePassword').on('click', async function () {
+        if (passwordSaving) return;
+
+        var payload = passwordPayload();
+        if (!payload.current_password || !payload.password || !payload.password_confirmation) {
+          showFeedback('#passwordFeedback', 'يرجى ملء جميع حقول كلمة المرور.', 'danger');
+          return;
+        }
+
+        if (payload.password !== payload.password_confirmation) {
+          showFeedback('#passwordFeedback', 'كلمة المرور الجديدة وتأكيدها غير متطابقين.', 'danger');
+          return;
+        }
+
+        passwordSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ التغيير...');
+        hideFeedback('#passwordFeedback');
+        try {
+          var response = await NDS.api.changePassword(payload);
+          $('#currentPassword,#newPassword,#confirmPassword').val('');
+          showFeedback('#passwordFeedback', response.message || 'تم تغيير كلمة المرور بنجاح');
+        } catch (error) {
+          showFeedback('#passwordFeedback', error.message || 'تعذر تغيير كلمة المرور', 'danger');
+        } finally {
+          passwordSaving = false;
+          setButtonLoading($btn, false);
+        }
+      });
+
+      loadProfile();
+      loadCamps();
     });
 
     /* دالة عرض رسالة الحفظ */

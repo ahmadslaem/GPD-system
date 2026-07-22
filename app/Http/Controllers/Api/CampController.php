@@ -6,16 +6,23 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Camp;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 
 
 class CampController extends Controller
 {
 
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Camp::query();
+
+        if ($request->boolean('active')) {
+            $query->where('is_active', true);
+        }
+
         return response()->json(
-            Camp::all()
+            $query->withCount('families')->orderBy('id')->get()
         );
     }
 
@@ -30,10 +37,17 @@ class CampController extends Controller
 
             'location'=>'required|string',
 
-            'capacity'=>'nullable|integer'
+            'capacity'=>'nullable|integer',
+
+            'is_active'=>'sometimes|boolean'
 
         ]);
 
+        foreach (['name', 'location'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
 
         $camp = Camp::create($data);
 
@@ -77,6 +91,11 @@ class CampController extends Controller
 
         ]);
 
+        foreach (['name', 'location'] as $field) {
+            if (isset($data[$field])) {
+                $data[$field] = strip_tags($data[$field]);
+            }
+        }
 
         $camp->update($data);
 
@@ -98,7 +117,13 @@ class CampController extends Controller
     public function destroy(Camp $camp)
     {
 
-        $camp->delete();
+        try {
+            $camp->delete();
+        } catch (QueryException $e) {
+            return response()->json([
+                'message' => 'لا يمكن حذف المخيم لأنه مرتبط بأسر مسجلة'
+            ], 409);
+        }
 
 
         return response()->json([

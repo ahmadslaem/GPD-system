@@ -56,27 +56,34 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/layout.js"></script>
   <script>
     $(document).ready(function () {
-      var members = [
-        { id: 1, name: 'أحمد محمد سليم الأغا', relation: 'رب أسرة', nid: '276-1985-0034', dob: '1985-01-01', disability: 'نعم' },
-        { id: 2, name: 'سارة أحمد', relation: 'زوجة', nid: '280-1990-0012', dob: '1990-05-12', disability: 'لا' },
-        { id: 3, name: 'يوسف أحمد', relation: 'ابن', nid: '310-2010-0045', dob: '2010-09-20', disability: 'لا' },
-        { id: 4, name: 'مريم أحمد', relation: 'ابنة', nid: '315-2014-0051', dob: '2014-03-08', disability: 'نعم' }
-      ];
+      if (!NDS.auth.guardPage('families')) return;
+      NDS.applyPermissions();
+
+      var members = [];
+      var familyId = new URLSearchParams(window.location.search).get('familyId') || localStorage.getItem('nds_current_family_id');
+      var familyName = '—';
 
       function renderMembers() {
+        if (!members.length) {
+          $('#membersList').html('<div class="text-center text-muted py-4">لا يوجد أفراد مسجلون</div>');
+          return;
+        }
+
         var html = members.map(function (m) {
+          var memberId = m.id || '';
           return `
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 mb-2 border rounded-3" style="background:#f8fafc;">
               <div>
                 <div class="fw-bold">${m.name}</div>
-                <div class="small text-muted">${m.relation} · الهوية: ${m.nid} · الميلاد: ${m.dob} · إعاقة: ${m.disability}</div>
+                <div class="small text-muted">الهوية: ${m.national_id || '—'} · الميلاد: ${m.birth_date || '—'} · الجنس: ${m.gender === 'female' ? 'أنثى' : 'ذكر'} · إعاقة: ${m.has_disability ? 'نعم' : 'لا'}</div>
               </div>
               <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-primary" title="تعديل"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn btn-sm btn-outline-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                <a class="btn btn-sm btn-outline-primary" title="تعديل" href="edit-member.html?memberId=${encodeURIComponent(memberId)}&familyId=${encodeURIComponent(familyId || '')}&familyName=${encodeURIComponent(familyName)}&memberName=${encodeURIComponent(m.name || '')}&memberNid=${encodeURIComponent(m.national_id || '')}&memberDob=${encodeURIComponent(m.birth_date || '')}&memberDisability=${encodeURIComponent(m.has_disability ? 'نعم' : 'لا')}"><i class="fa-solid fa-pen"></i></a>
+                <button class="btn btn-sm btn-outline-danger btn-delete-member" data-id="${memberId}" title="حذف"><i class="fa-solid fa-trash"></i></button>
               </div>
             </div>`;
         }).join('');
@@ -84,14 +91,40 @@
         $('#membersList').html(html);
       }
 
-      var params = new URLSearchParams(window.location.search);
-      var familyId = params.get('familyId');
-      var familyName = params.get('familyName') || '—';
+      async function loadFamilyMembers() {
+        if (!familyId) {
+          $('#membersList').html('<div class="text-center text-danger py-4">لم يتم تحديد الأسرة</div>');
+          return;
+        }
+
+        $('#membersList').html('<div class="text-center text-muted py-4">جارٍ تحميل الأفراد...</div>');
+        try {
+          var response = await NDS.api.family(familyId);
+          var family = response.data || {};
+          members = family.members || [];
+          familyName = family.head_name || family.name || '—';
+          $('#familyMeta').text('الأسرة: ' + familyName);
+          $('#familyBadge').text(family.family_number || ('F-' + String(family.id || familyId).padStart(5, '0')));
+          localStorage.setItem('nds_current_family_id', family.id || familyId);
+          renderMembers();
+        } catch (error) {
+          $('#membersList').html('<div class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل أفراد الأسرة') + '</div>');
+        }
+      }
+
+      $(document).on('click', '.btn-delete-member', async function () {
+        var memberId = $(this).data('id');
+        if (!memberId || !confirm('هل تريد حذف هذا الفرد؟')) return;
+        try {
+          await NDS.api.deleteMember(memberId);
+          await loadFamilyMembers();
+        } catch (error) {
+          alert(error.message || 'تعذر حذف الفرد');
+        }
+      });
 
       $('#familyTitle').text('أفراد الأسرة');
-      $('#familyMeta').text(familyName ? 'الأسرة: ' + familyName : 'الأسرة المختارة');
-      $('#familyBadge').text(familyId || '—');
-      renderMembers();
+      loadFamilyMembers();
     });
   </script>
 </body>

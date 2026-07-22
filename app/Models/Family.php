@@ -42,10 +42,10 @@ class Family extends Model
     //     return $this->hasMany(Assistance::class);
     // }
 
-    // public function transferRequests()
-    // {
-    //     return $this->hasMany(TransferRequest::class);
-    // }
+    public function transferRequests()
+    {
+        return $this->hasMany(TransferRequest::class);
+    }
 
     // ============================
     // حساب درجة الهشاشة تلقائياً
@@ -100,4 +100,3 @@ class Family extends Model
     );
    }
 }
-

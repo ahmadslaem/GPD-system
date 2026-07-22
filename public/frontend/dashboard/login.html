@@ -59,27 +59,6 @@
         </span>
       </button>
 
-      <!-- بيانات تجريبية للمطورين -->
-      <div style="margin-top:24px;padding:12px;background:#f8fafc;border-radius:9px;border:1px dashed #dde4ee;">
-        <div style="font-size:11px;color:#9aaabb;margin-bottom:8px;text-align:center;">بيانات تجريبية للاختبار</div>
-        <div class="d-flex flex-column gap-2">
-          <button class="demo-btn" data-user="admin" data-pass="admin123"
-            style="background:#e8f1fb;border:1px solid #c5d9f0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a4a7a;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-shield me-1"></i>مدير النظام</span>
-            <span style="color:#7a8a9a;">admin / admin123</span>
-          </button>
-          <button class="demo-btn" data-user="manager" data-pass="manager123"
-            style="background:#eaf5ee;border:1px solid #a0d8b0;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#1a5a2a;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-tie me-1"></i>مدير المنظمة</span>
-            <span style="color:#7a8a9a;">manager / manager123</span>
-          </button>
-          <button class="demo-btn" data-user="staff" data-pass="staff123"
-            style="background:#fdf3e0;border:1px solid #f0cc80;border-radius:7px;padding:7px 12px;font-family:'Tajawal',sans-serif;font-size:12px;cursor:pointer;color:#7a5010;display:flex;justify-content:space-between;align-items:center;">
-            <span><i class="fa-solid fa-user-pen me-1"></i>موظف إدخال بيانات</span>
-            <span style="color:#7a8a9a;">staff / staff123</span>
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- ── مرحلة 2: اختيار المخيم (لموظف الإدخال فقط) ────────── -->
@@ -168,24 +147,12 @@
 
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
   <script>
     $(document).ready(function () {
 
-      /* بيانات المستخدمين التجريبية */
-      var USERS = {
-        admin: { name: 'محمد أبو حماد', role: 'admin', roleLabel: 'مدير النظام', pass: 'admin123' },
-        manager: { name: 'أحمد سليم', role: 'manager', roleLabel: 'مدير المنظمة', pass: 'manager123' },
-        staff: { name: 'علاء أبو يوسف', role: 'staff', roleLabel: 'موظف إدخال بيانات', pass: 'staff123' }
-      };
-
       var currentUser = null;
-
-      /* ── ملء البيانات التجريبية ──────────────────────────── */
-      $('.demo-btn').on('click', function () {
-        $('#username').val($(this).data('user'));
-        $('#password').val($(this).data('pass'));
-        $('#loginError').hide();
-      });
+      var camps = [];
 
       /* ── إظهار/إخفاء كلمة المرور ────────────────────────── */
       $('#togglePass').on('click', function () {
@@ -196,7 +163,23 @@
       });
 
       /* ── تسجيل الدخول ────────────────────────────────────── */
-      function doLogin() {
+      function roleLabel(role) {
+        return ({ admin: 'مدير النظام', manager: 'مدير المنظمة', data_entry: 'موظف إدخال بيانات' })[role] || role;
+      }
+
+      async function loadCamps() {
+        camps = await NDS.api.camps({ active: 1 });
+        var html = camps.map(function (camp) {
+          return '<li class="camp-list-item" data-camp-id="' + camp.id + '" data-camp="' + camp.name + '">'
+            + '<div class="camp-icon"><i class="fa-solid fa-tent-arrow-left-right"></i></div>'
+            + '<div style="flex:1;"><div class="camp-name-text">' + camp.name + '</div>'
+            + '<div class="camp-meta"><i class="fa-solid fa-people-group me-1"></i>' + (camp.current_population || 0).toLocaleString('ar-EG') + ' فرد مسجل</div></div>'
+            + '<i class="fa-solid fa-circle-check camp-check"></i></li>';
+        }).join('');
+        $('#campList').html(html || '<li style="padding:18px;text-align:center;color:#9aaabb;">لا توجد مخيمات متاحة</li>');
+      }
+
+      async function doLogin() {
         var user = $('#username').val().trim();
         var pass = $('#password').val().trim();
 
@@ -210,23 +193,28 @@
         $('#loginBtnLoading').removeClass('d-none');
         $('#loginError').hide();
 
-        /* محاكاة طلب الخادم (setTimeout بدلاً من AJAX حالياً) */
-        setTimeout(function () {
+        try {
+          var result = await NDS.api.login(user, pass);
+          NDS.api.setToken(result.token);
+          var found = result.user;
+          currentUser = {
+            id: found.id,
+            name: found.name,
+            username: found.email,
+            email: found.email,
+            role: found.role,
+            roleLabel: found.role_label || roleLabel(found.role),
+            camp_id: found.camp_id,
+            camp: found.camp
+          };
+
           $('#loginBtnText').removeClass('d-none');
           $('#loginBtnLoading').addClass('d-none');
-
-          var found = USERS[user];
-          if (!found || found.pass !== pass) {
-            showError('اسم المستخدم أو كلمة المرور غير صحيحة.');
-            $('#username, #password').addClass('is-invalid');
-            return;
-          }
-
           $('#username, #password').removeClass('is-invalid');
-          currentUser = $.extend({}, found, { username: user });
 
           /* إذا موظف إدخال → انتقل لاختيار المخيم */
-          if (found.role === 'staff') {
+          if (found.role === 'data_entry' && !found.camp_id) {
+            await loadCamps();
             var initials = found.name.split(' ').slice(0, 2).map(function (w) { return w[0]; }).join('.');
             $('#campStepAvatar').text(initials);
             $('#campStepName').text(found.name);
@@ -234,9 +222,14 @@
             $('#campStep').removeClass('d-none');
           } else {
             /* مدير/أدمن → ادخل مباشرة */
-            saveSessionAndGo(found, null);
+            saveSessionAndGo(currentUser);
           }
-        }, 900);
+        } catch (error) {
+          $('#loginBtnText').removeClass('d-none');
+          $('#loginBtnLoading').addClass('d-none');
+          showError(error.message || 'اسم المستخدم أو كلمة المرور غير صحيحة.');
+          $('#username, #password').addClass('is-invalid');
+        }
       }
 
       $('#btnLogin').on('click', doLogin);
@@ -260,14 +253,24 @@
         $('#campRequired').addClass('d-none');
       });
 
-      $('#btnEnterCamp').on('click', function () {
+      $('#btnEnterCamp').on('click', async function () {
         var $selected = $('.camp-list-item.selected');
         if ($selected.length === 0) {
           $('#campRequired').removeClass('d-none');
           return;
         }
         var camp = $selected.data('camp');
-        saveSessionAndGo(currentUser, camp);
+        var campId = $selected.data('camp-id');
+        try {
+          await NDS.api.selectCamp(campId);
+          currentUser.camp = camp;
+          currentUser.camp_id = campId;
+          saveSessionAndGo(currentUser);
+        } catch (error) {
+          showError(error.message || 'تعذر اختيار المخيم.');
+          $('#campStep').addClass('d-none');
+          $('#loginStep').removeClass('d-none');
+        }
       });
 
       $('#btnBackToLogin').on('click', function () {
@@ -278,15 +281,8 @@
       });
 
       /* ── حفظ الجلسة والانتقال ────────────────────────────── */
-      function saveSessionAndGo(user, camp) {
-        var session = {
-          name: user.name,
-          username: user.username,
-          role: user.role,
-          roleLabel: user.roleLabel,
-          camp: camp
-        };
-        sessionStorage.setItem('nds_user', JSON.stringify(session));
+      function saveSessionAndGo(session) {
+        NDS.api.setSession(session);
         window.location.href = 'index.html';
       }
 

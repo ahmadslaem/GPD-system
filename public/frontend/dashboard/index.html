@@ -56,7 +56,7 @@
       var s = NDS.auth.getSession();
       if (!s) { window.location.href = 'login.html'; return; }
       setTimeout(function () {
-        window.location.href = s.role === 'staff' ? 'staff-dashboard.html' : 'admin-dashboard.html';
+        window.location.href = s.role === 'data_entry' ? 'staff-dashboard.html' : 'admin-dashboard.html';
       }, 600);
     });
   </script>
