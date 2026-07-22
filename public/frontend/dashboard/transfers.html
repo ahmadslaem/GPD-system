@@ -241,6 +241,8 @@ $(document).ready(function(){
   var canCreateTransfer = NDS.auth.role() === 'data_entry';
   var canReviewTransfer = NDS.auth.isManagerOrAdmin();
   var searchTimer = null;
+  var transferSubmitting = false;
+  var decisionSubmitting = false;
 
   if (!canCreateTransfer) {
     $('#btnOpenNewTransfer').addClass('d-none');
@@ -369,13 +371,19 @@ $(document).ready(function(){
   }
 
   async function makeDecision(decision) {
+    if (decisionSubmitting) return;
     if (!canReviewTransfer || !selectedTransfer || selectedTransfer.status !== 'pending') return;
+    decisionSubmitting = true;
+    $('#btnApproveTransfer,#btnRejectTransfer').prop('disabled', true);
     try {
       if (decision === 'approved') await NDS.api.approveTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
       else await NDS.api.rejectTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
       await loadTransfers();
     } catch (error) {
       alert(error.message || 'تعذر حفظ القرار');
+    } finally {
+      decisionSubmitting = false;
+      $('#btnApproveTransfer,#btnRejectTransfer').prop('disabled', false);
     }
   }
 
@@ -403,11 +411,16 @@ $(document).ready(function(){
   });
 
   $('#btnSubmitNewTransfer').on('click', async function(){
+    if (transferSubmitting) return;
     if (!canCreateTransfer) { alert('إنشاء طلبات النقل متاح لموظف الإدخال فقط.'); return; }
     var from = $('#ntFrom').val();
     var to = $('#ntTo').val();
     var reason = $('#ntReason').val().trim();
     if (!checkedFamily || !from || !to || !reason) { alert('يرجى التحقق من الأسرة وملء جميع الحقول.'); return; }
+    transferSubmitting = true;
+    var $btn = $(this);
+    var originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الإرسال...');
     try {
       await NDS.api.createTransfer({ family_id: checkedFamily.id, from_camp_id: from, to_camp_id: to, reason: reason });
       await loadTransfers();
@@ -417,6 +430,9 @@ $(document).ready(function(){
       checkedFamily = null;
     } catch (error) {
       alert(error.message || 'تعذر إرسال الطلب');
+    } finally {
+      transferSubmitting = false;
+      $btn.prop('disabled', false).html(originalHtml);
     }
   });
 

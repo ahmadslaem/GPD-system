@@ -30,44 +30,57 @@ $data=$request->validate([
 
 ]);
 
-$family = Family::findOrFail($data['family_id']);
+return DB::transaction(function () use ($request, $data) {
+    $family = Family::whereKey($data['family_id'])->lockForUpdate()->firstOrFail();
 
-if ($family->camp_id !== (int) $data['from_camp_id']) {
+    if ($family->camp_id !== (int) $data['from_camp_id']) {
+        return response()->json([
+            'message' => 'The selected family does not belong to the source camp'
+        ], 422);
+    }
+
+    if ($request->user()->role === 'data_entry' && $family->camp_id !== $request->user()->camp_id) {
+        return response()->json([
+            'message' => 'Forbidden'
+        ], 403);
+    }
+
+    if ((int) $data['from_camp_id'] === (int) $data['to_camp_id']) {
+        return response()->json([
+            'message' => 'Target camp must be different from source camp'
+        ], 422);
+    }
+
+    $duplicatePending = TransferRequest::where('family_id', $data['family_id'])
+        ->where('from_camp_id', $data['from_camp_id'])
+        ->where('to_camp_id', $data['to_camp_id'])
+        ->where('status', 'pending')
+        ->exists();
+
+    if ($duplicatePending) {
+        return response()->json([
+            'message' => 'يوجد طلب نقل معلق لهذه الأسرة إلى نفس المخيم'
+        ], 409);
+    }
+
+    $data['reason'] = strip_tags($data['reason']);
+
+    $data['requested_by']=auth()->id();
+
+
+
+    $transfer=TransferRequest::create($data);
+
+
+
     return response()->json([
-        'message' => 'The selected family does not belong to the source camp'
-    ], 422);
-}
 
-if ($request->user()->role === 'data_entry' && $family->camp_id !== $request->user()->camp_id) {
-    return response()->json([
-        'message' => 'Forbidden'
-    ], 403);
-}
+    'message'=>'Transfer request created',
 
-if ((int) $data['from_camp_id'] === (int) $data['to_camp_id']) {
-    return response()->json([
-        'message' => 'Target camp must be different from source camp'
-    ], 422);
-}
+    'data'=>$transfer
 
-
-$data['reason'] = strip_tags($data['reason']);
-
-$data['requested_by']=auth()->id();
-
-
-
-$transfer=TransferRequest::create($data);
-
-
-
-return response()->json([
-
-'message'=>'Transfer request created',
-
-'data'=>$transfer
-
-],201);
+    ],201);
+});
 
 
 

@@ -211,6 +211,9 @@
       var users = [];
       var camps = [];
       var deleteTargetId = null;
+      var userSaving = false;
+      var userDeleting = false;
+      var togglingUsers = {};
 
       function labelRole(role) {
         return ({ admin: 'مدير النظام', manager: 'مدير المنظمة', data_entry: 'موظف إدخال' })[role] || role;
@@ -222,6 +225,14 @@
 
       function formatNumber(value) {
         return Number(value || 0).toLocaleString('ar-EG');
+      }
+
+      function setButtonLoading($btn, loading, html) {
+        if (loading) {
+          $btn.data('originalHtml', $btn.html()).prop('disabled', true).html(html);
+        } else {
+          $btn.prop('disabled', false).html($btn.data('originalHtml'));
+        }
       }
 
       function mapUser(u) {
@@ -319,6 +330,8 @@
       });
 
       $('#btnSaveUser').on('click', async function () {
+        if (userSaving) return;
+
         var payload = {
           name: $('#umName').val().trim(),
           email: $('#umEmail').val().trim(),
@@ -330,6 +343,9 @@
         if (password) payload.password = password;
         if (!payload.name || !payload.email || !payload.role) { alert('يرجى ملء الحقول الإلزامية.'); return; }
         var editId = $(this).data('editId');
+        userSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحفظ...');
         try {
           if (editId) await NDS.api.updateUser(editId, payload);
           else await NDS.api.createUser(payload);
@@ -338,13 +354,25 @@
           await refreshUsersPage();
         } catch (error) {
           alert(error.message || 'تعذر حفظ المستخدم');
+        } finally {
+          userSaving = false;
+          setButtonLoading($btn, false);
         }
       });
 
       $(document).on('click', '.btn-toggle-status', async function (e) {
         e.stopPropagation();
-        try { await NDS.api.toggleUserStatus($(this).data('id')); await refreshUsersPage(); }
+        var id = $(this).data('id');
+        if (togglingUsers[id]) return;
+        togglingUsers[id] = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin"></i>');
+        try { await NDS.api.toggleUserStatus(id); await refreshUsersPage(); }
         catch (error) { alert(error.message || 'تعذر تغيير حالة المستخدم'); }
+        finally {
+          delete togglingUsers[id];
+          setButtonLoading($btn, false);
+        }
       });
 
       $(document).on('click', '.btn-delete-user', function (e) {
@@ -356,11 +384,19 @@
       });
 
       $('#btnConfirmDelete').on('click', async function () {
+        if (userDeleting) return;
+        userDeleting = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحذف...');
         try {
           await NDS.api.deleteUser(deleteTargetId);
           bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
           await refreshUsersPage();
         } catch (error) { alert(error.message || 'تعذر حذف المستخدم'); }
+        finally {
+          userDeleting = false;
+          setButtonLoading($btn, false);
+        }
       });
 
       $('#btnAddUser').on('click', function () {

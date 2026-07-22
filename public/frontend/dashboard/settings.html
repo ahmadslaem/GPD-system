@@ -450,6 +450,8 @@
       var camps = [];
       var deleteCampId = null;
       var canManageCamps = NDS.auth.can('manage_camps');
+      var campSaving = false;
+      var campDeleting = false;
 
       function escapeHtml(value) {
         return String(value === null || value === undefined ? '' : value)
@@ -473,6 +475,14 @@
 
       function hideCampFeedback() {
         $('#campFeedback').addClass('d-none').removeClass('alert-success alert-danger').text('');
+      }
+
+      function setButtonLoading($btn, loading, html) {
+        if (loading) {
+          $btn.data('originalHtml', $btn.html()).prop('disabled', true).html(html);
+        } else {
+          $btn.prop('disabled', false).html($btn.data('originalHtml'));
+        }
       }
 
       function statusBadge(camp) {
@@ -553,12 +563,17 @@
       });
 
       $('#btnSaveCamp').on('click', async function () {
+        if (campSaving) return;
+
         var payload = campPayload();
         if (!payload.name || !payload.location || payload.capacity === '') {
           alert('يرجى ملء الحقول الإلزامية.');
           return;
         }
 
+        campSaving = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحفظ...');
         var editId = $(this).data('editId');
         try {
           if (editId) {
@@ -573,6 +588,9 @@
           await loadCamps();
         } catch (error) {
           alert(error.message || 'تعذر حفظ المخيم');
+        } finally {
+          campSaving = false;
+          setButtonLoading($btn, false);
         }
       });
 
@@ -585,8 +603,12 @@
       });
 
       $('#btnConfirmDeleteCamp').on('click', async function () {
+        if (campDeleting) return;
         if (!deleteCampId) return;
 
+        campDeleting = true;
+        var $btn = $(this);
+        setButtonLoading($btn, true, '<i class="fa-solid fa-spinner fa-spin me-1"></i>جارٍ الحذف...');
         try {
           await NDS.api.deleteCamp(deleteCampId);
           bootstrap.Modal.getInstance($('#deleteCampModal')[0]).hide();
@@ -596,6 +618,9 @@
         } catch (error) {
           bootstrap.Modal.getInstance($('#deleteCampModal')[0]).hide();
           showCampFeedback(error.message || 'لا يمكن حذف المخيم لأنه مرتبط ببيانات مسجلة', 'danger');
+        } finally {
+          campDeleting = false;
+          setButtonLoading($btn, false);
         }
       });
 
