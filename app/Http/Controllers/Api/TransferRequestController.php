@@ -168,6 +168,18 @@ public function index(Request $request)
             'status' => $transfer->status,
  
             'head_name' => $transfer->family->head_name ?? null,
+
+            'national_id' => $transfer->family->national_id ?? null,
+
+            'vulnerability_level' => $transfer->family->vulnerability_level ?? null,
+
+            'family' => $transfer->family ? [
+                'id' => $transfer->family->id,
+                'national_id' => $transfer->family->national_id,
+                'head_name' => $transfer->family->head_name,
+                'camp_id' => $transfer->family->camp_id,
+                'vulnerability_level' => $transfer->family->vulnerability_level,
+            ] : null,
  
             'from_camp' => $transfer->fromCamp->name ?? null,
  

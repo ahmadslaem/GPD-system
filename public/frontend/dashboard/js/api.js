@@ -195,6 +195,10 @@
       return this.request('/users');
     },
 
+    usersStatistics: async function () {
+      return this.request('/users/statistics');
+    },
+
     createUser: async function (payload) {
       return this.request('/users', {
         method: 'POST',

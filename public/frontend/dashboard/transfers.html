@@ -20,7 +20,7 @@
 
   <div class="page-header d-flex justify-content-between align-items-center mb-3">
     <h1 class="page-title"><i class="fa-solid fa-right-left me-2 text-primary"></i>طلبات النقل</h1>
-    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newTransferModal">
+    <button class="btn btn-primary btn-sm" id="btnOpenNewTransfer" data-bs-toggle="modal" data-bs-target="#newTransferModal">
       <i class="fa-solid fa-plus me-1"></i>طلب نقل جديد
     </button>
   </div>
@@ -32,7 +32,7 @@
         <div class="stat-card__icon"><i class="fa-solid fa-hourglass-half"></i></div>
         <div class="stat-card__body">
           <div class="stat-card__label">معلقة</div>
-          <div class="stat-card__value">47</div>
+          <div class="stat-card__value" id="transferPendingCount">0</div>
         </div>
       </div>
     </div>
@@ -41,7 +41,7 @@
         <div class="stat-card__icon"><i class="fa-solid fa-circle-check"></i></div>
         <div class="stat-card__body">
           <div class="stat-card__label">موافق عليها</div>
-          <div class="stat-card__value">128</div>
+          <div class="stat-card__value" id="transferApprovedCount">0</div>
         </div>
       </div>
     </div>
@@ -50,7 +50,7 @@
         <div class="stat-card__icon"><i class="fa-solid fa-circle-xmark"></i></div>
         <div class="stat-card__body">
           <div class="stat-card__label">مرفوضة</div>
-          <div class="stat-card__value">23</div>
+          <div class="stat-card__value" id="transferRejectedCount">0</div>
         </div>
       </div>
     </div>
@@ -59,7 +59,7 @@
         <div class="stat-card__icon"><i class="fa-solid fa-list"></i></div>
         <div class="stat-card__body">
           <div class="stat-card__label">الإجمالي</div>
-          <div class="stat-card__value">198</div>
+          <div class="stat-card__value" id="transferTotalCount">0</div>
         </div>
       </div>
     </div>
@@ -238,6 +238,13 @@ $(document).ready(function(){
   var selectedTransfer = null;
   var activeStatusFilter = 'all';
   var checkedFamily = null;
+  var canCreateTransfer = NDS.auth.role() === 'data_entry';
+  var canReviewTransfer = NDS.auth.isManagerOrAdmin();
+  var searchTimer = null;
+
+  if (!canCreateTransfer) {
+    $('#btnOpenNewTransfer').addClass('d-none');
+  }
 
   function mapTransfer(t) {
     return {
@@ -252,7 +259,8 @@ $(document).ready(function(){
       submitter: t.requested_by || '-',
       reason: t.reason || '',
       manager_note: t.manager_note || '',
-      level: t.vulnerability_level || 'medium'
+      level: t.vulnerability_level || 'medium',
+      family: t.family || null
     };
   }
 
@@ -268,6 +276,7 @@ $(document).ready(function(){
     $('#transferList').html('<div style="text-align:center;padding:20px;color:#9aaabb;font-size:13px;">جارٍ تحميل الطلبات...</div>');
     try {
       var response = await NDS.api.transfers({ status: activeStatusFilter, keyword: $('#transferSearch').val() });
+      renderTransferCounters(response.summary || {});
       transfers = (response.data || []).map(mapTransfer);
       renderTransfers();
       if (selectedTransfer) {
@@ -275,8 +284,16 @@ $(document).ready(function(){
         if (selectedTransfer) renderReview(selectedTransfer);
       }
     } catch (error) {
+      renderTransferCounters({});
       $('#transferList').html('<div style="text-align:center;padding:20px;color:#b03030;font-size:13px;">' + (error.message || 'تعذر تحميل الطلبات') + '</div>');
     }
+  }
+
+  function renderTransferCounters(summary) {
+    $('#transferPendingCount').text(Number(summary.pending || 0).toLocaleString('ar-EG'));
+    $('#transferApprovedCount').text(Number(summary.approved || 0).toLocaleString('ar-EG'));
+    $('#transferRejectedCount').text(Number(summary.rejected || 0).toLocaleString('ar-EG'));
+    $('#transferTotalCount').text(Number(summary.total || 0).toLocaleString('ar-EG'));
   }
 
   function renderTransfers() {
@@ -306,7 +323,10 @@ $(document).ready(function(){
     loadTransfers();
   });
 
-  $('#transferSearch').on('input', renderTransfers);
+  $('#transferSearch').on('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadTransfers, 250);
+  });
 
   $(document).on('click','.transfer-request-card',function(){
     var id = Number($(this).data('id'));
@@ -322,7 +342,7 @@ $(document).ready(function(){
     $('#rpEmpty').addClass('d-none');
     $('#rpDetails').removeClass('d-none');
     $('#rpDecisionResult').addClass('d-none');
-    $('#rpActionArea').removeClass('d-none');
+    $('#rpActionArea').toggleClass('d-none', !canReviewTransfer);
     $('#rpRemarks').val(t.manager_note || '');
     $('#rpStatus').html({ pending: '<span class="badge bg-warning text-dark">معلق</span>', approved: '<span class="badge bg-success">موافق عليه</span>', rejected: '<span class="badge bg-danger">مرفوض</span>' }[t.status]);
     $('#rpAvatar').text(initials);
@@ -335,16 +355,21 @@ $(document).ready(function(){
     $('#rpSubmitter').text(t.submitter);
     $('#rpDate').text(t.date);
 
-    if (t.status !== 'pending') {
+    if (t.status !== 'pending' || !canReviewTransfer) {
       $('#rpActionArea').addClass('d-none');
       $('#rpDecisionResult').removeClass('d-none');
-      $('#rpDecisionIcon').html(t.status === 'approved' ? '<i class="fa-solid fa-circle-check" style="color:#2d8a4e;"></i>' : '<i class="fa-solid fa-circle-xmark" style="color:#b03030;"></i>');
-      $('#rpDecisionText').text(t.status === 'approved' ? 'تمت الموافقة على هذا الطلب' : 'تم رفض هذا الطلب').css('color', t.status === 'approved' ? '#1a6a2a' : '#8a2020');
+      if (t.status === 'pending') {
+        $('#rpDecisionIcon').html('<i class="fa-solid fa-clock" style="color:#b07a18;"></i>');
+        $('#rpDecisionText').text('الطلب بانتظار مراجعة المدير').css('color', '#7a5010');
+      } else {
+        $('#rpDecisionIcon').html(t.status === 'approved' ? '<i class="fa-solid fa-circle-check" style="color:#2d8a4e;"></i>' : '<i class="fa-solid fa-circle-xmark" style="color:#b03030;"></i>');
+        $('#rpDecisionText').text(t.status === 'approved' ? 'تمت الموافقة على هذا الطلب' : 'تم رفض هذا الطلب').css('color', t.status === 'approved' ? '#1a6a2a' : '#8a2020');
+      }
     }
   }
 
   async function makeDecision(decision) {
-    if (!selectedTransfer || selectedTransfer.status !== 'pending') return;
+    if (!canReviewTransfer || !selectedTransfer || selectedTransfer.status !== 'pending') return;
     try {
       if (decision === 'approved') await NDS.api.approveTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
       else await NDS.api.rejectTransfer(selectedTransfer.backend_id, $('#rpRemarks').val());
@@ -363,7 +388,8 @@ $(document).ready(function(){
   $('#btnNtCheck').on('click', async function(){
     var nid = $('#ntNid').val().trim();
     try {
-      var response = await NDS.api.search('global', nid);
+      var searchScope = NDS.auth.isManagerOrAdmin() ? 'global' : 'local';
+      var response = await NDS.api.search(searchScope, nid);
       checkedFamily = (response.data || [])[0] || null;
       if (!checkedFamily) throw new Error('لم يُعثر على أسرة بهذا الرقم.');
       $('#ntFamilyName').text(checkedFamily.head_name || checkedFamily.name || checkedFamily.national_id);
@@ -377,6 +403,7 @@ $(document).ready(function(){
   });
 
   $('#btnSubmitNewTransfer').on('click', async function(){
+    if (!canCreateTransfer) { alert('إنشاء طلبات النقل متاح لموظف الإدخال فقط.'); return; }
     var from = $('#ntFrom').val();
     var to = $('#ntTo').val();
     var reason = $('#ntReason').val().trim();

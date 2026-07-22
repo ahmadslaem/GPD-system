@@ -21,6 +21,16 @@ class UserController extends Controller
         ]);
     }
 
+    public function statistics()
+    {
+        return response()->json([
+            'total_users' => User::count(),
+            'active_users' => User::where('is_active', true)->count(),
+            'inactive_users' => User::where('is_active', false)->count(),
+            'data_entry_users' => User::where('role', 'data_entry')->count(),
+        ]);
+    }
+
 
 
     // إنشاء مستخدم جديد

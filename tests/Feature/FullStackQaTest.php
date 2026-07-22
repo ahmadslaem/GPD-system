@@ -79,6 +79,7 @@ class FullStackQaTest extends TestCase
             ->assertOk()
             ->assertJsonPath('user.email', 'data@gpd.com');
         $this->withHeaders($headers)->getJson('/api/users')->assertForbidden();
+        $this->withHeaders($headers)->getJson('/api/users/statistics')->assertForbidden();
         $this->withHeaders($headers)->postJson('/api/logout')->assertOk();
         $this->assertDatabaseMissing('personal_access_tokens', ['id' => $dataEntryTokenId]);
     }
@@ -159,6 +160,15 @@ class FullStackQaTest extends TestCase
 
         Sanctum::actingAs($this->admin);
 
+        $this->getJson('/api/users/statistics')
+            ->assertOk()
+            ->assertJson([
+                'total_users' => 3,
+                'active_users' => 3,
+                'inactive_users' => 0,
+                'data_entry_users' => 1,
+            ]);
+
         $user = $this->postJson('/api/users', [
             'name' => 'QA User',
             'email' => 'qa.user@gpd.com',
@@ -171,6 +181,11 @@ class FullStackQaTest extends TestCase
         $userId = $user->json('user.id');
         $this->assertTrue(User::find($userId)->hasRole('data_entry'));
 
+        $this->getJson('/api/users/statistics')
+            ->assertOk()
+            ->assertJsonPath('total_users', 4)
+            ->assertJsonPath('data_entry_users', 2);
+
         $this->putJson("/api/users/{$userId}", [
             'name' => 'QA User Updated',
             'email' => 'qa.user@gpd.com',
@@ -179,6 +194,10 @@ class FullStackQaTest extends TestCase
         ])->assertOk();
         $this->assertTrue(User::find($userId)->hasRole('manager'));
 
+        $this->getJson('/api/users/statistics')
+            ->assertOk()
+            ->assertJsonPath('data_entry_users', 1);
+
         $this->putJson("/api/users/{$userId}", [
             'email' => 'admin@gpd.com',
         ])->assertUnprocessable();
@@ -186,8 +205,17 @@ class FullStackQaTest extends TestCase
         $this->postJson("/api/users/{$userId}/toggle-status")->assertOk();
         $this->assertFalse(User::find($userId)->is_active);
 
+        $this->getJson('/api/users/statistics')
+            ->assertOk()
+            ->assertJsonPath('active_users', 3)
+            ->assertJsonPath('inactive_users', 1);
+
         $this->deleteJson("/api/users/{$userId}")->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $userId]);
+
+        $this->getJson('/api/users/statistics')
+            ->assertOk()
+            ->assertJsonPath('total_users', 3);
 
         foreach (['demographic', 'vulnerability', 'transfers', 'periodic'] as $report) {
             $this->getJson("/api/reports/{$report}")->assertOk();

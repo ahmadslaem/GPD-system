@@ -24,6 +24,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function(){
 
+    Route::middleware(['role:admin'])->get(
+        'users/statistics',
+        [UserController::class,'statistics']
+    );
 
     Route::middleware(['role:admin'])->apiResource(
         'users',

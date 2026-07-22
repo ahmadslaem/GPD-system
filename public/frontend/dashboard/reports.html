@@ -176,105 +176,75 @@
 
       var currentReport = 'demographic';
       var campsById = {};
+      var hasGenerated = false;
 
-      var reportData = {
+      var summaryMappings = {
+        demographic: [
+          { key: 'total_families', label: 'إجمالي الأسر', icon: 'fa-house-chimney-user', color: 'blue' },
+          { key: 'total_individuals', label: 'إجمالي الأفراد', icon: 'fa-people-group', color: 'green' },
+          { key: 'vulnerable_families', label: 'الأسر الضعيفة', icon: 'fa-triangle-exclamation', color: 'red' },
+          { key: 'pwd', label: 'ذوو الإعاقة', icon: 'fa-wheelchair', color: 'amber' },
+          { key: 'female_headed', label: 'أسر برئاسة أنثى', icon: 'fa-venus', color: 'red' }
+        ],
+        vulnerability: [
+          { key: 'high', label: 'ضعف عالٍ', icon: 'fa-triangle-exclamation', color: 'red' },
+          { key: 'medium', label: 'ضعف متوسط', icon: 'fa-circle-half-stroke', color: 'amber' },
+          { key: 'low', label: 'ضعف منخفض', icon: 'fa-circle-check', color: 'green' },
+          { key: 'average_score', label: 'متوسط الدرجة', icon: 'fa-gauge-high', color: 'blue', suffix: ' / 100' }
+        ],
+        transfer: [
+          { key: 'total_requests', label: 'إجمالي الطلبات', icon: 'fa-list', color: 'blue' },
+          { key: 'approved', label: 'موافق عليها', icon: 'fa-circle-check', color: 'green' },
+          { key: 'rejected', label: 'مرفوضة', icon: 'fa-ban', color: 'red' },
+          { key: 'pending', label: 'معلقة', icon: 'fa-hourglass-half', color: 'amber' }
+        ],
+        timeline: []
+      };
+
+      var tableMappings = {
         demographic: {
-          title: 'تقرير ديموغرافي شامل',
-          summary: [
-            { label: 'إجمالي الأسر', val: '12,847', icon: 'fa-house-chimney-user', color: 'blue' },
-            { label: 'إجمالي الأفراد', val: '71,430', icon: 'fa-people-group', color: 'green' },
-            { label: 'ذوو إعاقة', val: '6,730', icon: 'fa-wheelchair', color: 'amber' },
-            { label: 'أسر FHH', val: '2,140', icon: 'fa-venus', color: 'red' },
+          rows: function (data) { return data.details || []; },
+          columns: [
+            { key: 'camp_name', label: 'المخيم' },
+            { key: 'families', label: 'الأسر' },
+            { key: 'individuals', label: 'الأفراد' },
+            { key: 'vulnerable', label: 'الأسر الضعيفة' },
+            { key: 'pwd', label: 'ذوو الإعاقة' },
+            { key: 'female_headed', label: 'برئاسة أنثى' }
           ],
-          chartTitle: 'توزيع الأسر حسب المخيم',
-          chartData: [
-            { name: 'جباليا', val: 3412, max: 4000 },
-            { name: 'خان يونس', val: 2710, max: 4000 },
-            { name: 'رفح', val: 2420, max: 4000 },
-            { name: 'النصيرات', val: 1830, max: 4000 },
-            { name: 'البريج', val: 1495, max: 4000 },
-            { name: 'مواصي رفح', val: 980, max: 4000 },
-          ],
-          tableHead: ['المخيم', 'الأسر', 'الأفراد', 'ضعف عالٍ', 'PWD', 'FHH'],
-          tableRows: [
-            ['جباليا', '3,412', '18,976', '812', '1,240', '534'],
-            ['خان يونس', '2,710', '15,090', '645', '980', '421'],
-            ['رفح', '2,420', '13,478', '576', '875', '378'],
-            ['النصيرات', '1,830', '10,186', '436', '662', '285'],
-            ['البريج', '1,495', '8,318', '356', '541', '233'],
-            ['<b>المجموع</b>', '<b>12,847</b>', '<b>71,430</b>', '<b>3,218</b>', '<b>6,730</b>', '<b>2,140</b>'],
-          ]
+          totals: function (data) {
+            return data.totals ? Object.assign({ camp_name: 'الإجمالي' }, data.totals) : null;
+          }
         },
         vulnerability: {
-          title: 'تقرير حالات الضعف',
-          summary: [
-            { label: 'ضعف عالٍ', val: '3,218 (25%)', icon: 'fa-triangle-exclamation', color: 'red' },
-            { label: 'ضعف متوسط', val: '5,781 (45%)', icon: 'fa-circle-half-stroke', color: 'amber' },
-            { label: 'ضعف منخفض', val: '3,848 (30%)', icon: 'fa-circle-check', color: 'green' },
-            { label: 'متوسط الدرجة', val: '42 / 100', icon: 'fa-gauge-high', color: 'blue' },
-          ],
-          chartTitle: 'توزيع حالات الضعف العالي حسب المخيم',
-          chartData: [
-            { name: 'جباليا', val: 812, max: 900 },
-            { name: 'خان يونس', val: 645, max: 900 },
-            { name: 'رفح', val: 576, max: 900 },
-            { name: 'النصيرات', val: 436, max: 900 },
-            { name: 'البريج', val: 356, max: 900 },
-          ],
-          tableHead: ['المخيم', 'عالٍ', 'متوسط', 'منخفض', 'إجمالي', 'نسبة العالي'],
-          tableRows: [
-            ['جباليا', '812', '1,536', '1,064', '3,412', '24%'],
-            ['خان يونس', '645', '1,219', '846', '2,710', '24%'],
-            ['رفح', '576', '1,089', '755', '2,420', '24%'],
-            ['النصيرات', '436', '824', '570', '1,830', '24%'],
-            ['البريج', '356', '672', '467', '1,495', '24%'],
+          rows: function (data) { return data.distribution_by_camp || []; },
+          columns: [
+            { key: 'camp', label: 'المخيم' },
+            { key: 'high', label: 'عالٍ' },
+            { key: 'medium', label: 'متوسط' },
+            { key: 'low', label: 'منخفض' },
+            { key: 'total', label: 'الإجمالي' },
+            { key: 'high_percentage', label: 'نسبة العالي', suffix: '%' }
           ]
         },
         transfer: {
-          title: 'تقرير حركة النقل',
-          summary: [
-            { label: 'إجمالي الطلبات', val: '198', icon: 'fa-list', color: 'blue' },
-            { label: 'موافق عليها', val: '128 (65%)', icon: 'fa-circle-check', color: 'green' },
-            { label: 'مرفوضة', val: '23 (12%)', icon: 'fa-ban', color: 'red' },
-            { label: 'معلقة', val: '47 (24%)', icon: 'fa-hourglass', color: 'amber' },
-          ],
-          chartTitle: 'الطلبات حسب المخيم (المصدر)',
-          chartData: [
-            { name: 'جباليا', val: 62, max: 80 },
-            { name: 'النصيرات', val: 45, max: 80 },
-            { name: 'رفح', val: 38, max: 80 },
-            { name: 'خان يونس', val: 31, max: 80 },
-            { name: 'البريج', val: 22, max: 80 },
-          ],
-          tableHead: ['الشهر', 'الطلبات', 'موافق', 'مرفوض', 'معلق'],
-          tableRows: [
-            ['يناير 2026', '42', '28', '5', '9'],
-            ['فبراير 2026', '55', '36', '7', '12'],
-            ['مارس 2026', '61', '40', '8', '13'],
-            ['أبريل 2026', '40', '24', '3', '13'],
+          rows: function (data) { return data.monthly_breakdown || []; },
+          columns: [
+            { key: 'month', label: 'الشهر' },
+            { key: 'requests', label: 'الطلبات' },
+            { key: 'approved', label: 'موافق' },
+            { key: 'rejected', label: 'مرفوض' },
+            { key: 'pending', label: 'معلق' }
           ]
         },
         timeline: {
-          title: 'تقرير زمني دوري',
-          summary: [
-            { label: 'تسجيلات يناير', val: '1,240', icon: 'fa-calendar', color: 'blue' },
-            { label: 'تسجيلات فبراير', val: '1,890', icon: 'fa-calendar', color: 'blue' },
-            { label: 'تسجيلات مارس', val: '3,120', icon: 'fa-calendar', color: 'green' },
-            { label: 'تسجيلات أبريل', val: '6,597', icon: 'fa-calendar', color: 'amber' },
-          ],
-          chartTitle: 'التسجيلات الشهرية',
-          chartData: [
-            { name: 'يناير', val: 1240, max: 7000 },
-            { name: 'فبراير', val: 1890, max: 7000 },
-            { name: 'مارس', val: 3120, max: 7000 },
-            { name: 'أبريل', val: 6597, max: 7000 },
-          ],
-          tableHead: ['الشهر', 'تسجيلات جديدة', 'إجمالي تراكمي', 'مخيم الأعلى'],
-          tableRows: [
-            ['يناير 2026', '1,240', '1,240', 'جباليا'],
-            ['فبراير 2026', '1,890', '3,130', 'جباليا'],
-            ['مارس 2026', '3,120', '6,250', 'رفح'],
-            ['أبريل 2026', '6,597', '12,847', 'جباليا'],
+          rows: function (data) { return data.details || []; },
+          columns: [
+            { key: 'month', label: 'الشهر' },
+            { key: 'new_registrations', label: 'تسجيلات جديدة' },
+            { key: 'cumulative_total', label: 'الإجمالي التراكمي' },
+            { key: 'top_camp', label: 'المخيم الأعلى' },
+            { key: 'top_camp_count', label: 'عدد المخيم الأعلى' }
           ]
         }
       };
@@ -284,6 +254,7 @@
         $('.report-type-btn').removeClass('active');
         $(this).addClass('active');
         currentReport = $(this).data('report');
+        if (hasGenerated) generateReport();
       });
 
       function apiReportName() {
@@ -317,23 +288,156 @@
         return campId ? (campsById[String(campId)] || 'مخيم محدد') : 'كل المخيمات';
       }
 
-      function cardValue(card) {
-        if (card.value !== undefined) return card.value;
-        if (card.val !== undefined) return card.val;
-        if (card.count !== undefined && card.percentage !== undefined) return card.count + ' (' + card.percentage + '%)';
-        if (card.count !== undefined) return card.count;
-        if (card.new_registrations !== undefined) return card.new_registrations;
-        return '';
+      function escapeHtml(value) {
+        return String(value === undefined || value === null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
       }
 
-      function cardLabel(card) {
-        return card.label || card.month || card.name || '';
+      function formatNumber(value) {
+        if (value === undefined || value === null || value === '') return '0';
+        if (typeof value === 'number') return value.toLocaleString('ar-EG');
+        if (!isNaN(Number(value))) return Number(value).toLocaleString('ar-EG');
+        return value;
+      }
+
+      function formatCardValue(value, mapping) {
+        if (typeof value === 'object' && value !== null) {
+          var count = formatNumber(value.count || 0);
+          return value.percentage !== undefined ? count + ' (' + formatNumber(value.percentage) + '%)' : count;
+        }
+        return formatNumber(value) + (mapping.suffix || '');
+      }
+
+      function summaryCards(data) {
+        if (currentReport === 'timeline') {
+          return (data.summary_cards || []).slice(-4).map(function (row) {
+            return {
+              label: row.month || 'فترة',
+              value: formatNumber(row.new_registrations || 0),
+              icon: 'fa-calendar-days',
+              color: 'blue'
+            };
+          });
+        }
+
+        var summary = data.summary || {};
+        return (summaryMappings[currentReport] || []).map(function (mapping) {
+          return {
+            label: mapping.label,
+            value: formatCardValue(summary[mapping.key], mapping),
+            icon: mapping.icon,
+            color: mapping.color
+          };
+        });
+      }
+
+      function renderSummaryCards(data) {
+        var cards = summaryCards(data);
+        if (!cards.length) {
+          $('#summaryCards').html('<div class="col-12 text-center text-muted py-3">لا توجد مؤشرات متاحة</div>');
+          return;
+        }
+        $('#summaryCards').html(cards.map(function (card) {
+          return '<div class="col-6 col-xl-3"><div class="stat-card stat-card--' + card.color + '" style="padding:12px 14px;box-shadow:none;"><div class="stat-card__icon" style="width:38px;height:38px;font-size:16px;"><i class="fa-solid ' + card.icon + '"></i></div><div class="stat-card__body"><div class="stat-card__label">' + escapeHtml(card.label) + '</div><div class="stat-card__value" style="font-size:22px;">' + escapeHtml(card.value) + '</div></div></div></div>';
+        }).join(''));
+      }
+
+      function chartRows(data) {
+        if (currentReport === 'demographic') {
+          return (data.distribution || []).map(function (row) {
+            return { label: row.camp_name || 'غير محدد', value: Number(row.families || 0) };
+          });
+        }
+        if (currentReport === 'vulnerability') {
+          return (data.distribution_by_camp || []).map(function (row) {
+            return { label: row.camp || 'غير محدد', value: Number(row.high || 0) };
+          });
+        }
+        if (currentReport === 'transfer') {
+          return (data.distribution_by_camp || []).map(function (row) {
+            return { label: row.camp_name || 'غير محدد', value: Number(row.requests || 0) };
+          });
+        }
+        return (data.monthly_chart || []).map(function (row) {
+          return { label: row.month || 'فترة', value: Number(row.new_registrations || 0) };
+        });
+      }
+
+      function chartTitle() {
+        return {
+          demographic: 'توزيع الأسر حسب المخيم',
+          vulnerability: 'توزيع الضعف العالي حسب المخيم',
+          transfer: 'الطلبات حسب مخيم المصدر',
+          timeline: 'التسجيلات الشهرية'
+        }[currentReport] || 'البيانات';
+      }
+
+      function renderReportChart(data) {
+        var rows = chartRows(data);
+        var max = rows.reduce(function (highest, row) { return Math.max(highest, row.value); }, 0);
+        $('#chartTitle').text(chartTitle());
+
+        if (!rows.length || max === 0) {
+          $('#chartBars').html('<div class="text-center text-muted py-4">لا توجد بيانات للرسم البياني</div>');
+          return;
+        }
+
+        $('#chartBars').html('<div class="geo-bars">' + rows.map(function (row) {
+          var percent = Math.max(2, Math.round((row.value / max) * 100));
+          return '<div class="geo-bar-item"><div class="geo-bar-label"><span class="geo-bar-name">' + escapeHtml(row.label) + '</span><span class="geo-bar-val">' + formatNumber(row.value) + '</span></div><div class="geo-bar-track"><div class="geo-bar-fill" style="width:' + percent + '%;"></div></div></div>';
+        }).join('') + '</div>');
+      }
+
+      function formatCell(row, column) {
+        var value = row[column.key];
+        if (value === undefined || value === null || value === '') value = '-';
+        else if (typeof value === 'number') value = formatNumber(value);
+        else if (!isNaN(Number(value)) && value !== '-') value = formatNumber(value);
+        return escapeHtml(value) + (column.suffix && value !== '-' ? column.suffix : '');
+      }
+
+      function renderReportTable(data) {
+        var config = tableMappings[currentReport];
+        var rows = config.rows(data);
+        var totals = config.totals ? config.totals(data) : null;
+        var colCount = config.columns.length;
+
+        $('#reportTableHead').html('<tr>' + config.columns.map(function (column) {
+          return '<th>' + escapeHtml(column.label) + '</th>';
+        }).join('') + '</tr>');
+
+        if (!rows.length && !totals) {
+          $('#reportTableBody').html('<tr><td colspan="' + colCount + '" class="text-center text-muted py-4">لا توجد بيانات ضمن المعاملات المحددة</td></tr>');
+          return;
+        }
+
+        var body = rows.map(function (row) {
+          return '<tr>' + config.columns.map(function (column) {
+            return '<td>' + formatCell(row, column) + '</td>';
+          }).join('') + '</tr>';
+        }).join('');
+
+        if (totals) {
+          body += '<tr class="table-light fw-bold">' + config.columns.map(function (column) {
+            return '<td>' + formatCell(totals, column) + '</td>';
+          }).join('') + '</tr>';
+        }
+
+        $('#reportTableBody').html(body);
       }
 
       /* ── توليد التقرير ──────────────────────────────────── */
-      $('#btnGenerate').on('click', async function () {
+      async function generateReport() {
+        hasGenerated = true;
         $('#previewEmpty').addClass('d-none');
         $('#previewContent').addClass('d-none');
+        $('#reportTableHead').html('');
+        $('#reportTableBody').html('<tr><td class="text-center text-muted py-4">جارٍ تحميل البيانات...</td></tr>');
+        $('#chartBars').html('<div class="text-center text-muted py-4">جارٍ تحميل الرسم البياني...</div>');
         $('#generateLoading').removeClass('d-none');
         try {
           var data = await NDS.api.report(apiReportName(), reportParams());
@@ -342,28 +446,19 @@
           $('#exportBtns').css('display', 'flex');
           $('#previewTitle').text('معاينة: ' + $('.report-type-btn.active .rt-name').text());
           $('#previewMeta').text(selectedCampLabel() + ' — ' + (($('#repFrom').val() || 'البداية') + ' إلى ' + ($('#repTo').val() || 'اليوم')));
-
-          var summary = data.summary || data.summary_cards || {};
-          var cards = Array.isArray(summary) ? summary : Object.keys(summary).map(function (key) {
-            var value = summary[key];
-            if (typeof value === 'object' && value !== null) value = value.count !== undefined ? value.count : JSON.stringify(value);
-            return { label: key, value: value };
-          });
-          $('#summaryCards').html(cards.slice(0, 4).map(function (card) {
-            return '<div class="col-6 col-xl-3"><div style="background:#f8fafc;border-radius:10px;padding:12px 14px;"><div style="font-size:11px;color:#7a8a9a;">' + cardLabel(card) + '</div><div style="font-size:22px;font-weight:700;color:#1a2332;">' + cardValue(card) + '</div></div></div>';
-          }).join(''));
-
-          var rows = data.details || data.distribution || data.distribution_by_camp || data.monthly_breakdown || data.monthly_chart || [];
-          if (!Array.isArray(rows)) rows = [];
-          var keys = rows[0] ? Object.keys(rows[0]) : [];
-          $('#reportTableHead').html(keys.length ? '<tr>' + keys.map(function (k) { return '<th>' + k + '</th>'; }).join('') + '</tr>' : '');
-          $('#reportTableBody').html(rows.length ? rows.map(function (row) { return '<tr>' + keys.map(function (k) { return '<td>' + row[k] + '</td>'; }).join('') + '</tr>'; }).join('') : '<tr><td class="text-center text-muted py-4">لا توجد بيانات</td></tr>');
-          $('#chartTitle').text('البيانات');
-          $('#chartBars').html('');
+          renderSummaryCards(data);
+          renderReportChart(data);
+          renderReportTable(data);
         } catch (error) {
           $('#generateLoading').addClass('d-none');
           $('#previewEmpty').removeClass('d-none').html('<i class="fa-solid fa-circle-exclamation" style="font-size:46px;color:#b03030;display:block;margin-bottom:12px;"></i><div style="font-size:15px;font-weight:500;color:#b03030;">' + (error.message || 'تعذر توليد التقرير') + '</div>');
         }
+      }
+
+      $('#btnGenerate').on('click', generateReport);
+
+      $('#repCamp,#repFrom,#repTo,#repLevel').on('change', function () {
+        if (hasGenerated) generateReport();
       });
 
       /* ── أزرار التصدير ──────────────────────────────────── */

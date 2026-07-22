@@ -34,7 +34,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-users"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">إجمالي المستخدمين</div>
-                <div class="stat-card__value">24</div>
+                <div class="stat-card__value" id="usersTotalCount">0</div>
               </div>
             </div>
           </div>
@@ -43,7 +43,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-circle-dot"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">نشطون</div>
-                <div class="stat-card__value">21</div>
+                <div class="stat-card__value" id="usersActiveCount">0</div>
               </div>
             </div>
           </div>
@@ -52,7 +52,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-user-pen"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">موظفو إدخال</div>
-                <div class="stat-card__value">18</div>
+                <div class="stat-card__value" id="usersDataEntryCount">0</div>
               </div>
             </div>
           </div>
@@ -61,7 +61,7 @@
               <div class="stat-card__icon"><i class="fa-solid fa-user-slash"></i></div>
               <div class="stat-card__body">
                 <div class="stat-card__label">معطّلون</div>
-                <div class="stat-card__value">3</div>
+                <div class="stat-card__value" id="usersInactiveCount">0</div>
               </div>
             </div>
           </div>
@@ -220,6 +220,10 @@
         return (name || '').split(' ').slice(0, 2).map(function (w) { return w[0]; }).join('.') || '؟';
       }
 
+      function formatNumber(value) {
+        return Number(value || 0).toLocaleString('ar-EG');
+      }
+
       function mapUser(u) {
         var camp = camps.find(function (c) { return c.id === u.camp_id; });
         return {
@@ -244,6 +248,21 @@
         $('#umCamp').html('<option value="">اختر المخيم...</option>' + camps.map(function (camp) {
           return '<option value="' + camp.id + '">' + camp.name + '</option>';
         }).join(''));
+      }
+
+      async function loadUserStatistics() {
+        var stats = await NDS.api.usersStatistics();
+        $('#usersTotalCount').text(formatNumber(stats.total_users));
+        $('#usersActiveCount').text(formatNumber(stats.active_users));
+        $('#usersDataEntryCount').text(formatNumber(stats.data_entry_users));
+        $('#usersInactiveCount').text(formatNumber(stats.inactive_users));
+      }
+
+      async function refreshUsersPage() {
+        await Promise.all([
+          loadUsers(),
+          loadUserStatistics()
+        ]);
       }
 
       async function loadUsers() {
@@ -316,7 +335,7 @@
           else await NDS.api.createUser(payload);
           bootstrap.Modal.getInstance($('#userModal')[0]).hide();
           $('#btnSaveUser').removeData('editId');
-          await loadUsers();
+          await refreshUsersPage();
         } catch (error) {
           alert(error.message || 'تعذر حفظ المستخدم');
         }
@@ -324,7 +343,7 @@
 
       $(document).on('click', '.btn-toggle-status', async function (e) {
         e.stopPropagation();
-        try { await NDS.api.toggleUserStatus($(this).data('id')); await loadUsers(); }
+        try { await NDS.api.toggleUserStatus($(this).data('id')); await refreshUsersPage(); }
         catch (error) { alert(error.message || 'تعذر تغيير حالة المستخدم'); }
       });
 
@@ -340,7 +359,7 @@
         try {
           await NDS.api.deleteUser(deleteTargetId);
           bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
-          await loadUsers();
+          await refreshUsersPage();
         } catch (error) { alert(error.message || 'تعذر حذف المستخدم'); }
       });
 
@@ -353,7 +372,7 @@
         $('#btnSaveUser').removeData('editId');
       });
 
-      loadCamps().then(loadUsers).catch(function (error) {
+      loadCamps().then(refreshUsersPage).catch(function (error) {
         $('#usersList').html('<div style="text-align:center;padding:40px;color:#b03030;">' + (error.message || 'تعذر التحميل') + '</div>');
       });
     });
