@@ -1,1 +1,1 @@
-window.API_BASE_URL = "https://gpd-system-production.up.railway.app/";
+window.API_BASE_URL = "https://gpd-system-production.up.railway.app/api";
