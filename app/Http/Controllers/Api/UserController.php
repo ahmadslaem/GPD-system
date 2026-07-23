@@ -110,8 +110,8 @@ class UserController extends Controller
         'email' => 'sometimes|email|unique:users,email,' . $user->id,
         'role' => 'sometimes|in:admin,manager,data_entry',
         'phone' => 'sometimes|string',
-        'camp_id' => 'sometimes|nullable|exists:camps,id', // ← أضفنا nullable
-        'is_active' => 'sometimes|boolean'
+        'camp_id' => 'sometimes|nullable|exists:camps,id',
+        'is_active' => 'boolean' // ← شيلنا sometimes
     ]);
 
     $data = $request->only([
@@ -120,8 +120,10 @@ class UserController extends Controller
         'role',
         'phone',
         'camp_id',
-        'is_active',
     ]);
+
+    // is_active نتعامل معاه بشكل منفصل
+    $data['is_active'] = $request->boolean('is_active');
 
     foreach (['name', 'email', 'phone'] as $field) {
         if (isset($data[$field])) {
@@ -129,7 +131,6 @@ class UserController extends Controller
         }
     }
 
-    // لو camp_id فاضي string "" نحوله لـ null
     if (isset($data['camp_id']) && $data['camp_id'] === '') {
         $data['camp_id'] = null;
     }
@@ -145,7 +146,6 @@ class UserController extends Controller
         'user' => $user
     ]);
 }
-
 
 
 
