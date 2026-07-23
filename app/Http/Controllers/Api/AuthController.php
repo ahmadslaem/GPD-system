@@ -16,53 +16,38 @@ class AuthController extends Controller
     /**
      * Login User
      */
-    public function login(Request $request)
-    {
+   public function login(Request $request)
+{
+    try {
         // Validate input
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
- 
- 
+
         // Find user
         $user = User::where('email', $request->email)->first();
- 
- 
+
         // Check user and password
         if (!$user || !Hash::check($request->password, $user->password)) {
- 
             return response()->json([
                 'message' => 'Invalid email or password'
             ], 401);
- 
         }
- 
- 
+
         // Check account status
         if(!$user->is_active){
- 
             return response()->json([
                 'message'=>'Account is disabled'
             ],403);
- 
         }
- 
- 
-        // Create Token - تنتهي صلاحيته بعد 3 ساعات من تسجيل الدخول
+
+        // Create Token
         $expiresAt = Carbon::now()->addHours(3);
- 
-        $token = $user->createToken(
-            'auth_token',
-            ['*'],
-            $expiresAt
-        )->plainTextToken;
- 
- 
+        $token = $user->createToken('auth_token', ['*'], $expiresAt)->plainTextToken;
+
         return response()->json([
- 
             'message'=>'Login successful',
- 
             'user'=>[
                 'id'=>$user->id,
                 'name'=>$user->name,
@@ -72,14 +57,18 @@ class AuthController extends Controller
                 'camp_id'=>$user->camp_id,
                 'camp'=>$user->camp?->name,
             ],
- 
             'token'=>$token,
- 
             'expires_at'=>$expiresAt->toDateTimeString(),
- 
         ],200);
- 
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'debug_message' => $e->getMessage(),
+            'debug_file' => $e->getFile(),
+            'debug_line' => $e->getLine(),
+        ], 500);
     }
+}
 
     private function roleLabel(string $role): string
     {
