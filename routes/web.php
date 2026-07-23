@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/frontend/dashboard/index.html');
 });
 
 /*
