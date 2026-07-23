@@ -62,7 +62,7 @@ class UserController extends Controller
             'role'=>$request->role,
             'phone'=>$request->phone ? strip_tags($request->phone) : null,
             'camp_id'=>$request->camp_id ?? null,
-            'is_active'=>true
+            'is_active' => $request->boolean('is_active')
 
         ]);
 
