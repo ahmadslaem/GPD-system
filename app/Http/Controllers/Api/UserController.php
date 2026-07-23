@@ -101,59 +101,50 @@ class UserController extends Controller
 
 
     // تعديل مستخدم
-    public function update(Request $request,$id)
-    {
+   public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
 
+    $request->validate([
+        'name' => 'sometimes|string',
+        'email' => 'sometimes|email|unique:users,email,' . $user->id,
+        'role' => 'sometimes|in:admin,manager,data_entry',
+        'phone' => 'sometimes|string',
+        'camp_id' => 'sometimes|nullable|exists:camps,id', // ← أضفنا nullable
+        'is_active' => 'sometimes|boolean'
+    ]);
 
-        $user=User::findOrFail($id);
+    $data = $request->only([
+        'name',
+        'email',
+        'role',
+        'phone',
+        'camp_id',
+        'is_active',
+    ]);
 
-
-
-        $request->validate([
-
-            'name'=>'sometimes|string',
-
-            'email'=>'sometimes|email|unique:users,email,' . $user->id,
-
-            'role'=>'sometimes|in:admin,manager,data_entry',
-            'phone'=>'sometimes|string',
-            'camp_id'=>'sometimes|exists:camps,id'
-
-        ]);
-
-
-
-        $data = $request->only([
-            'name',
-            'email',
-            'role',
-            'phone',
-            'camp_id',
-        ]);
-
-        foreach (['name', 'email', 'phone'] as $field) {
-            if (isset($data[$field])) {
-                $data[$field] = strip_tags($data[$field]);
-            }
+    foreach (['name', 'email', 'phone'] as $field) {
+        if (isset($data[$field])) {
+            $data[$field] = strip_tags($data[$field]);
         }
-
-        $user->update($data);
-
-        if ($request->filled('role')) {
-            $user->syncRoles([$request->role]);
-        }
-
-
-
-        return response()->json([
-
-            'message'=>'User updated successfully',
-
-            'user'=>$user
-
-        ]);
-
     }
+
+    // لو camp_id فاضي string "" نحوله لـ null
+    if (isset($data['camp_id']) && $data['camp_id'] === '') {
+        $data['camp_id'] = null;
+    }
+
+    $user->update($data);
+
+    if ($request->filled('role')) {
+        $user->syncRoles([$request->role]);
+    }
+
+    return response()->json([
+        'message' => 'User updated successfully',
+        'user' => $user
+    ]);
+}
 
 
 
