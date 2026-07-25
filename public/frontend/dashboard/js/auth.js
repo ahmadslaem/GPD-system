@@ -21,7 +21,7 @@ NDS.permissions = {
                'register_family','edit_family','search_local','search_global',
                'view_vuln','view_dashboard_full']
   },
- manager: {
+manager: {
     pages:    ['index','register','search','transfers','reports','families'],
     actions:  ['view_all','register_family','edit_family','approve_transfers',
                'create_transfer','view_reports','export','search_global',
