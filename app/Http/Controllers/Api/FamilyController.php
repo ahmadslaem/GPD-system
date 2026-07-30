@@ -326,7 +326,7 @@ public function update(Request $request, Family $family)
         'head_name' => 'required|string|max:255',
         'phone' => 'required|string|max:20',
         'birth_date' => 'nullable|date',
-
+        
         // Prevent National ID editing
         'national_id' => 'prohibited',
     ]);

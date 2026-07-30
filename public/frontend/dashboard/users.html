@@ -164,7 +164,7 @@
               <div class="toggle-wrap">
                 <span class="toggle-text">تفعيل الحساب فوراً</span>
                 <div class="form-check form-switch mb-0">
-                  <input class="form-check-input" type="checkbox" id="umActive" checked />
+                  <input class="form-check-input" type="checkbox" id="umActive" checked name="is_active"/>
                 </div>
               </div>
             </div>
@@ -338,7 +338,8 @@
           email: $('#umEmail').val().trim(),
           role: $('#umRole').val(),
           phone: $('#umPhone').val().trim(),
-          camp_id: $('#umRole').val() === 'data_entry' ? $('#umCamp').val() : null
+          camp_id: $('#umRole').val() === 'data_entry' ? $('#umCamp').val() : null,
+          is_active: $('#umActive').is(':checked') //
         };
         var password = $('#umPassword').val();
         if (password) payload.password = password;
