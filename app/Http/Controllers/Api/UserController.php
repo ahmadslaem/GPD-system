@@ -66,7 +66,7 @@ class UserController extends Controller
 
         ]);
 
-        $user->syncRoles([$request->role]);
+      
         
 
 
@@ -137,9 +137,7 @@ class UserController extends Controller
 
     $user->update($data);
 
-    if ($request->filled('role')) {
-        $user->syncRoles([$request->role]);
-    }
+   
 
     return response()->json([
         'message' => 'User updated successfully',
