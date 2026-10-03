@@ -54,8 +54,10 @@
                       <input type="text" id="editFamilyId" class="form-control" readonly style="background:#f8fafc;" />
                     </div>
                     <div class="col-12 col-sm-6">
-                      <label class="field-label">رقم الهوية</label>
-                      <input type="text" id="editNid" class="form-control" />
+                      <label class="field-label">رقم الهوية
+                        <span class="badge bg-secondary ms-1 d-none" id="nidManagerBadge">تعديل للمدير فقط</span>
+                      </label>
+                      <input type="text" id="editNid" class="form-control" readonly style="background:#f8fafc;" />
                     </div>
                     <div class="col-12 col-sm-6">
                       <label class="field-label">الاسم الكامل</label>
@@ -195,7 +197,11 @@
           var response = await NDS.api.family(familyId);
           var family = response.data || {};
           $('#editFamilyId').val(family.id || familyId);
-          $('#editNid').val(family.nid || '');
+          $('#editNid').val(family.nid || '').data('original', family.nid || '');
+          // FR-DD-04: تعديل الرقم القومي متاح للمدير والأدمن فقط
+          var canEditNid = NDS.auth.isManagerOrAdmin();
+          $('#editNid').prop('readonly', !canEditNid).css('background', canEditNid ? '' : '#f8fafc');
+          $('#nidManagerBadge').toggleClass('d-none', !canEditNid);
           $('#editName').val(family.name || '');
           $('#editPhone').val(family.phone || '');
           $('#editCamp').val(family.camp || '');
@@ -227,6 +233,14 @@
           phone: $('#editPhone').val().trim(),
           birth_date: null
         };
+        // المدير/الأدمن فقط يرسل الرقم القومي عند تغييره
+        if (NDS.auth.isManagerOrAdmin()) {
+          var originalNid = $('#editNid').data('original') || '';
+          var currentNid = $('#editNid').val().trim();
+          if (currentNid && currentNid !== originalNid) {
+            payload.national_id = currentNid;
+          }
+        }
         if (!id || !payload.head_name || !payload.phone) {
           alert('يرجى إدخال اسم رب الأسرة ورقم الهاتف.');
           return;

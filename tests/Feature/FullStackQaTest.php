@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Camp;
 use App\Models\Family;
+use App\Models\FamilyMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -416,6 +418,488 @@ class FullStackQaTest extends TestCase
         $this->get('/api/reports/demographic/export/pdf?camp_id='.$this->sourceCamp->id)
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_add_member_without_birth_date_is_counted_as_adult(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-8000',
+            'members_count' => 1,
+            'adults_count' => 1,
+            'children_count' => 0,
+        ]))->assertCreated();
+
+        $this->postJson('/api/families/1/members', [
+            'name' => 'عضو من غير تاريخ ميلاد',
+            'gender' => 'male',
+        ])->assertOk();
+
+        $family = Family::where('national_id', '999-2026-8000')->firstOrFail();
+
+        $this->assertSame(2, (int) $family->members_count);
+        $this->assertSame(2, (int) $family->adults_count);
+        $this->assertSame(0, (int) $family->children_count);
+    }
+
+    public function test_update_member_birth_date_reclassifies_adults_and_children_counts(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-8001',
+            'members_count' => 2,
+            'adults_count' => 1,
+            'children_count' => 1,
+        ]))->assertCreated();
+
+        $memberId = $this->postJson('/api/families/1/members', [
+            'name' => 'طفل بيكبر',
+            'gender' => 'male',
+            'birth_date' => '2010-01-01',
+        ])->assertOk()->json('data.id');
+
+        // العضو كان طفل: 2 بالغ، 2 طفل، 3 أفراد
+        $family = Family::where('national_id', '999-2026-8001')->firstOrFail();
+        $this->assertSame([3, 1, 2], [(int) $family->members_count, (int) $family->adults_count, (int) $family->children_count]);
+
+        // تعديل تاريخ الميلاد ليبقى بالغ: الطفل ينتقل لعدّاد البالغين
+        $this->putJson('/api/members/'.$memberId, [
+            'name' => 'طفل بيكبر',
+            'gender' => 'male',
+            'birth_date' => '1990-01-01',
+        ])->assertOk();
+
+        $family->refresh();
+        $this->assertSame(3, (int) $family->members_count);
+        $this->assertSame(2, (int) $family->adults_count);
+        $this->assertSame(1, (int) $family->children_count);
+    }
+
+    public function test_update_member_disability_syncs_pwd_count_and_vulnerability(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-8002',
+            'pwd_count' => 0,
+            'has_pwd' => false,
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated();
+
+        $memberId = $this->postJson('/api/families/1/members', [
+            'name' => 'عضو ذو إعاقة',
+            'gender' => 'female',
+            'birth_date' => '1985-05-05',
+            'has_disability' => true,
+        ])->assertOk()->json('data.id');
+
+        $family = Family::where('national_id', '999-2026-8002')->firstOrFail();
+        $this->assertSame(1, (int) $family->pwd_count);
+        $this->assertTrue((bool) $family->has_pwd);
+        $this->assertSame('medium', $family->vulnerability_level);
+
+        // إلغاء الإعاقة يزيلها من العدادات ويعيد حساب الهشاشة
+        $this->putJson('/api/members/'.$memberId, [
+            'name' => 'عضو ذو إعاقة',
+            'gender' => 'female',
+            'birth_date' => '1985-05-05',
+            'has_disability' => false,
+        ])->assertOk();
+
+        $family->refresh();
+        $this->assertSame(0, (int) $family->pwd_count);
+        $this->assertFalse((bool) $family->has_pwd);
+        $this->assertSame('low', $family->vulnerability_level);
+    }
+
+    public function test_vulnerability_score_uses_unified_100_point_scale(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        // نفس الحالة اللي بتعرضها معاينة التسجيل: FHH + إعاقتين + اعتماد عالي + أسرة كبيرة + أطفال كتير
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9000',
+            'members_count' => 10,
+            'adults_count' => 3,
+            'children_count' => 7,
+            'pwd_count' => 2,
+            'has_pwd' => true,
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated();
+
+        $family = Family::where('national_id', '999-2026-9000')->firstOrFail();
+
+        // 20 (FHH) + 30 (2×PWD) + 15 (اعتماد) + 15 (حجم) + 10 (أطفال) = 90
+        $this->assertSame(90, (int) $family->vulnerability_score);
+        $this->assertSame('high', $family->vulnerability_level);
+
+        // حالة بسيطة: رئاسة أنثى فقط = 20 نقطة → منخفض
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9001',
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated();
+
+        $simple = Family::where('national_id', '999-2026-9001')->firstOrFail();
+        $this->assertSame(20, (int) $simple->vulnerability_score);
+        $this->assertSame('low', $simple->vulnerability_level);
+    }
+
+    public function test_camps_index_returns_plain_array_for_frontend_compatibility(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $response = $this->getJson('/api/camps')->assertOk();
+
+        // الواجهة بتتعامل مع الرد كمصفوفة مباشرة (activeCamps.map ...)
+        $this->assertIsArray($response->json());
+        $this->assertArrayHasKey('name', $response->json('0'));
+    }
+
+    public function test_families_index_supports_server_side_pagination_and_filters(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        // أنشئ 15 أسرة في نفس المخيم
+        for ($i = 1; $i <= 15; $i++) {
+            $this->postJson('/api/families', $this->familyPayload([
+                'national_id' => '999-2027-'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+            ]))->assertCreated();
+        }
+
+        // الترقيم: صفحة 1 بحجم 10 من 15 (الأسرة الافتراضية من setUp غير موجودة في هذه القاعدة)
+        $res = $this->getJson('/api/families?per_page=10&page=1')
+            ->assertOk()
+            ->assertJsonPath('status', true);
+
+        $this->assertSame(10, count($res->json('data')));
+        $this->assertSame(10, $res->json('meta.per_page'));
+        $this->assertSame(2, $res->json('meta.last_page'));
+
+        $page1Ids = collect($res->json('data'))->pluck('id')->all();
+
+        // صفحة 2 فيها الـ 5 الباقين وبدون تكرار
+        $page2 = $this->getJson('/api/families?per_page=10&page=2')->assertOk();
+        $this->assertSame(5, count($page2->json('data')));
+        $this->assertCount(0, array_intersect($page1Ids, collect($page2->json('data'))->pluck('id')->all()));
+
+        // فلتر مستوى الضعف على السيرفر: رئاسة أنثى وحدها = low؛ سجل حالة high
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2027-9990',
+            'members_count' => 10,
+            'adults_count' => 2,
+            'children_count' => 8,
+            'pwd_count' => 2,
+            'has_pwd' => true,
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated();
+
+        $high = $this->getJson('/api/families?per_page=100&vulnerability_level=high')->assertOk();
+        $this->assertGreaterThanOrEqual(1, count($high->json('data')));
+        foreach ($high->json('data') as $item) {
+            $this->assertSame('high', $item['level']);
+        }
+
+        // بحث نصي بالاسم على السيرفر
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2027-9991',
+            'head_name' => 'شخص مميز بالبحث',
+        ]))->assertCreated();
+
+        $search = $this->getJson('/api/families?per_page=50&search='.urlencode('مميز'))
+            ->assertOk();
+        $this->assertSame(1, count($search->json('data')));
+        $this->assertSame('شخص مميز بالبحث', $search->json('data.0.name'));
+
+        // ترتيب بالاسم تصاعدي
+        $sorted = $this->getJson('/api/families?per_page=200&sort_by=head_name&sort_dir=asc')->assertOk();
+        $names = collect($sorted->json('data'))->pluck('name')->all();
+        $sortedNames = $names;
+        sort($names, SORT_LOCALE_STRING);
+        $this->assertSame(array_values($names), array_values($sortedNames));
+    }
+
+    public function test_families_index_default_compatibility_returns_all_rows(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        for ($i = 1; $i <= 7; $i++) {
+            $this->postJson('/api/families', $this->familyPayload([
+                'national_id' => '999-2028-'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+            ]))->assertCreated();
+        }
+
+        // بدون per_page — الوضع القديم: كل الصفوف بدون meta (توافق مع الواجهات الأخرى)
+        $res = $this->getJson('/api/families')->assertOk();
+        $this->assertSame(7, count($res->json('data')));
+        $this->assertNull($res->json('meta'));
+    }
+
+    public function test_dashboard_metrics_are_cached_and_invalidated_on_writes(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9700',
+        ]))->assertCreated();
+
+        $total = Family::count();
+
+        // أول طلب يحسب ويكاشي، والتاني مباشرة يقرأ من الكاش (نفس generated_at)
+        $first = $this->getJson('/api/dashboard')->assertOk()->json('data');
+        $this->assertSame($total, $first['cards']['total_families']['count']);
+
+        $second = $this->getJson('/api/dashboard')->assertOk()->json('data');
+        $this->assertSame($first['generated_at'], $second['generated_at'], 'الطلب الثاني يجب أن يقرأ من الكاش');
+
+        // كتابة جديدة → Observer يبطل الكاش → الطلب القادم يحسب القيمة الجديدة
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9701',
+        ]))->assertCreated();
+
+        $fresh = $this->getJson('/api/dashboard')->assertOk()->json('data');
+        $this->assertSame($total + 1, $fresh['cards']['total_families']['count'], 'بعد الكتابة يجب إعادة الحساب بقيمة جديدة');
+    }
+
+    public function test_audit_log_records_family_and_member_changes(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        // إنشاء أسرة يوثّق
+        $family = $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9600',
+        ]))->assertCreated()->json('data');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'auditable_type' => Family::class,
+            'auditable_id' => $family['id'],
+            'action' => 'created',
+            'user_id' => $this->dataEntry->id,
+        ]);
+
+        // تعديل الأسرة يوثّق القيم القديمة والجديدة
+        $this->putJson('/api/families/'.$family['id'], [
+            'head_name' => 'الاسم المعدّل',
+            'phone' => '059-111-2222',
+        ])->assertOk();
+
+        $log = AuditLog::where('auditable_type', Family::class)
+            ->where('auditable_id', $family['id'])
+            ->where('action', 'updated')
+            ->latest('id')->first();
+
+        $this->assertNotNull($log);
+        $this->assertSame('QA Family', $log->changes['old']['head_name']);
+        $this->assertSame('الاسم المعدّل', $log->changes['new']['head_name']);
+
+        // إضافة عضو يوثّق على family_member
+        $this->postJson("/api/families/{$family['id']}/members", [
+            'name' => 'عضو موثّق',
+            'gender' => 'male',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'auditable_type' => FamilyMember::class,
+            'action' => 'created',
+            'user_id' => $this->dataEntry->id,
+        ]);
+
+        // حذف عضو يوثّق
+        $member = FamilyMember::where('family_id', $family['id'])->latest('id')->first();
+        $this->deleteJson('/api/members/'.$member->id)->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'auditable_type' => FamilyMember::class,
+            'auditable_id' => $member->id,
+            'action' => 'deleted',
+        ]);
+
+        // endpoint السجل يرجع التغييرات بترتيب تنازلي ويلتزم صلاحية المخيم
+        $res = $this->getJson('/api/families/'.$family['id'].'/audit-logs')
+            ->assertOk()
+            ->assertJsonPath('status', true);
+        $this->assertNotEmpty($res->json('data'));
+
+        Sanctum::actingAs($this->manager);
+        $this->getJson('/api/families/'.$family['id'].'/audit-logs')->assertOk();
+
+        // موظف إدخال من مخيم آخر مرفوض — أنشئ مستخدم بمخيم مختلف
+        $otherCamp = Camp::create([
+            'name' => 'مخيم اختبار التدقيق',
+            'location' => 'غزة',
+            'capacity' => 100,
+            'current_population' => 0,
+            'is_active' => true,
+        ]);
+        $outsider = User::create([
+            'name' => 'موظف مخيم آخر',
+            'email' => 'outside@gpd.com',
+            'password' => 'secret-123',
+            'role' => 'data_entry',
+            'camp_id' => $otherCamp->id,
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($outsider);
+        $this->getJson('/api/families/'.$family['id'].'/audit-logs')->assertForbidden();
+    }
+
+    public function test_fhh_reason_is_required_when_female_headed(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        // رئاسة أنثى بدون سبب → مرفوض
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9601',
+            'is_female_headed' => true,
+            'fhh_reason' => null,
+        ]))->assertUnprocessable()
+            ->assertJsonValidationErrors('fhh_reason');
+
+        // رئاسة أنثى مع سبب خارج القائمة → مرفوض
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9602',
+            'is_female_headed' => true,
+            'fhh_reason' => 'سبب غير معروف',
+        ]))->assertUnprocessable();
+
+        // رئاسة أنثى مع سبب صحيح → مقبول
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9603',
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated();
+
+        // بدون رئاسة أنثى، السبب اختياري (null مسموح)
+        $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9604',
+            'is_female_headed' => false,
+            'fhh_reason' => null,
+        ]))->assertCreated();
+    }
+
+    public function test_national_id_editing_is_manager_only(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $family = $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9605',
+        ]))->assertCreated()->json('data');
+
+        // موظف الإدخال ممنوع من تعديل الرقم القومي
+        $this->putJson('/api/families/'.$family['id'], [
+            'head_name' => 'QA Family',
+            'phone' => '059-000-0000',
+            'national_id' => '999-2026-9999',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('national_id');
+
+        // المدير يقدر يعدّله لقيمة غير مستخدمة
+        Sanctum::actingAs($this->manager);
+        $this->putJson('/api/families/'.$family['id'], [
+            'head_name' => 'QA Family',
+            'phone' => '059-000-0000',
+            'national_id' => '999-2026-9610',
+        ])->assertOk();
+        $this->assertDatabaseHas('families', [
+            'id' => $family['id'],
+            'national_id' => '999-2026-9610',
+        ]);
+
+        // المدير لا يستطيع استخدام رقم مستخدم من أسرة أخرى — أنشئ أسرة ثانية أولاً
+        $this->postJson('/api/families', $this->familyPayload())
+            ->assertCreated(); // national_id الافتراضي: 999-2026-1000
+
+        $this->putJson('/api/families/'.$family['id'], [
+            'head_name' => 'QA Family',
+            'phone' => '059-000-0000',
+            'national_id' => '999-2026-1000',
+        ])->assertUnprocessable();
+    }
+
+    public function test_vulnerability_preview_endpoint_uses_server_computation(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        // نفس حالة اختبار المعادلة الموحدة: 20+30+15+15+10 = 90 عالٍ
+        $this->postJson('/api/families/preview-vulnerability', [
+            'members_count' => 10,
+            'adults_count' => 3,
+            'children_count' => 7,
+            'pwd_count' => 2,
+            'is_female_headed' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.score', 90)
+            ->assertJsonPath('data.level', 'high')
+            ->assertJsonPath('data.factors.pwd', 30)
+            ->assertJsonStructure([
+                'status',
+                'data' => ['score', 'level', 'factors'],
+            ]);
+
+        // حالة بسيطة: رئاسة أنثى فقط = 20 منخفض
+        $this->postJson('/api/families/preview-vulnerability', [
+            'members_count' => 1,
+            'adults_count' => 1,
+            'children_count' => 0,
+            'pwd_count' => 0,
+            'is_female_headed' => true,
+        ])->assertOk()->assertJsonPath('data.level', 'low')->assertJsonPath('data.score', 20);
+
+        // فالديشن: قيم ناقصة أو غير منطقية ترفض
+        $this->postJson('/api/families/preview-vulnerability', [
+            'members_count' => 0,
+        ])->assertUnprocessable();
+    }
+
+    public function test_vulnerability_preview_requires_authentication(): void
+    {
+        $this->postJson('/api/families/preview-vulnerability', [])
+            ->assertUnauthorized();
+    }
+
+    public function test_recalculate_vulnerability_command_recomputes_stale_scores(): void
+    {
+        Sanctum::actingAs($this->dataEntry);
+
+        $family = $this->postJson('/api/families', $this->familyPayload([
+            'national_id' => '999-2026-9500',
+            'is_female_headed' => true,
+            'fhh_reason' => 'widow',
+        ]))->assertCreated()->json('data');
+
+        // محاكاة بيانات قديمة محفوظة بمعادلة قديمة (سلم 0-12)
+        Family::where('id', $family['id'])->update([
+            'vulnerability_score' => 3,
+            'vulnerability_level' => 'medium',
+        ]);
+
+        // dry-run: لازم يبلغ عن تغيير بدون ما يحفظ
+        $this->artisan('families:recalculate-vulnerability', ['--dry-run' => true])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('families', [
+            'id' => $family['id'],
+            'vulnerability_score' => 3,
+            'vulnerability_level' => 'medium',
+        ]);
+
+        // التشغيل الفعلي: يعيد الحساب بالمعادلة الجديدة (رئاسة أنثى = 20 → منخفض)
+        $this->artisan('families:recalculate-vulnerability')->assertSuccessful();
+
+        $this->assertDatabaseHas('families', [
+            'id' => $family['id'],
+            'vulnerability_score' => 20,
+            'vulnerability_level' => 'low',
+        ]);
+
+        // --camp لمخيم غير موجود يفشل بأمان
+        $this->artisan('families:recalculate-vulnerability', ['--camp' => 99999])
+            ->assertFailed();
     }
 
     private function familyPayload(array $overrides = []): array

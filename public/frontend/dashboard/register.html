@@ -558,33 +558,25 @@
 
       $('#btnAddMember').on('click', function () { addMember(false); });
 
-      /* ── حساب الضعف ─────────────────────────────────────── */
-      function calcVuln() {
-        var fhh = $('#toggleFhh').is(':checked') ? 20 : 0;
-        var pwd = parseInt($('#s2Pwd').val() || 0) * 15;
-        var total = parseInt($('#s2Total').val() || 1);
-        var adults = parseInt($('#s2Adults').val() || 1);
-        var children = parseInt($('#s2Children').val() || 0);
-        var depRatio = adults > 0 ? (total - adults) / adults : 0;
-        var depScore = depRatio > 1 ? 15 : depRatio > 0.5 ? 8 : 0;
-        var sizeScore = total > 8 ? 15 : total > 5 ? 8 : 0;
-        var childScore = children > 3 ? 10 : children > 1 ? 5 : 0;
-        var total_score = fhh + pwd + depScore + sizeScore + childScore;
-
-        $('#vf1').text('+' + (fhh));
-        $('#vf2').text('+' + (pwd));
-        $('#vf3').text('+' + (depScore));
-        $('#vf4').text('+' + (sizeScore));
-        $('#vf5').text('+' + (childScore));
-        $('#vulnScoreNum').text(total_score);
+      /* ── حساب الضعف — الحسبة دايماً على السيرفر ───────────── */
+      /* مفيش معادلة منسوخة هنا: نفس computeVulnerability() اللي بتحفظ في الداتابيز
+         هي اللي بترجّع النتيجة عبر POST /families/preview-vulnerability */
+      function renderVuln(result) {
+        var f = (result && result.factors) || {};
+        $('#vf1').text('+' + (f.fhh || 0));
+        $('#vf2').text('+' + (f.pwd || 0));
+        $('#vf3').text('+' + (f.dependency || 0));
+        $('#vf4').text('+' + (f.size || 0));
+        $('#vf5').text('+' + (f.children || 0));
+        $('#vulnScoreNum').text(result.score);
 
         var disp = $('#vulnScoreDisplay');
         disp.removeClass('high medium low');
-        if (total_score >= 50) {
+        if (result.level === 'high') {
           disp.addClass('high');
           $('#vulnScoreLabel').text('مستوى الضعف: عالٍ');
           $('#vulnScoreDesc').text('هذه الأسرة تحتاج أولوية متابعة فورية');
-        } else if (total_score >= 25) {
+        } else if (result.level === 'medium') {
           disp.addClass('medium');
           $('#vulnScoreLabel').text('مستوى الضعف: متوسط');
           $('#vulnScoreDesc').text('تحتاج متابعة دورية منتظمة');
@@ -592,6 +584,31 @@
           disp.addClass('low');
           $('#vulnScoreLabel').text('مستوى الضعف: منخفض');
           $('#vulnScoreDesc').text('الوضع مستقر نسبياً');
+        }
+      }
+
+      async function calcVuln() {
+        var disp = $('#vulnScoreDisplay');
+        disp.removeClass('high medium low');
+        $('#vulnScoreNum').text('...');
+        $('#vulnScoreLabel').text('جارٍ الحساب');
+        $('#vulnScoreDesc').text('يتم الحساب على السيرفر');
+
+        try {
+          var res = await NDS.api.previewVulnerability({
+            members_count:    parseInt($('#s2Total').val() || 1),
+            adults_count:     parseInt($('#s2Adults').val() || 1),
+            children_count:   parseInt($('#s2Children').val() || 0),
+            pwd_count:        parseInt($('#s2Pwd').val() || 0),
+            is_female_headed: $('#toggleFhh').is(':checked')
+          });
+
+          if (!res || !res.data) { throw new Error('bad response'); }
+          renderVuln(res.data);
+        } catch (e) {
+          $('#vulnScoreNum').text('—');
+          $('#vulnScoreLabel').text('تعذر الحساب');
+          $('#vulnScoreDesc').text('تأكد من الاتصال وأعد المحاولة — التسجيل سيحسبها تلقائياً عند الحفظ');
         }
       }
 
@@ -617,6 +634,14 @@
 
       $('#btnSubmitRegistration').on('click', async function () {
         var $btn = $(this);
+
+        // FR-DE: لو الأسرة برئاسة أنثى، السبب إلزامي
+        if ($('#toggleFhh').is(':checked') && !$('#s2FhhReason').val()) {
+          alert('يرجى اختيار سبب ترؤس الأنثى للأسرة.');
+          $('#s2FhhReason').focus();
+          return;
+        }
+
         var payload = {
           national_id: $('#s2Nid').val(),
           head_name: $('#s2Name').val(),

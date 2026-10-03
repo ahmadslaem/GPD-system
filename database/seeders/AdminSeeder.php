@@ -44,7 +44,7 @@ class AdminSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-        $admin->syncRoles(['admin']);
+
 
         $manager = User::updateOrCreate(
             ['email' => 'manager@gpd.com'],
@@ -55,7 +55,7 @@ class AdminSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-        $manager->syncRoles(['manager']);
+
 
         $staff = User::updateOrCreate(
             ['email' => 'data@gpd.com'],
@@ -67,7 +67,6 @@ class AdminSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-        $staff->syncRoles(['data_entry']);
     }
 
     private function seedPassword(string $key, string $localDefault): string

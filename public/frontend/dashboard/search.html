@@ -263,7 +263,8 @@
       async function loadFamilies() {
         showLoading('جارٍ تحميل الأسر...');
         try {
-          var response = await NDS.api.families();
+          var response = await NDS.api.families({ page: 1, per_page: 100 });
+          serverMeta = response.meta || null;
           families = (response.data || []).map(mapFamily);
           visibleFamilies = families.slice();
           renderFamilies(visibleFamilies);
@@ -272,11 +273,14 @@
         }
       }
 
+      var serverMeta = null; // معلومات الترقيم من السيرفر
+
       function renderFamilies(rows) {
         var filtered = applyActiveFilter(rows || []);
+        var totalCount = (serverMeta && serverMeta.total) || filtered.length;
         $('#emptyState').hide();
         $('#resultsArea').css('display', 'flex');
-        $('#resultsCount').text('وجدنا ' + filtered.length + ' نتيجة' + (isGlobal ? ' (بحث شامل)' : ' (بحث محلي)'));
+        $('#resultsCount').text('وجدنا ' + totalCount.toLocaleString('ar-EG') + ' نتيجة' + (isGlobal ? ' (بحث شامل)' : ' (بحث محلي)'));
 
         var html = '';
         if (filtered.length === 0) {
@@ -308,7 +312,9 @@
 
         showLoading('جارٍ البحث...');
         try {
-          var response = await NDS.api.search(isGlobal ? 'global' : 'local', q);
+          // per_page عالي يغطي نتائج البحث العادية؛ الفلترة بمستوى الضعف client-side على chips
+          var response = await NDS.api.search(isGlobal ? 'global' : 'local', q, { page: 1, per_page: 100 });
+          serverMeta = response.meta || null;
           visibleFamilies = (response.data || []).map(mapFamily);
           renderFamilies(visibleFamilies);
         } catch (error) {

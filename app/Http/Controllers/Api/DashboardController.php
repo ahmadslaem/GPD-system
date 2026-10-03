@@ -6,23 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Models\Family;
 use App\Models\Camp;
 use App\Models\TransferRequest;
+use App\Models\AuditLog;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * GET /api/dashboard
-     * يرجع كل بيانات لوحة التحكم الرئيسية
-     */
+    /** مدة صلاحية كاش الداشبورد */
+    private const CACHE_TTL = 60; // ثانية
+
     public function index()
     {
+        $cacheKey = 'dashboard:metrics';
+
+        $payload = cache()->remember($cacheKey, self::CACHE_TTL, function () {
+            return $this->buildMetrics();
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => $payload,
+        ]);
+    }
+
+    /**
+     * حساب كل مؤشرات الداشبورد (يعمل مرة كل CACHE_TTL ثانية فقط).
+     */
+    private function buildMetrics(): array
+    {
         /*
-        |--------------------------------------------------------------------------
         | 1) الكروت العلوية (Summary Cards)
-        |--------------------------------------------------------------------------
         */
         $totalFamilies    = Family::count();
-        $totalIndividuals = Family::sum('members_count');
+        $totalIndividuals = (int) Family::sum('members_count');
         $pendingTransfers = TransferRequest::where('status', 'pending')->count();
         $highVulnerability = Family::where('vulnerability_level', 'high')->count();
 
@@ -41,7 +56,7 @@ class DashboardController extends Controller
                 'label' => 'تحتاج متابعة فورية',
             ],
             'total_individuals' => [
-                'count' => (int) $totalIndividuals,
+                'count' => $totalIndividuals,
                 'label' => 'بيانات محدثة',
             ],
             'total_families' => [
@@ -51,9 +66,7 @@ class DashboardController extends Controller
         ];
 
         /*
-        |--------------------------------------------------------------------------
         | 2) مستوى الضعف (Vulnerability Levels)
-        |--------------------------------------------------------------------------
         */
         $high   = Family::where('vulnerability_level', 'high')->count();
         $medium = Family::where('vulnerability_level', 'medium')->count();
@@ -76,9 +89,7 @@ class DashboardController extends Controller
         ];
 
         /*
-        |--------------------------------------------------------------------------
         | 3) التركيبة الديموغرافية (Demographics)
-        |--------------------------------------------------------------------------
         */
         $childrenCount     = (int) Family::sum('children_count');
         $adultsCount       = (int) Family::sum('adults_count');
@@ -102,9 +113,7 @@ class DashboardController extends Controller
         ];
 
         /*
-        |--------------------------------------------------------------------------
         | 4) التوزيع الجغرافي حسب المخيم (Geographic Distribution)
-        |--------------------------------------------------------------------------
         */
         $geoDistribution = Camp::query()
             ->withCount('families')
@@ -122,9 +131,7 @@ class DashboardController extends Controller
             ->values();
 
         /*
-        |--------------------------------------------------------------------------
         | 5) آخر الأسر المسجلة (Latest Registered Families)
-        |--------------------------------------------------------------------------
         */
         $latestFamilies = Family::with('camp')
             ->latest()
@@ -144,9 +151,7 @@ class DashboardController extends Controller
             });
 
         /*
-        |--------------------------------------------------------------------------
         | 6) أحدث طلبات النقل المعلقة (Latest Pending Transfer Requests)
-        |--------------------------------------------------------------------------
         */
         $latestPendingTransfers = TransferRequest::with(['family', 'fromCamp', 'toCamp'])
             ->where('status', 'pending')
@@ -165,21 +170,30 @@ class DashboardController extends Controller
             });
 
         /*
-        |--------------------------------------------------------------------------
-        | Response
-        |--------------------------------------------------------------------------
+        | 7) عدادات سجل التدقيق (تدقيق النشاط الأخير)
         */
-        return response()->json([
-            'status' => true,
-            'data' => [
-                'cards'                    => $cards,
-                'vulnerability_levels'     => $vulnerabilityLevels,
-                'demographics'             => $demographics,
-                'geographic_distribution'  => $geoDistribution,
-                'latest_families'          => $latestFamilies,
-                'latest_pending_transfers' => $latestPendingTransfers,
-                'last_updated'             => optional($lastUpdated)->format('h:i A'),
-            ],
-        ]);
+        $auditToday = AuditLog::whereDate('created_at', Carbon::today())->count();
+        $auditWeek  = AuditLog::where('created_at', '>=', Carbon::now()->subDays(7))->count();
+
+        return [
+            'cards'                    => $cards,
+            'vulnerability_levels'     => $vulnerabilityLevels,
+            'demographics'             => $demographics,
+            'geographic_distribution'  => $geoDistribution,
+            'latest_families'          => $latestFamilies,
+            'latest_pending_transfers' => $latestPendingTransfers,
+            'last_updated'             => optional($lastUpdated)->format('h:i A'),
+            'audit_activity'           => ['today' => $auditToday, 'week' => $auditWeek],
+            'generated_at'             => Carbon::now()->toDateTimeString(),
+        ];
+    }
+
+    /**
+     * إبطال كاش الداشبورد عند أي كتابة تؤثر على المؤشرات.
+     * تُستدعى من Observers والكونترولرز — رخيصة: مجرد حذف مفتاح.
+     */
+    public static function flushCache(): void
+    {
+        cache()->forget('dashboard:metrics');
     }
 }

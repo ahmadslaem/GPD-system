@@ -21,9 +21,14 @@ class CampController extends Controller
             $query->where('is_active', true);
         }
 
-        return response()->json(
-            $query->withCount('families')->orderBy('id')->get()
-        );
+        $camps = $query->withCount('families')->orderBy('id')->get();
+
+        // الواجهة الحالية تتوقع مصفوفة مباشرة — نحافظ على الصيغة القديمة بدون per_page
+        if (! $request->filled('per_page')) {
+            return response()->json($camps);
+        }
+
+        return $this->paginatedJson($request, $camps);
     }
 
 

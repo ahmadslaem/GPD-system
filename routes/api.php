@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\DashboardController;
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -67,6 +67,10 @@ Route::middleware('auth:sanctum')->group(function () {
         FamilyController::class
     );
 
+    // معاينة درجة الضعف من السيرفر (قبل الـ {family} حتى لا يُلتقط كمعرّف)
+    Route::post('/families/preview-vulnerability',
+        [FamilyController::class,'previewVulnerability']);
+
     Route::get('/families/check/{national_id}',
         [FamilyController::class,'checkNationalId']);
 
@@ -76,6 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::put('/members/{member}',
 [FamilyController::class,'updateMember']);
+
+Route::get('/families/{family}/audit-logs',
+[FamilyController::class,'auditLogs']);
 
 
 Route::delete('/members/{member}',

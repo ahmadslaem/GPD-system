@@ -48,24 +48,72 @@ class Family extends Model
     }
 
     // ============================
-    // حساب درجة الهشاشة تلقائياً
+    // حساب درجة الضعف تلقائياً
     // ============================
-    public function calculateVulnerability(): void
+    /*
+     | المعادلة الموحدة (سلم 0-100) — مطابقة لمعاينة التسجيل في register.html
+     | ولإعدادات معايير الضعف في settings.html، حتى يكون المعروض عند التسجيل
+     | هو نفسه المحفوظ والمُعروض في البحث والتقارير.
+     |
+     | رئاسة أنثى +20 · كل فرد ذو إعاقة +15 · نسبة اعتماد عالية +15 (>1) أو +8 (>0.5)
+     | حجم أسرة كبير +15 (>8) أو +8 (>5) · أطفال +10 (>3) أو +5 (>1)
+     | العتبات: ≥50 عالٍ · ≥25 متوسط · أقل: منخفض
+     */
+    /**
+     * حساب درجة ومستوى الضعف بدون حفظ — مصدر واحد للحسبة يستخدمه
+     * التسجيل وتحديث الأعضاء وأمر إعادة الحساب (families:recalculate-vulnerability).
+     *
+     * @return array{score: int, level: string}
+     */
+    public function computeVulnerability(): array
     {
         $score = 0;
 
-        if ($this->is_female_headed) $score += 3;
-        if ($this->has_pwd)          $score += 4;
-        if ($this->pwd_count > 1)    $score += 2;
-        if ($this->children_count > 3) $score += 2;
-        if ($this->members_count > 7)  $score += 1;
+        $fhh = $this->is_female_headed ? 20 : 0;
+        $score += $fhh;
+
+        $pwd = ((int) $this->pwd_count) * 15;
+        $score += $pwd;
+
+        $total    = max(1, (int) $this->members_count);
+        $adults   = (int) $this->adults_count;
+        $children = (int) $this->children_count;
+
+        $depRatio = $adults > 0 ? max(0, $total - $adults) / $adults : 0;
+        $depScore = $depRatio > 1 ? 15 : ($depRatio > 0.5 ? 8 : 0);
+        $score += $depScore;
+
+        $sizeScore = $total > 8 ? 15 : ($total > 5 ? 8 : 0);
+        $score += $sizeScore;
+
+        $childScore = $children > 3 ? 10 : ($children > 1 ? 5 : 0);
+        $score += $childScore;
+
+        $level = match(true) {
+            $score >= 50 => 'high',
+            $score >= 25 => 'medium',
+            default      => 'low',
+        };
+
+        return [
+            'score'   => $score,
+            'level'   => $level,
+            'factors' => [
+                'fhh'        => $fhh,
+                'pwd'        => $pwd,
+                'dependency' => $depScore,
+                'size'       => $sizeScore,
+                'children'   => $childScore,
+            ],
+        ];
+    }
+
+    public function calculateVulnerability(): void
+    {
+        ['score' => $score, 'level' => $level] = $this->computeVulnerability();
 
         $this->vulnerability_score = $score;
-        $this->vulnerability_level = match(true) {
-            $score >= 7 => 'high',
-            $score >= 4 => 'medium',
-            default     => 'low',
-        };
+        $this->vulnerability_level = $level;
 
         $this->save();
     }

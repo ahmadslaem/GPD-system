@@ -39,6 +39,18 @@ class FamilyPolicy
     }
 
     /**
+     * عرض سجل تغييرات أسرة معينة — بنفس قيود المشاهدة
+     */
+    public function auditLogs(User $user, Family $family): bool
+    {
+        if ($user->role === 'data_entry') {
+            return $user->camp_id == $family->camp_id;
+        }
+
+        return false;
+    }
+
+    /**
      * إنشاء أسرة
      */
     public function create(User $user): bool

@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // الصفحة الرئيسية تحوّل إلى لوحة التحكم (frontend/dashboard/index.html)
+        $response->assertRedirect('/frontend/dashboard/index.html');
     }
 }

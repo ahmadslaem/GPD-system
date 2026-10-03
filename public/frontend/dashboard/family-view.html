@@ -69,6 +69,13 @@
               <div class="form-card-title"><i class="fa-solid fa-users text-primary"></i>الأفراد</div>
               <div id="membersList"></div>
             </div>
+
+            <div class="form-card mt-3">
+              <div class="form-card-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i>سجل التغييرات
+                <button class="btn btn-sm btn-outline-primary ms-2" id="btnAuditRefresh" type="button"><i class="fa-solid fa-rotate"></i> تحديث</button>
+              </div>
+              <div id="auditList" class="small"><div class="text-center text-muted py-3">جارٍ التحميل...</div></div>
+            </div>
           </div>
         </div>
       </main>
@@ -131,7 +138,74 @@
         }
       });
 
+      /* ── سجل التغييرات ── */
+      var AUDIT_LABELS = {
+        created: 'إنشاء', updated: 'تعديل', deleted: 'حذف',
+        national_id: 'رقم الهوية', head_name: 'اسم رب الأسرة', phone: 'الهاتف',
+        birth_date: 'تاريخ الميلاد', camp_id: 'المخيم', shelter_number: 'رقم المأوى',
+        members_count: 'إجمالي الأفراد', adults_count: 'البالغون', children_count: 'الأطفال',
+        pwd_count: 'ذوو الإعاقة', has_pwd: 'لديه إعاقة', is_female_headed: 'رئاسة أنثى',
+        fhh_reason: 'سبب الرئاسة', vulnerability_score: 'درجة الضعف', vulnerability_level: 'مستوى الضعف',
+        notes: 'ملاحظات', name: 'الاسم', gender: 'الجنس', has_disability: 'إعاقة فرد'
+      };
+
+      function auditField(field) { return AUDIT_LABELS[field] || field; }
+
+      function auditValue(field, value) {
+        if (value === null || value === undefined || value === '') return '—';
+        if (field === 'vulnerability_level') return { high: 'عالٍ', medium: 'متوسط', low: 'منخفض' }[value] || value;
+        if (field === 'fhh_reason') return { widow: 'أرملة', divorced: 'مطلقة', husband_absent: 'غياب رب الأسرة', other: 'أخرى' }[value] || value;
+        if (field === 'gender') return value === 'female' ? 'أنثى' : 'ذكر';
+        if (value === true || value === 1 || value === '1') return 'نعم';
+        if (value === false || value === 0 || value === '0') return 'لا';
+        return String(value);
+      }
+
+      function renderAuditLogs(logs) {
+        if (!logs || !logs.length) {
+          $('#auditList').html('<div class="text-center text-muted py-3">لا توجد تغييرات مسجلة</div>');
+          return;
+        }
+        var html = logs.map(function (log) {
+          var badge = log.action === 'created' ? 'success'
+            : log.action === 'deleted' ? 'danger' : 'warning';
+          var target = log.target === 'member' ? 'فرد #' + log.target_id : 'الأسرة';
+          var details = '';
+
+          if (log.action === 'updated' && log.changes) {
+            var oldV = log.changes.old || {}, newV = log.changes.new || {};
+            details = Object.keys(newV).map(function (field) {
+              return '<div class="small text-muted">' + auditField(field) + ': '
+                + '<span class="text-decoration-line-through">' + auditValue(field, oldV[field]) + '</span> ← '
+                + '<span class="fw-semibold text-dark">' + auditValue(field, newV[field]) + '</span></div>';
+            }).join('');
+          }
+
+          return '<div class="p-2 mb-2 border rounded-3" style="background:#f8fafc;">'
+            + '<div class="d-flex justify-content-between flex-wrap gap-1">'
+            + '<div><span class="badge bg-' + badge + '">' + (AUDIT_LABELS[log.action] || log.action) + '</span> '
+            + '<span class="fw-semibold">' + target + '</span> '
+            + '<span class="text-muted small">بواسطة ' + (log.user || 'نظام') + '</span></div>'
+            + '<span class="text-muted small">' + (log.at || '') + '</span></div>'
+            + details + '</div>';
+        }).join('');
+        $('#auditList').html(html);
+      }
+
+      async function loadAuditLogs() {
+        if (!familyId) return;
+        try {
+          var res = await NDS.api.familyAuditLogs(familyId);
+          renderAuditLogs(res.data || []);
+        } catch (error) {
+          $('#auditList').html('<div class="text-center text-muted py-2">' + (error.message || 'تعذر تحميل السجل') + '</div>');
+        }
+      }
+
+      $('#btnAuditRefresh').on('click', loadAuditLogs);
+
       loadFamily();
+      loadAuditLogs();
     });
   </script>
 </body>

@@ -148,8 +148,10 @@
       return this.request('/dashboard');
     },
 
-    families: async function () {
-      return this.request('/families');
+    // معاملات اختيارية: page, per_page, search, camp_id, vulnerability_level, sort_by, sort_dir
+    families: async function (params) {
+      var qs = params ? '?' + new URLSearchParams(params).toString() : '';
+      return this.request('/families' + qs);
     },
 
     family: async function (id) {
@@ -178,6 +180,19 @@
 
     checkNationalId: async function (nationalId) {
       return this.request('/families/check/' + encodeURIComponent(nationalId));
+    },
+
+    // معاينة درجة الضعف — الحسبة على السيرفر دايماً، مفيش معادلة في الـ JS
+    previewVulnerability: async function (payload) {
+      return this.request('/families/preview-vulnerability', {
+        method: 'POST',
+        body: payload
+      });
+    },
+
+    // سجل تغييرات الأسرة وأفرادها
+    familyAuditLogs: async function (familyId) {
+      return this.request('/families/' + encodeURIComponent(familyId) + '/audit-logs');
     },
 
     addMember: async function (familyId, payload) {
@@ -309,8 +324,9 @@
       setTimeout(function () { URL.revokeObjectURL(objectUrl); }, 1000);
     },
 
-    search: async function (scope, keyword) {
-      return this.request('/search/' + encodeURIComponent(scope) + this.query({ keyword: keyword }));
+    // معاملات اختيارية: keyword, page, per_page, vulnerability_level
+    search: async function (scope, keyword, params) {
+      return this.request('/search/' + encodeURIComponent(scope) + this.query(Object.assign({ keyword: keyword }, params || {})));
     },
 
     query: function (params) {

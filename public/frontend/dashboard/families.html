@@ -336,48 +336,35 @@
       }
 
       /* ══ الحالة ════════════════════════════════════════════ */
-      var S = { data: DB, filtered: DB, page: 1, perPage: 25, sortCol: 'id', sortDir: 'asc', search: '', view: 'table', sel: [], openIdx: -1, filters: {} };
+      /* Server-side pagination: كل الفلترة والترتيب والترقيم على السيرفر */
+      var S = {
+        page: 1, perPage: 25, sortCol: 'id', sortDir: 'asc',
+        search: '', view: 'table', sel: [], openIdx: -1, filters: {},
+        total: 0, serverSort: false
+      };
+      var SORT_MAP = {
+        id: { col: 'created_at', defaultDir: 'desc' },
+        name: { col: 'head_name', defaultDir: 'asc' },
+        nid: { col: 'national_id', defaultDir: 'asc' },
+        camp: { col: 'camp_id', defaultDir: 'asc' },
+        total: { col: 'members_count', defaultDir: 'asc' },
+        score: { col: 'vulnerability_score', defaultDir: 'desc' },
+        date: { col: 'created_at', defaultDir: 'desc' }
+      };
       var LB = { high: '<span class="badge bg-danger">عالٍ</span>', medium: '<span class="badge bg-warning text-dark">متوسط</span>', low: '<span class="badge bg-success">منخفض</span>' };
 
-      $('#totalCount').text(DB.length.toLocaleString('ar-EG'));
-
-      /* ══ فلترة وترتيب ═══════════════════════════════════════ */
-      function applyFilters() {
-        var q = S.search.toLowerCase(), fl = S.filters;
-        S.filtered = S.data.filter(function (f) {
-          if (q && !(f.name.toLowerCase().includes(q) || f.nid.includes(q) || f.id.toLowerCase().includes(q) || f.camp.includes(q))) return false;
-          if (fl.camp && f.camp !== fl.camp) return false;
-          if (fl.level && f.level !== fl.level) return false;
-          if (fl.fhh === '1' && !f.fhh) return false;
-          if (fl.fhh === '0' && f.fhh) return false;
-          if (fl.pwd === '1' && f.pwd < 1) return false;
-          if (fl.pwd === '0' && f.pwd > 0) return false;
-          if (fl.gov && f.gov !== fl.gov) return false;
-          if (fl.size === 'small' && f.total > 3) return false;
-          if (fl.size === 'medium' && (f.total < 4 || f.total > 6)) return false;
-          if (fl.size === 'large' && f.total < 7) return false;
-          return true;
-        });
-        S.filtered.sort(function (a, b) {
-          var va = a[S.sortCol], vb = b[S.sortCol];
-          if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
-          var r = va < vb ? -1 : va > vb ? 1 : 0;
-          return S.sortDir === 'asc' ? r : -r;
-        });
-        S.page = 1; S.sel = []; render();
-      }
+      $('#totalCount').text('—');
 
       /* ══ رندر ══════════════════════════════════════════════ */
       function render() {
-        var start = (S.page - 1) * S.perPage, end = start + S.perPage;
-        var paged = S.filtered.slice(start, end);
-        $('#shownCount').text(S.filtered.length.toLocaleString('ar-EG'));
+        var rows = DB;
+        $('#shownCount').text((S.total || rows.length).toLocaleString('ar-EG'));
         updateFcnt(); updateTags();
-        if (!S.filtered.length) { $('#emptyState').show(); $('#viewTable,#viewCards').hide(); return; }
+        if (!rows.length) { $('#emptyState').show(); $('#viewTable,#viewCards').hide(); renderPg(); $('#pgInfo').text(''); return; }
         $('#emptyState').hide();
-        if (S.view === 'table') { $('#viewTable').show(); $('#viewCards').hide(); renderTable(paged); }
-        else { $('#viewCards').show(); $('#viewTable').hide(); renderCards(paged); }
-        renderPg(); updatePgInfo(start, end);
+        if (S.view === 'table') { $('#viewTable').show(); $('#viewCards').hide(); renderTable(rows); }
+        else { $('#viewCards').show(); $('#viewTable').hide(); renderCards(rows); }
+        renderPg(); updatePgInfo();
       }
 
       function renderTable(rows) {
@@ -430,7 +417,7 @@
       }
 
       function renderPg() {
-        var total = S.filtered.length, pages = Math.ceil(total / S.perPage);
+        var pages = Math.ceil(S.total / S.perPage);
         if (pages <= 1) { $('#pgBtns').html(''); return; }
         var html = '<button class="cpb' + (S.page === 1 ? ' off' : '') + '" data-p="prev"><i class="fa-solid fa-chevron-right"></i></button>';
         var range = [];
@@ -443,9 +430,10 @@
         $('#pgBtns').html(html);
       }
 
-      function updatePgInfo(s, e) {
-        var t = S.filtered.length;
-        $('#pgInfo').text('يُعرض ' + (s + 1) + ' - ' + Math.min(e, t) + ' من ' + t.toLocaleString('ar-EG') + ' أسرة');
+      function updatePgInfo() {
+        if (!S.total) { $('#pgInfo').text(''); return; }
+        var start = (S.page - 1) * S.perPage;
+        $('#pgInfo').text('يُعرض ' + (start + 1) + ' - ' + Math.min(start + S.perPage, S.total) + ' من ' + S.total.toLocaleString('ar-EG') + ' أسرة');
       }
 
       function updateSelBar() {
@@ -468,9 +456,10 @@
 
       /* ══ درج الملف ═════════════════════════════════════════ */
       function openDrawer(id) {
-        var f = S.filtered.find(function (x) { return x.id === id; }) || DB.find(function (x) { return x.id === id; });
+        var rows = S.filteredRows || DB;
+        var f = rows.find(function (x) { return x.id === id; }) || DB.find(function (x) { return x.id === id; });
         if (!f) return;
-        S.openIdx = S.filtered.findIndex(function (x) { return x.id === id; });
+        S.openIdx = rows.findIndex(function (x) { return x.id === id; });
         localStorage.setItem('nds_edit_family', JSON.stringify(f));
         var sc = { high: '#b03030', medium: '#9a6010', low: '#1a6a2a' }[f.level];
         var sb = { high: '#fdf0f0', medium: '#fdf3e0', low: '#eaf5ee' }[f.level];
@@ -548,8 +537,8 @@
 
       /* ══ أحداث الدرج ════════════════════════════════════════ */
       $('#btnCloseDrawer,#drawerOverlay').on('click', closeDrawer);
-      $('#btnPrev').on('click', function () { if (S.openIdx > 0) openDrawer(S.filtered[S.openIdx - 1].id); });
-      $('#btnNext').on('click', function () { if (S.openIdx < S.filtered.length - 1) openDrawer(S.filtered[S.openIdx + 1].id); });
+      $('#btnPrev').on('click', function () { var rows = S.filteredRows || DB; if (S.openIdx > 0) openDrawer(rows[S.openIdx - 1].id); });
+      $('#btnNext').on('click', function () { var rows = S.filteredRows || DB; if (S.openIdx < rows.length - 1) openDrawer(rows[S.openIdx + 1].id); });
 
       /* تبويبات الدرج */
       $(document).on('click', '.dtab', function () {
@@ -570,28 +559,34 @@
         }
       });
 
-      /* ترتيب */
+      /* ترتيب — من السيرفر */
       $(document).on('click', '.sortable', function () {
         var col = $(this).data('col');
-        if (S.sortCol === col) { S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc'; } else { S.sortCol = col; S.sortDir = 'asc'; }
+        if (S.sortCol === col) { S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc'; } else { S.sortCol = col; S.sortDir = SORT_MAP[col] ? SORT_MAP[col].defaultDir : 'asc'; }
         $('.sortable').removeClass('s-asc s-desc').find('.si').html('<i class="fa-solid fa-sort"></i>');
         $(this).addClass('s-' + S.sortDir).find('.si').html('<i class="fa-solid fa-sort-' + S.sortDir + '"></i>');
-        applyFilters();
+        loadFamilies();
       });
 
-      /* بحث */
-      $('#tableSearch').on('input', function () { S.search = $(this).val(); applyFilters(); });
+      /* بحث — على السيرفر (head_name/phone/رقم الأسرة) */
+      var searchTimer = null;
+      $('#tableSearch').on('input', function () {
+        S.search = $(this).val();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadFamilies, 350); // debounced
+      });
 
-      /* عدد الصفوف */
-      $('#perPage').on('change', function () { S.perPage = parseInt($(this).val()); S.page = 1; render(); });
+      /* عدد الصفوف — يجلب من جديد من السيرفر */
+      $('#perPage').on('change', function () { S.perPage = parseInt($(this).val()); S.page = 1; loadFamilies(); });
 
-      /* Pagination */
+      /* Pagination — يجلب الصفحة من السيرفر */
       $(document).on('click', '.cpb:not(.off)', function () {
-        var p = $(this).data('p'), pages = Math.ceil(S.filtered.length / S.perPage);
+        var p = $(this).data('p'), pages = Math.ceil(S.total / S.perPage);
         if (p === 'prev') S.page = Math.max(1, S.page - 1);
         else if (p === 'next') S.page = Math.min(pages, S.page + 1);
         else S.page = parseInt(p);
-        render(); $('html,body').animate({ scrollTop: 0 }, 200);
+        loadFamilies();
+        $('html,body').animate({ scrollTop: 0 }, 200);
       });
 
       /* عرض جدول/بطاقات */
@@ -600,7 +595,7 @@
 
       /* تحديد الصفوف */
       $('#checkAll').on('change', function () {
-        var paged = S.filtered.slice((S.page - 1) * S.perPage, S.page * S.perPage);
+        var paged = S.filteredRows || DB;
         if ($(this).is(':checked')) paged.forEach(function (f) { if (S.sel.indexOf(f.id) === -1) S.sel.push(f.id); });
         else paged.forEach(function (f) { S.sel = S.sel.filter(function (id) { return id !== f.id; }); });
         renderTable(paged);
@@ -619,18 +614,55 @@
 
       function readFilters() {
         S.filters = { camp: $('#fCamp').val(), level: $('#fLevel').val(), fhh: $('#fFhh').val(), pwd: $('#fPwd').val(), gov: $('#fGov').val(), size: $('#fSize').val() };
+        // camp وlevel يترشّوا على السيرفر؛ الباقي client-side على الصفحة الحالية
         applyFilters();
       }
 
       $('#fCamp,#fLevel,#fFhh,#fPwd,#fGov,#fSize,#fDateFrom,#fDateTo').on('change input', readFilters);
 
+      /* فلترة العرض على الصفحة الحالية — للفلاتر غير المدعومة سيرفراً */
+      function applyFilters() {
+        var fl = S.filters;
+        S.filteredRows = DB.filter(function (f) {
+          if (fl.fhh === '1' && !f.fhh) return false;
+          if (fl.fhh === '0' && f.fhh) return false;
+          if (fl.pwd === '1' && f.pwd < 1) return false;
+          if (fl.pwd === '0' && f.pwd > 0) return false;
+          if (fl.gov && f.gov !== fl.gov) return false;
+          if (fl.size === 'small' && f.total > 3) return false;
+          if (fl.size === 'medium' && (f.total < 4 || f.total > 6)) return false;
+          if (fl.size === 'large' && f.total < 7) return false;
+          return true;
+        });
+        S.page = 1; S.sel = []; render();
+      }
+
+      function serverFilterParams() {
+        var params = { page: S.page, per_page: S.perPage };
+        if (S.search.trim()) params.search = S.search.trim();
+        if (S.filters.camp) {
+          var camps = { 'مخيم جباليا': 1, 'مخيم خان يونس': 2, 'مواصي رفح': 3, 'مخيم النصيرات': 4, 'مخيم البريج': 5 };
+          if (camps[S.filters.camp]) params.camp_id = camps[S.filters.camp];
+        }
+        if (S.filters.level) params.vulnerability_level = S.filters.level;
+        var sm = SORT_MAP[S.sortCol];
+        if (sm) { params.sort_by = sm.col; params.sort_dir = S.sortDir === 'asc' ? 'asc' : 'desc'; }
+        return params;
+      }
+
       $(document).on('click', '.rt', function () {
         var k = $(this).data('key');
         S.filters[k] = ''; $('#f' + k.charAt(0).toUpperCase() + k.slice(1)).val('');
+        if (k === 'camp' || k === 'level') { loadFamilies(); return; } // فلاتر السيرفر تجلب من جديد
         applyFilters();
       });
 
-      function clearAll() { S.filters = {}; S.search = ''; $('#tableSearch').val(''); $('#fCamp,#fLevel,#fFhh,#fPwd,#fGov,#fSize').val(''); applyFilters(); }
+      function clearAll() {
+        S.filters = {}; S.search = ''; $('#tableSearch').val('');
+        $('#fCamp,#fLevel,#fFhh,#fPwd,#fGov,#fSize').val('');
+        S.page = 1;
+        loadFamilies();
+      }
       $('#btnClearFilters,#btnClearAll').on('click', clearAll);
 
       /* حذف */
@@ -638,40 +670,40 @@
       $(document).on('click', '.bdel', function (e) {
         e.stopPropagation();
         delId = $(this).data('id');
-        var f = DB.find(function (x) { return x.id === delId; });
+        var f = (S.filteredRows || DB).find(function (x) { return x.id === delId; });
         $('#delText').text('سيتم حذف بيانات الأسرة: ' + (f ? f.name : delId));
         new bootstrap.Modal($('#deleteModal')[0]).show();
       });
       $('#drawerDelete').on('click', function () {
-        delId = (S.filtered[S.openIdx] || {}).id;
+        delId = ((S.filteredRows || DB)[S.openIdx] || {}).id;
         if (!delId) return;
         var f = DB.find(function (x) { return x.id === delId; });
         $('#delText').text('سيتم حذف بيانات الأسرة: ' + (f ? f.name : delId));
         new bootstrap.Modal($('#deleteModal')[0]).show();
       });
       $('#btnConfirmDel').on('click', async function () {
-        var family = DB.find(function (f) { return f.id === delId; });
+        var family = (S.filteredRows || DB).find(function (f) { return f.id === delId; });
         if (!family) return;
         try {
           await NDS.api.deleteFamily(family.backend_id);
-          DB = DB.filter(function (f) { return f.id !== delId; });
-          S.data = DB;
           bootstrap.Modal.getInstance($('#deleteModal')[0]).hide();
-          closeDrawer(); applyFilters();
+          closeDrawer();
+          loadFamilies(); // إعادة الجلب — العدادات والترقيم من السيرفر
         } catch (error) {
           alert(error.message || 'تعذر حذف الأسرة');
         }
       });
 
+      /* ══ التحميل من السيرفر — pagination حقيقي ═════════════════ */
       async function loadFamilies() {
         $('#emptyState').hide();
         $('#tableBody').html('<tr><td colspan="12" class="text-center text-muted py-4">جارٍ تحميل البيانات...</td></tr>');
         try {
-          var response = await NDS.api.families();
+          var response = await NDS.api.families(serverFilterParams());
           DB = (response.data || []).map(mapFamily);
-          S.data = DB;
-          S.page = 1;
-          $('#totalCount').text(DB.length.toLocaleString('ar-EG'));
+          S.total = (response.meta && response.meta.total) || DB.length;
+          S.filteredRows = DB; // الصفحة الحالية بعد فلترة العرض المحلية
+          $('#totalCount').text(S.total.toLocaleString('ar-EG'));
           applyFilters();
         } catch (error) {
           $('#tableBody').html('<tr><td colspan="12" class="text-center text-danger py-4">' + (error.message || 'تعذر تحميل الأسر') + '</td></tr>');

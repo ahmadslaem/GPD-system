@@ -9,144 +9,98 @@ use Illuminate\Http\Request;
 class SearchController extends Controller
 {
 
+    /*
+    Local Search
+    البحث داخل مخيم المستخدم فقط
+    */
+
+    public function local(Request $request)
+    {
+        $request->validate([
+            'keyword' => 'required|string'
+        ]);
+
+        $campId = auth()->user()->camp_id;
+
+        $keyword = $request->keyword;
+
+        $query = Family::with('members')
+            ->where('camp_id', $campId)
+            ->where(function ($q) use ($keyword) {
+                $this->applyKeywordMatch($q, $keyword);
+            });
+
+        $this->applyLevelFilter($query, $request);
+
+        $families = $query->orderByDesc('created_at')->get();
+
+        return $this->paginatedJson($request, $families, null, ['status' => true]);
+    }
+
+
+
 
     /*
-Local Search
-البحث داخل مخيم المستخدم فقط
-*/
+    Global Search
+    للمدير والأدمن فقط
+    */
 
-public function local(Request $request)
-{
+    public function global(Request $request)
+    {
+        $request->validate([
+            'keyword' => 'required|string'
+        ]);
 
-    $request->validate([
-        'keyword'=>'required|string'
-    ]);
+        $keyword = $request->keyword;
 
+        $query = Family::with(['members', 'camp'])
+            ->where(function ($q) use ($keyword) {
+                $this->applyKeywordMatch($q, $keyword);
+            });
 
-    $campId = auth()->user()->camp_id;
+        $this->applyLevelFilter($query, $request);
 
-    $keyword = $request->keyword;
+        $families = $query->orderByDesc('created_at')->get();
 
-    // لو المستخدم كتب رقم الأسرة بصيغة F-00004 أو حتى بدون F-
-    $numericId = ltrim(str_ireplace('F-', '', $keyword), '0');
+        return $this->paginatedJson($request, $families, null, ['status' => true]);
+    }
 
-
-    $families = Family::with('members')
-        ->where('camp_id',$campId)
-        ->where(function($query) use ($keyword, $numericId){
-
-            $query->where(
-                'national_id',
-                'like',
-                '%'.$keyword.'%'
-            )
-
-            ->orWhere(
-                'head_name',
-                'like',
-                '%'.$keyword.'%'
-            )
-
-            ->orWhere(
-                'phone',
-                'like',
-                '%'.$keyword.'%'
-            );
-
-            if(is_numeric($numericId) && $numericId !== ''){
-
-                $query->orWhere('id', $numericId);
-
-            }
-
-        })
-        ->get();
-
-
-
-    return response()->json([
-
-        'status'=>true,
-
-        'data'=>$families
-
-    ]);
-
-}
-
-
-
-
-
-/*
-Global Search
-للمدير فقط
-*/
-
-public function global(Request $request)
-{
-
-    $request->validate([
-        'keyword'=>'required|string'
-    ]);
-
-
-    $keyword = $request->keyword;
-
-    $numericId = ltrim(str_ireplace('F-', '', $keyword), '0');
-
-
-    $families = Family::with([
-        'members',
-        'camp'
-    ])
-
-    ->where(function($query) use ($keyword, $numericId){
-
-
-        $query->where(
-            'national_id',
-            'like',
-            '%'.$keyword.'%'
-        )
-
-
-        ->orWhere(
-            'head_name',
-            'like',
-            '%'.$keyword.'%'
-        )
-
-
-        ->orWhere(
-            'phone',
-            'like',
-            '%'.$keyword.'%'
-        );
-
-
-        if(is_numeric($numericId) && $numericId !== ''){
-
-            $query->orWhere('id', $numericId);
-
+    /**
+     * فلترة اختيارية بمستوى الضعف (تستفيد من فهرس vulnerability_level).
+     */
+    private function applyLevelFilter($query, Request $request): void
+    {
+        if (in_array($request->query('vulnerability_level'), ['high', 'medium', 'low'], true)) {
+            $query->where('vulnerability_level', $request->query('vulnerability_level'));
         }
+    }
 
+    /**
+     * تطابق آمن ضد SQL LIKE injection:
+     * يهرب wildcards (% و _ و \) قبل دمجها في نمط LIKE.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
 
-    })
+    /**
+     * يضيف شروط البحث (national_id / head_name / phone / رقم الأسرة F-xxxx)
+     * مع escaping آمن.
+     */
+    private function applyKeywordMatch($query, string $keyword): void
+    {
+        $escaped = $this->escapeLike($keyword);
 
-    ->get();
+        // لو المستخدم كتب رقم الأسرة بصيغة F-00004 أو حتى بدون F-
+        $numericId = ltrim(str_ireplace('F-', '', $keyword), '0');
 
+        $query->where('national_id', 'like', '%' . $escaped . '%')
+            ->orWhere('head_name', 'like', '%' . $escaped . '%')
+            ->orWhere('phone', 'like', '%' . $escaped . '%');
 
-
-    return response()->json([
-
-        'status'=>true,
-
-        'data'=>$families
-
-    ]);
-
-}
-
-
+        if (is_numeric($numericId) && $numericId !== '') {
+            $query->orWhere('id', (int) $numericId);
+        }
+    }
 }

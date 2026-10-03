@@ -162,64 +162,55 @@ public function index(Request $request)
  
         'pending' => (clone $summaryQuery)->where('status', 'pending')->count(),
  
-    ];
- 
- 
-    /*
+    ];    /*
     |--------------------------------------------------------------------------
-    | تنسيق قائمة الطلبات
+    | تنسيق قائمة الطلبات + الترقيم
     |--------------------------------------------------------------------------
     */
-    $data = $requests->map(function ($transfer) {
+    return $this->paginatedJson(
+        $request,
+        $requests,
+        function ($transfer) {
  
-        return [
+            return [
  
-            'id' => $transfer->id,
+                'id' => $transfer->id,
  
-            'request_number' => 'T-' . str_pad($transfer->id, 3, '0', STR_PAD_LEFT),
+                'request_number' => 'T-' . str_pad($transfer->id, 3, '0', STR_PAD_LEFT),
  
-            'status' => $transfer->status,
+                'status' => $transfer->status,
  
-            'head_name' => $transfer->family->head_name ?? null,
+                'head_name' => $transfer->family->head_name ?? null,
 
-            'national_id' => $transfer->family->national_id ?? null,
+                'national_id' => $transfer->family->national_id ?? null,
 
-            'vulnerability_level' => $transfer->family->vulnerability_level ?? null,
+                'vulnerability_level' => $transfer->family->vulnerability_level ?? null,
 
-            'family' => $transfer->family ? [
-                'id' => $transfer->family->id,
-                'national_id' => $transfer->family->national_id,
-                'head_name' => $transfer->family->head_name,
-                'camp_id' => $transfer->family->camp_id,
-                'vulnerability_level' => $transfer->family->vulnerability_level,
-            ] : null,
+                'family' => $transfer->family ? [
+                    'id' => $transfer->family->id,
+                    'national_id' => $transfer->family->national_id,
+                    'head_name' => $transfer->family->head_name,
+                    'camp_id' => $transfer->family->camp_id,
+                    'vulnerability_level' => $transfer->family->vulnerability_level,
+                ] : null,
  
-            'from_camp' => $transfer->fromCamp->name ?? null,
+                'from_camp' => $transfer->fromCamp->name ?? null,
  
-            'to_camp' => $transfer->toCamp->name ?? null,
+                'to_camp' => $transfer->toCamp->name ?? null,
  
-            'requested_by' => $transfer->requester->name ?? null,
+                'requested_by' => $transfer->requester->name ?? null,
  
-            'reason' => $transfer->reason,
+                'reason' => $transfer->reason,
  
-            'manager_note' => $transfer->manager_note,
+                'manager_note' => $transfer->manager_note,
  
-            'created_at' => optional($transfer->created_at)->format('Y-m-d'),
+                'created_at' => optional($transfer->created_at)->format('Y-m-d'),
  
-        ];
+            ];
  
-    });
- 
- 
-    return response()->json([
- 
-        'status' => true,
- 
-        'summary' => $summary,
- 
-        'data' => $data,
- 
-    ]);
+        },
+        ['status' => true, 'summary' => $summary]
+    );
  
 }
 

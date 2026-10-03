@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\FamilyResource;
 use App\Models\Camp;
 use App\Models\Family;
+use App\Models\AuditLog;
 use App\Models\FamilyMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,67 @@ use Illuminate\Validation\Rule;
 class FamilyController extends Controller
 {
     
+
+    /**
+     * سجل تغييرات الأسرة وأفرادها (UC-09: Data History).
+     */
+    public function auditLogs(Request $request, Family $family)
+    {
+        $this->authorize('view', $family);
+
+        $memberIds = $family->members()->pluck('id');
+
+        $logs = AuditLog::with('user:id,name,role')
+            ->where(function ($query) use ($family) {
+                $query->where('auditable_type', $family->getMorphClass())
+                      ->where('auditable_id', $family->id);
+            })
+            ->orWhere(function ($query) use ($memberIds) {
+                $query->where('auditable_type', (new FamilyMember)->getMorphClass())
+                      ->whereIn('auditable_id', $memberIds);
+            })
+            ->orderByDesc('id')
+            ->limit(100)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $logs->map(fn (AuditLog $log) => [
+                'id'         => $log->id,
+                'action'     => $log->action,
+                'user'       => $log->user?->name,
+                'role'       => $log->user?->role,
+                'target'     => $log->auditable_type === FamilyMember::class ? 'member' : 'family',
+                'target_id'  => $log->auditable_id,
+                'changes'    => $log->changes,
+                'ip'         => $log->ip_address,
+                'at'         => $log->created_at?->format('Y-m-d H:i'),
+            ]),
+        ]);
+    }
+
+    /**
+     * معاينة درجة الضعف بدون حفظ — المصدر الوحيد للحساب في الواجهة
+     * (يستخدم computeVulnerability() نفسها حتى لا تتكرر المعادلة في الـ JS).
+     */
+    public function previewVulnerability(Request $request)
+    {
+        $data = $request->validate([
+            'members_count'    => 'required|integer|min:1|max:99',
+            'adults_count'     => 'required|integer|min:0|max:99',
+            'children_count'   => 'required|integer|min:0|max:99',
+            'pwd_count'        => 'required|integer|min:0|max:99',
+            'is_female_headed' => 'required|boolean',
+        ]);
+
+        $preview = new Family($data);
+        $result  = $preview->computeVulnerability();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $result,
+        ]);
+    }
 
     public function checkNationalId($national_id)
     {
@@ -81,6 +143,14 @@ class FamilyController extends Controller
         'pwd_count'=>'nullable|integer|min:0',
 
         'is_female_headed'=>'nullable|boolean',
+
+        // FR-DE: لو الأسرة برئاسة أنثى، السبب إلزامي من القائمة المعرفة
+        'fhh_reason'=>[
+            'nullable',
+            'string',
+            Rule::requiredIf(fn () => $request->boolean('is_female_headed')),
+            'in:widow,divorced,husband_absent,other',
+        ],
 
         'has_pwd'=>'nullable|boolean',
 
@@ -176,7 +246,7 @@ class FamilyController extends Controller
 
             'pwd_count'=>$request->integer('pwd_count'),
 
-            'has_pwd'=>$request->has_pwd ?? (($request->pwd_count ?? 0) > 0),
+            'has_pwd'=>($request->pwd_count ?? 0) > 0 || $request->boolean('has_pwd'),
 
 
             'is_female_headed'=>$request->boolean('is_female_headed'),
@@ -260,7 +330,7 @@ class FamilyController extends Controller
 }
 
 //index method to list all families with their members, filtered by the user's role and camp if applicable
-public function index()
+public function index(Request $request)
 {
 
     $this->authorize('viewAny', Family::class);
@@ -269,24 +339,60 @@ public function index()
     $user = auth()->user();
 
 
+    $query = Family::query();
+
     if($user->role === 'data_entry'){
 
-        $families = Family::where('camp_id',$user->camp_id)
-            ->latest()
-            ->get();
-
-    }else{
-
-        $families = Family::latest()->get();
+        $query->where('camp_id', $user->camp_id);
 
     }
 
+    // فلاتر السيرفر (NFR-01/06): تُنفّذ على الداتابيز مع الفهارس
+    if ($request->filled('camp_id')) {
+        $query->where('camp_id', (int) $request->camp_id);
+    }
 
+    if ($request->filled('vulnerability_level')) {
+        $query->where('vulnerability_level', $request->vulnerability_level);
+    }
 
-   return response()->json([
-    'status' => true,
-    'data' => FamilyResource::collection($families)
-]);
+    if ($request->filled('search')) {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $request->string('search')->trim());
+        $query->where(function ($q) use ($escaped, $request) {
+            $q->where('head_name', 'like', '%' . $escaped . '%')
+              ->orWhere('phone', 'like', '%' . $escaped . '%');
+
+            $numericId = ltrim(str_ireplace('F-', '', $request->string('search')->trim()), '0');
+            if (is_numeric($numericId) && $numericId !== '') {
+                $q->orWhere('id', (int) $numericId);
+            }
+        });
+    }
+
+    // ترتيب آمن من قائمة بيضاء (الافتراضي: الأحدث أولاً)
+    $sortMap = [
+        'head_name' => 'head_name',
+        'phone' => 'phone',
+        'members_count' => 'members_count',
+        'vulnerability_score' => 'vulnerability_score',
+        'created_at' => 'created_at',
+    ];
+    $sortCol = $sortMap[$request->query('sort_by')] ?? 'created_at';
+    $sortDir = strtolower($request->query('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+    $query->orderBy($sortCol, $sortDir);
+
+    // الترقيم الحقيقي: N+1 يُحل بـ eager loading، والصف تُحسب في الداتابيز
+    $families = $query->with('members')->paginate(
+        perPage: max(1, min((int) $request->query('per_page', 50), 200)),
+        page: max(1, (int) $request->query('page', 1))
+    );
+
+   return $this->paginatedJson(
+       $request,
+       $families,
+       fn ($family) => (new FamilyResource($family))->resolve(),
+       ['status' => true]
+   );
 
 }
 
@@ -322,13 +428,18 @@ public function update(Request $request, Family $family)
 {
     $this->authorize('update', $family);
 
+    $user = $request->user();
+    $canEditNid = in_array($user->role, ['admin', 'manager']); // FR-DD-04
+
     $request->validate([
         'head_name' => 'required|string|max:255',
         'phone' => 'required|string|max:20',
         'birth_date' => 'nullable|date',
-        
-        // Prevent National ID editing
-        'national_id' => 'prohibited',
+
+        // الرقم القومي مقفل على موظف الإدخال، ومتاح للمدير والأدمن فقط (FR-DD-04)
+        'national_id' => $canEditNid
+            ? ['sometimes', 'string', 'max:20', Rule::unique('families', 'national_id')->ignore($family->id)]
+            : ['prohibited'],
     ]);
 
 
@@ -336,6 +447,7 @@ public function update(Request $request, Family $family)
         'head_name'  => strip_tags($request->head_name),
         'phone'      => strip_tags($request->phone),
         'birth_date' => $request->birth_date,
+        ...($request->has('national_id') ? ['national_id' => strip_tags($request->national_id)] : []),
     ]);
 
 
@@ -373,15 +485,14 @@ public function addMember(Request $request, Family $family)
         'has_disability'=>$request->has_disability ?? false
     ]);
 
-    $family->increment('members_count');
-
-    if ($request->filled('birth_date')) {
-        if (now()->subYears(18)->greaterThanOrEqualTo($request->date('birth_date'))) {
-            $family->increment('adults_count');
-        } else {
-            $family->increment('children_count');
-        }
+    // تصنيف العمر: العضو من غير تاريخ ميلاد بيتحسب بالغ افتراضياً — كل عضو جديد بيهبط على بالغين أو أطفال
+    if ($this->isMemberAdult($member)) {
+        $family->increment('adults_count');
+    } else {
+        $family->increment('children_count');
     }
+
+    $family->increment('members_count');
 
     if ($member->has_disability) {
         $family->increment('pwd_count');
@@ -419,17 +530,49 @@ public function updateMember(Request $request, $memberId)
         'name'=>'required|string|max:255',
         'gender'=>'required|in:male,female',
         'birth_date'=>'nullable|date',
+        'has_disability'=>'nullable|boolean',
     ]);
 
 
-    $member->update([
+    $family = $member->family;
+
+    $wasAdult = $this->isMemberAdult($member);
+    $wasDisabled = (bool) $member->has_disability;
+
+    $attributes = [
         'name'=>strip_tags($request->name),
         'gender'=>$request->gender,
         'birth_date'=>$request->birth_date,
-    ]);
+    ];
 
+    if ($request->has('has_disability')) {
+        $attributes['has_disability'] = $request->boolean('has_disability');
+    }
 
-    $member->family->calculateVulnerability();
+    $member->update($attributes);
+
+    // مزامنة العدادات لو تصنيف العمر اتغير (طفل بقى بالغ أو العكس)
+    if ($this->isMemberAdult($member) !== $wasAdult) {
+        if ($wasAdult) {
+            $family->decrement('adults_count');
+            $family->increment('children_count');
+        } else {
+            $family->decrement('children_count');
+            $family->increment('adults_count');
+        }
+    }
+
+    // مزامنة عداد الإعاقة لو حالة الإعاقة اتغيرت
+    $hasDisability = (bool) $member->has_disability;
+    if ($hasDisability !== $wasDisabled) {
+        $family->pwd_count = max(0, (int) $family->pwd_count + ($hasDisability ? 1 : -1));
+        $family->has_pwd = $family->pwd_count > 0;
+        $family->save();
+    }
+
+    $family->refresh();
+
+    $family->calculateVulnerability();
 
 
     return response()->json([
@@ -440,6 +583,16 @@ public function updateMember(Request $request, $memberId)
 
 }
 
+
+// تصنيف العمر: بالغ (18 سنة أو أكثر) أو طفل — العضو من غير تاريخ ميلاد بيتحسب بالغ
+private function isMemberAdult(FamilyMember $member): bool
+{
+    if (!$member->birth_date) {
+        return true;
+    }
+
+    return now()->subYears(18)->greaterThanOrEqualTo($member->birth_date);
+}
 
 //delete member from family
 public function deleteMember($memberId)
@@ -454,7 +607,7 @@ public function deleteMember($memberId)
     }
 
     $family = $member->family;
-    $wasAdult = $member->birth_date && now()->subYears(18)->greaterThanOrEqualTo($member->birth_date);
+    $wasAdult = $this->isMemberAdult($member);
     $hadDisability = (bool) $member->has_disability;
 
     $this->authorize('update', $family);
@@ -468,12 +621,10 @@ public function deleteMember($memberId)
 
     $family->members_count = max(0, $family->members_count - 1);
 
-    if ($member->birth_date) {
-        if ($wasAdult) {
-            $family->adults_count = max(0, $family->adults_count - 1);
-        } else {
-            $family->children_count = max(0, $family->children_count - 1);
-        }
+    if ($wasAdult) {
+        $family->adults_count = max(0, $family->adults_count - 1);
+    } else {
+        $family->children_count = max(0, $family->children_count - 1);
     }
 
     if ($hadDisability) {

@@ -14,11 +14,18 @@ class UserController extends Controller
 
 
     // عرض كل المستخدمين
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json([
-            'users'=>User::all()
-        ]);
+        $users = User::query()->orderBy('id')->get();
+
+        $response = $this->paginatedJson($request, $users, fn ($user) => $user, ['status' => true]);
+
+        $payload = $response->getData(true);
+
+        // توافق مع الواجهة الحالية التي تقرأ response.users
+        $payload['users'] = $payload['data'];
+
+        return response()->json($payload);
     }
 
     public function statistics()
@@ -62,7 +69,8 @@ class UserController extends Controller
             'role'=>$request->role,
             'phone'=>$request->phone ? strip_tags($request->phone) : null,
             'camp_id'=>$request->camp_id ?? null,
-            'is_active' => $request->boolean('is_active')
+            // المستخدم الجديد يبقى مفعّل افتراضياً ما لم يُذكر خلاف ذلك
+            'is_active' => $request->boolean('is_active', true)
 
         ]);
 
@@ -122,8 +130,10 @@ class UserController extends Controller
         'camp_id',
     ]);
 
-    // is_active نتعامل معاه بشكل منفصل
-    $data['is_active'] = $request->boolean('is_active');
+    // is_active نتعامل معاه بشكل منفصل (فقط إذا تم إرساله فعلاً)
+    if ($request->has('is_active')) {
+        $data['is_active'] = $request->boolean('is_active');
+    }
 
     foreach (['name', 'email', 'phone'] as $field) {
         if (isset($data[$field])) {
